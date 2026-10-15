@@ -64,8 +64,9 @@ powershell -ExecutionPolicy Bypass -File tools/check.ps1
      ```
 5. Phone logs (useful when something only breaks on the device): `adb logcat -s godot`
 
-Things to try on the phone: tap through the menus, open *Options > Game*, toggle Haptics, press the
-Back button, and tap with three fingers at once to open the debug console.
+Things to try on the phone: tap through every screen, open Settings and switch the style (debug
+builds), open the UI kit gallery, win and lose a level, press the Back button everywhere, and tap
+with three fingers at once to open the debug console.
 
 ## 5. Your daily loop
 
@@ -100,6 +101,7 @@ After that: ask Claude to explain every new script it writes, and build one smal
 with AI switched off.
 
 ## Where to go next
+- [UI_KIT.md](UI_KIT.md): the screens, the five styles, and how to add your own.
 - [ARCHITECTURE.md](ARCHITECTURE.md): what every part of the template does and how they connect.
 - [CUSTOMIZING.md](CUSTOMIZING.md): what to change for each new game.
 - [SERVICES.md](SERVICES.md): ads, purchases, leaderboards, analytics (the "backend").

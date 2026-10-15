@@ -1,0 +1,46 @@
+class_name Icons
+extends RefCounted
+## The UI kit's icons: Google Material Symbols Rounded (Apache 2.0), white 48 px SVGs that stay
+## sharp at any size. Tint them with the button's icon colours or a TextureRect's modulate.
+## Add one: download its "_fill1_24px.svg" from github.com/google/material-design-icons
+## (symbols/web/<name>/materialsymbolsrounded/), set width/height to 48 and fill to #ffffff,
+## and import it as DPITexture (Import dock > Import As: DPITexture).
+
+const ADD: Texture2D = preload("res://core/ui/icons/add.svg")
+const ANIMATION: Texture2D = preload("res://core/ui/icons/animation.svg")
+const ARROW_BACK: Texture2D = preload("res://core/ui/icons/arrow_back.svg")
+const ARROW_FORWARD: Texture2D = preload("res://core/ui/icons/arrow_forward.svg")
+const BLOCK: Texture2D = preload("res://core/ui/icons/block.svg")
+const BOLT: Texture2D = preload("res://core/ui/icons/bolt.svg")
+const CHECK: Texture2D = preload("res://core/ui/icons/check.svg")
+const CHECK_CIRCLE: Texture2D = preload("res://core/ui/icons/check_circle.svg")
+const CLOSE: Texture2D = preload("res://core/ui/icons/close.svg")
+const COIN: Texture2D = preload("res://core/ui/icons/monetization_on.svg")
+const DIAMOND: Texture2D = preload("res://core/ui/icons/diamond.svg")
+const GIFT: Texture2D = preload("res://core/ui/icons/redeem.svg")
+const GRID: Texture2D = preload("res://core/ui/icons/grid_view.svg")
+const GROUPS: Texture2D = preload("res://core/ui/icons/groups.svg")
+const HEART: Texture2D = preload("res://core/ui/icons/favorite.svg")
+const HELP: Texture2D = preload("res://core/ui/icons/help.svg")
+const HINT: Texture2D = preload("res://core/ui/icons/lightbulb.svg")
+const HOME: Texture2D = preload("res://core/ui/icons/home.svg")
+const INFO: Texture2D = preload("res://core/ui/icons/info.svg")
+const LEADERBOARD: Texture2D = preload("res://core/ui/icons/leaderboard.svg")
+const LOCK: Texture2D = preload("res://core/ui/icons/lock.svg")
+const MUSIC: Texture2D = preload("res://core/ui/icons/music_note.svg")
+const PALETTE: Texture2D = preload("res://core/ui/icons/palette.svg")
+const PAUSE: Texture2D = preload("res://core/ui/icons/pause.svg")
+const PLAY: Texture2D = preload("res://core/ui/icons/play_arrow.svg")
+const PRIVACY: Texture2D = preload("res://core/ui/icons/privacy_tip.svg")
+const REPLAY: Texture2D = preload("res://core/ui/icons/replay.svg")
+const RESTART: Texture2D = preload("res://core/ui/icons/restart_alt.svg")
+const SETTINGS: Texture2D = preload("res://core/ui/icons/settings.svg")
+const SHOP: Texture2D = preload("res://core/ui/icons/shopping_cart.svg")
+const STAR: Texture2D = preload("res://core/ui/icons/star.svg")
+const STAR_OUTLINE: Texture2D = preload("res://core/ui/icons/star_outline.svg")
+const TIMER: Texture2D = preload("res://core/ui/icons/timer.svg")
+const TROPHY: Texture2D = preload("res://core/ui/icons/emoji_events.svg")
+const UNDO: Texture2D = preload("res://core/ui/icons/undo.svg")
+const VIBRATION: Texture2D = preload("res://core/ui/icons/vibration.svg")
+const VIDEO: Texture2D = preload("res://core/ui/icons/smart_display.svg")
+const VOLUME: Texture2D = preload("res://core/ui/icons/volume_up.svg")

@@ -7,13 +7,17 @@ most of this audience. Puzzle players skew 35+, so readable text and generous to
 
 | Feature | Where | Detail |
 |---|---|---|
-| Large touch targets | `core/ui/mobile_theme.tres` | Buttons padded to about 96 px tall and toggles to 96 px tap areas on the 720 px canvas (= Android's 48 dp minimum, which also meets Apple's 44 pt and WCAG) |
-| Readable text | `core/ui/mobile_theme.tres` | 32 px default text (about 16-18 sp on a phone) |
-| Reduce Motion | Options > Game; `AppLifecycle`, `Juice.motion_scale` | When on, `Juice` effects are skipped. Your own effects must check `Juice.motion_scale` too |
-| Haptics toggle | Options > Game; `Haptics.enabled` | Vibration can be turned off; never the only signal |
-| Notch-safe layout | `SafeAreaMargin` | Keeps UI clear of camera cut-outs and system bars |
-| Interruptions | `AppLifecycle` > `Events.app_paused` / `back_requested` | Save on pause; Back goes to the pause menu instead of quitting |
-| Separate volume controls | Options > Audio | Master, Music, SFX sliders and Mute |
+| Large touch targets | every theme (`tools/build_theme.gd`) | Every button, switch, slider and tile is at least 96 px on the 720 px canvas (= Android's 48 dp minimum, which also meets Apple's 44 pt and WCAG 2.2's 24 px). Checked for every style by `tests/test_theme.gd` and on every screen at three sizes by `tests/test_screens.gd` |
+| Text contrast | every theme | WCAG AA: 4.5:1 for normal text, 3:1 for large text, in all five styles (`tests/test_theme.gd`). Outlined text is measured against its outline |
+| Readable text | every theme | 32 px body text (16 dp on a 360 dp phone), 26 px minimum for captions |
+| State not by colour alone | switches, level tiles, daily reward | Switches change knob size and position; locked levels show a lock; claimed days show a tick |
+| Reduce Motion | Settings; `AppLifecycle`, `Juice.motion_scale` | Turns off button squash, popup pop-ins, the logo intro, Play button breathing, star pops, coin count-ups and background drift. Your own effects must check `Juice.motion_scale` too |
+| Vibration toggle | Settings; `Haptics.enabled` | Haptics can be turned off; never the only signal |
+| Notch-safe layout | `SafeAreaMargin` on every screen and popup | Keeps UI clear of camera holes, rounded corners and the gesture bar |
+| Back button | `ui_cancel` includes Android Back | Closes the top popup, then goes back a screen; the game opens pause; the main menu asks before quitting |
+| Focus rings for keyboard and gamepad | `UI` autoload | Rings appear after a key or pad press and hide again after a tap |
+| Interruptions | `AppLifecycle` > `Events.app_paused` | Progress saves on every change; pause state is restored when popups close |
+| Separate volume controls | Settings | Music and Sound sliders, plus quick toggles in the pause menu |
 | Offline play | design | Everything except ads works offline |
 
 ## Each game must still do
@@ -21,8 +25,7 @@ most of this audience. Puzzle players skew 35+, so readable text and generous to
 - **Never carry information by colour alone.** About 1 in 12 men has red-green colour blindness.
   Pair every meaningful colour with a shape, symbol or pattern, and check screenshots in greyscale
   and a colour-blind simulator.
-- **Contrast:** text at least 4.5:1 against its background (3:1 for large text); game pieces at
-  least 3:1 against the board.
+- **Contrast for game pieces:** at least 3:1 against the board.
 - **Never carry information by sound or vibration alone.** Many players play muted and phones can
   block haptics. Every important event needs a visual on the same frame.
 - **No held buttons or button-mashing**; keep tap targets still while the player is aiming at them.
@@ -35,19 +38,19 @@ most of this audience. Puzzle players skew 35+, so readable text and generous to
 
 ## Known gaps
 
-- **Volume sliders are thin** (Godot's default slider artwork), below the 48 dp target. Restyle them
-  per game (slider grabber icons and track style).
-- **Toggle switch graphics are small** (default artwork), although their tap areas are 96 px.
 - **Screen readers:** Godot's AccessKit support for Android TalkBack was merged for Godot 4.8,
   which is still in development. Plan a TalkBack test for menu-heavy games once 4.8 is stable.
-- **No text-size setting yet.** Word games should add one (an `OptionControl` that changes the
-  theme's font size).
+- **No text-size setting yet.** Word games should add one (a setting that raises the style's
+  `font_size` and `text_scale` and rebuilds, or scales the theme at runtime).
+- **No translations yet.** Strings live in scenes and scripts.
 
 ## Checklist before release
 
-- [ ] Every button and tile at least 96 px on the 720 canvas
-- [ ] Text contrast at least 4.5:1; pieces at least 3:1
+- [ ] `tools/check.ps1` passes (contrast, touch sizes, every screen at three sizes)
+- [ ] Your game screens added to `tests/test_screens.gd` and pass
+- [ ] Game pieces at least 3:1 against the board
 - [ ] Game playable in greyscale and with sound off
 - [ ] Reduce Motion removes or softens every effect
 - [ ] Back button and app switching tested on a phone
-- [ ] No important UI under the notch or system bars
+- [ ] No important UI under the camera hole or the gesture bar (`safe_area` console command on PC, a
+      real phone before release)

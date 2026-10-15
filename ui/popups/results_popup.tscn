@@ -1,0 +1,121 @@
+[gd_scene format=3 uid="uid://bo8o716lxkew6"]
+
+[ext_resource type="Script" path="res://ui/popups/results_popup.gd" id="1_script"]
+[ext_resource type="Script" path="res://core/ui/safe_area_margin.gd" id="2_safe"]
+[ext_resource type="Script" path="res://core/ui/widgets/star_rating.gd" id="3_stars"]
+[ext_resource type="Script" path="res://core/ui/widgets/currency_pill.gd" id="4_pill"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/smart_display.svg" id="5_video"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/arrow_forward.svg" id="6_next"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/replay.svg" id="7_replay"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/home.svg" id="8_home"]
+
+[node name="ResultsPopup" type="Control" unique_id=18476310]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+dismissible = false
+pauses_game = true
+sheet_max_width = 620.0
+
+[node name="Safe" type="MarginContainer" parent="." unique_id=30397667]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_safe")
+extra_margin = 24
+
+[node name="Center" type="CenterContainer" parent="Safe" unique_id=1967021021]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Sheet" type="PanelContainer" parent="Safe/Center" unique_id=1144853702]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SheetPanel"
+
+[node name="Content" type="VBoxContainer" parent="Safe/Center/Sheet" unique_id=101534592]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Headline" type="Label" parent="Safe/Center/Sheet/Content" unique_id=873394401]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "Level complete!"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Stars" type="HBoxContainer" parent="Safe/Center/Sheet/Content" unique_id=2481739]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+script = ExtResource("3_stars")
+star_size = 88.0
+raise_middle = true
+
+[node name="Message" type="Label" parent="Safe/Center/Sheet/Content" unique_id=107842522]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Perfect!"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="RewardRow" type="HBoxContainer" parent="Safe/Center/Sheet/Content" unique_id=1661652836]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+
+[node name="Reward" type="PanelContainer" parent="Safe/Center/Sheet/Content/RewardRow" unique_id=2046600672]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"PillPanel"
+script = ExtResource("4_pill")
+
+[node name="Gap" type="Control" parent="Safe/Center/Sheet/Content" unique_id=303888014]
+custom_minimum_size = Vector2(0, 4)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="ContinueButton" type="Button" parent="Safe/Center/Sheet/Content" unique_id=777780483]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"AccentButton"
+text = "+5 moves  (watch ad)"
+icon = ExtResource("5_video")
+
+[node name="NextButton" type="Button" parent="Safe/Center/Sheet/Content" unique_id=1420013879]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeroButton"
+text = "Next level"
+icon = ExtResource("6_next")
+icon_alignment = 2
+
+[node name="Row" type="HBoxContainer" parent="Safe/Center/Sheet/Content" unique_id=845555894]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="RetryButton" type="Button" parent="Safe/Center/Sheet/Content/Row" unique_id=1611768533]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Retry"
+icon = ExtResource("7_replay")
+
+[node name="HomeButton" type="Button" parent="Safe/Center/Sheet/Content/Row" unique_id=185098249]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Home"
+icon = ExtResource("8_home")

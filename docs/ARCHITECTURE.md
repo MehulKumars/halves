@@ -15,7 +15,7 @@ built for low-end phones, judged on retention, with no AI-generated art.
    anything crossing systems goes through the `Events` bus.
 3. **Rules that are easy to get wrong live in tested code**, not in memory: when ads may show
    (`AdPolicy`), stable seeds (`SeedService`), safe saving (`SaveStore`).
-4. **Low-end Android first:** Compatibility renderer, 720×1280 canvas, 96 px touch targets, cheap
+4. **Low-end Android first:** Compatibility renderer, 720 px wide canvas, 96 px touch targets, cheap
    effects, nothing timed to audio.
 5. **Respect the player:** Reduce Motion and Haptics settings, no interstitials in the first
    session, no loot boxes.
@@ -30,14 +30,18 @@ core/                  Template systems shared by every game (ours)
   ad_policy.gd         When an interstitial may show (pure logic)
   seed_service.gd      Stable SHA-256 seeds
   save_store.gd        Versioned JSON save
+  progress.gd          Stars, unlocks, coins, purchases, daily streak (uses SaveStore)
+  settings.gd          Volume, vibration, reduce motion
   feel/                Juice (tweens), Haptics, hit_flash.gdshader
-  ui/                  mobile_theme.tres, SafeAreaMargin
+  ui/                  The UI kit: autoload UI, Screen, Modal, layout containers, widgets,
+                       styles/ (5 UIStyle resources), themes/ (built), fonts/, icons/
   dev_tools.gd         Autoload DevTools: debug-only console commands
-scenes/, scripts/,     Maaack's Game Template example content: menus, options, pause,
-resources/, assets/    loading, credits, example game and levels. Yours to edit per game.
+ui/                    Screens (ui/screens/) and popups (ui/popups/) of the game. Yours to edit
+scenes/                Maaack's opening logo and loading screen
+assets/                Logos used by the opening and the credits
 game/, data/           (create per game) gameplay code and baked level data
 tests/                 GUT unit tests (test_*.gd)
-tools/                 check.ps1, hooks/ (Claude Code auto-check), levelgen/ (per game)
+tools/                 check.ps1, snapshots, build_theme.gd, scene_edit.gd, hooks/ (Claude Code auto-check)
 addons/                Vendored plugins. Never edit.
 .claude/               Claude Code settings (hook) and project skills
 docs/                  These guides
@@ -47,19 +51,19 @@ docs/                  These guides
 
 ```mermaid
 flowchart LR
-    subgraph Game["Your game (game/, scenes/game/)"]
-        GP[Gameplay] --> RS[Results window]
+    subgraph Game["Your game (game/, ui/screens/game.gd)"]
+        GP[Gameplay] -- "finish(won, stars)" --> RS[Results popup]
     end
     GP -- "Events.level_finished" --> E[Events]
+    GP -- "Progress.record_win()" --> PR[Progress + SaveStore]
     RS -- "can_show_interstitial()" --> AP[AdPolicy]
-    RS -- "Services.ads.show_interstitial()" --> S[Services]
-    GP -- "Services.ads.show_rewarded()" --> S
+    RS -- "Services.ads.show_rewarded()" --> S[Services]
     GP -- "SeedService.make_rng()" --> SS[SeedService]
-    GP -- "SaveStore.save_data()" --> SV[SaveStore]
     GP -- "Juice.pop() / Haptics.tick()" --> FX[Juice + Haptics]
+    UI[UI autoload] -- "goto / open / toast" --> RS
     AL[AppLifecycle] -- "app_paused / back_requested" --> E
     AL -- "motion_scale, enabled" --> FX
-    OPT[Options > Game] -- "PlayerConfig + apply_settings()" --> AL
+    SET[Settings popup] -- "Settings.set_*()" --> AL
     S --> MOCK[Mocks: editor and PC]
     S -. "added per game" .-> PLUG[AdMob, Billing, Play Games]
 ```
@@ -77,6 +81,7 @@ Defined in `project.godot`, in this order:
 | `Events` | `core/events.gd` | Signal bus |
 | `Services` | `core/services/services.gd` | Service hub |
 | `AppLifecycle` | `core/app_lifecycle.gd` | Lifecycle and feel settings (needs `Events`) |
+| `UI` | `core/ui/ui.gd` | Screen changes, popups and Back, toasts, styles, button feel (needs the above) |
 | `DevTools` | `core/dev_tools.gd` | Console commands (needs all of the above; frees itself in release) |
 
 ## Module reference
@@ -117,10 +122,12 @@ Services.analytics.log_event("first_win", {"level": 1})
   longer quits the app.
 - `apply_settings()` reads `GameSettings/ReduceMotion` and `GameSettings/Haptics` from Maaack's
   `PlayerConfig` (`user://player_config.cfg`) and sets `Juice.motion_scale` and `Haptics.enabled`.
-  It runs at start, on resume, and when the Options > Game toggles change.
-- **Verify on a device:** Maaack's pause menu opens on the `ui_cancel` action (Esc on PC). If the
-  Android Back button does not open it on your phone, connect `Events.back_requested` to your pause
-  logic in the game scene.
+  It runs at start, on resume, and when the Settings toggles change (through `Settings`).
+- **Back on Android:** Godot delivers the Back button as a `KEY_BACK` key event plus the
+  go-back notification. `project.godot` maps `KEY_BACK` to `ui_cancel` (next to Escape), so popups
+  and screens handle Back, Escape and the gamepad the same way (see [UI_KIT.md](UI_KIT.md)).
+  Checked on a OnePlus 10R (Android 15) with `adb shell input keyevent 4` and the `log_input`
+  console command.
 
 ### AdPolicy (`core/ad_policy.gd`)
 Pure logic, unit-tested. Create one per game session and ask it before every interstitial.
@@ -133,7 +140,7 @@ func _ready() -> void:
 	Events.level_finished.connect(func(_id: String, won: bool, _stars: int) -> void:
 		ad_policy.record_level_result(won))
 
-# Call when the results window opens, after the win animation:
+# ui/screens/game.gd does this when the results popup opens:
 func _on_results_shown(level: int, won: bool) -> void:
 	var now := Time.get_ticks_msec() / 1000.0
 	if ad_policy.can_show_interstitial(level, won, now) and Services.ads.is_interstitial_ready("results"):
@@ -159,10 +166,11 @@ levels to data files** and only generate disposable content at runtime (see the
 corrupts it. Every save carries a `version`; bump `CURRENT_VERSION` and add a step to `_migrate()`
 when the layout changes. A corrupt file loads as a fresh save with a warning.
 
-**SaveStore vs Maaack's GameState:** Maaack's `GameState`/`LevelState` (in `scripts/`) drive the
-example menus (Continue, level select) and save as Resource files, which his own docs warn can
-carry injected scripts. Use **SaveStore for your game's progress, coins and settings**; keep or
-remove Maaack's state as the example menus need.
+**Progress** (`core/progress.gd`) is the template's player progress on top of SaveStore: best stars
+per level, unlocks, coins, owned items and the daily reward streak, saved on every change. It
+replaces Maaack's `GameState` (removed), which saved Resource files that can carry injected
+scripts. Tests point `Progress.path` at a temporary file. Its re-read function is
+`load_from_disk()`: a static function named `reload()` would be shadowed by `Script.reload()`.
 
 ### Juice and Haptics (`core/feel/`)
 - `Juice.pop(node, peak := 1.08, duration := 0.12)` and `Juice.squash(node, scale := Vector2(1.12, 0.9), duration := 0.14)`
@@ -173,16 +181,16 @@ remove Maaack's state as the example menus need.
 - `hit_flash.gdshader`: set `flash` once with `set_shader_parameter`, then tween
   `"shader_parameter/flash"` from 1 to 0. One material per flashing node.
 
-### Mobile UI (`core/ui/`)
-- `mobile_theme.tres` is the project theme (`gui/theme/custom`): 32 px default text, buttons padded
-  to about 96 px tall, toggle tap areas 96 px.
-- `SafeAreaMargin` (a `MarginContainer`): put HUDs and menus inside it; on phones it adds margins
-  for notches and system bars. `extra_margin` adds padding everywhere.
+### UI kit (`core/ui/`, `ui/`)
+Five styles (`core/ui/styles/*.tres`, built into `core/ui/themes/` by `tools/build_theme.gd`),
+the `UI` autoload, `Screen` and `Modal` base classes, responsive containers, widgets and the game's
+twelve screens and popups. Everything is in [UI_KIT.md](UI_KIT.md).
 
 ### DevTools (`core/dev_tools.gd`)
 Debug builds only. Open the console with `` ` `` on PC or a three-finger tap on a phone.
 Commands: `set_seed <text>`, `skip_level`, `ads_grant <true|false>`, `motion <0..1>`,
-`reset_save`, plus LimboConsole's built-ins (`help`, `commands`, `fps_max`, ...). Your game reacts
+`reset_save`, `fps` (FPS, frame time, draw calls, memory overlay), `log_input` (print every key,
+touch and action event), `display_info`, `safe_area <l> <t> <r> <b>` (fake a notch), plus LimboConsole's built-ins (`help`, `commands`, `fps_max`, ...). Your game reacts
 to `set_seed` and `skip_level` through `Events.debug_command`.
 
 ## Design decisions
@@ -197,3 +205,8 @@ to `set_seed` and `skip_level` through `Events.debug_command`.
 | Strict ad rules | A game living on organic installs depends on day-1 retention; Play bans ads at level start or during play |
 | GitHub, one repo per game | Unlimited private repos and template repos on the free plan |
 | No AI-generated assets | Studio rule; player sentiment in paying markets is negative |
+| Own UI kit instead of Maaack's menus | Maaack's menus are desktop-first (narrow centred buttons, tabs, small popups); the kit is built for thumbs, notches and tablets, and every screen is checked by tests |
+| Styles as resources plus a builder | One Inspector-editable file per style; the builder guarantees every component exists in every style, and tests check every style's contrast and touch sizes |
+| SVG icons and switch art as `DPITexture` | Sharp at any screen density without shipping several bitmap sizes |
+| Back key mapped to `ui_cancel` | One code path for Android Back, Escape and gamepads; popups get it first |
+| No `override.cfg` | Godot applies it on the PC but it is not exported, so the PC and the phone would differ |

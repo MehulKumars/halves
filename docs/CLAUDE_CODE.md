@@ -19,6 +19,7 @@ Claude picks a skill when your request matches its description; you can also nam
 
 | Skill | Use it for | Example prompts |
 |---|---|---|
+| `mobile-ui` | Building or changing screens, popups, HUDs and styles with the UI kit; checks them with tests and screenshots | "Add a lives counter to the HUD" · "Make a pack-opening popup" · "Make a new ocean-themed style" |
 | `game-design-review` | Judging an idea or prototype: core loop, first 60 seconds, difficulty, fail state, juice level, ads and IAP, keep/kill lines. Rules change by game type | "Review this game idea: …" · "Is the difficulty curve in levels 1-20 right?" · "Where should ads go in this game?" |
 | `godot-game-feel` | Juice, VFX, SFX, haptics and Reduce Motion, with the real cost on low-end Android | "Make matching feel more satisfying" · "Add a combo sound chain" · "Add screen shake to hits" |
 | `level-generation` | Solvable, bot-rated, seeded levels baked to data files; daily puzzles | "Write a generator for sort-puzzle levels" · "Make levels 30-50 harder" · "Add a daily puzzle" |
@@ -38,6 +39,8 @@ type, Compatibility-renderer limits and on-device profiling steps.
 3. **Ask for explanations:** "Explain what you just wrote like I'm a beginner."
 4. **Play every step yourself**, on PC and on the phone, before moving on.
 5. **Commit after each working step**, so you can always go back.
+6. **For UI work, ask Claude to look at the screenshots** ("run the snapshots and check the shop at
+   720x1280 and 960x1280"). It can read the PNGs and catch overlaps, clipping and contrast problems.
 
 A good first session on a new game:
 ```

@@ -1,0 +1,239 @@
+[gd_scene format=3 uid="uid://cwchxr57ujvm7"]
+
+[ext_resource type="Script" path="res://ui/popups/settings_popup.gd" id="1_script"]
+[ext_resource type="Script" path="res://core/ui/safe_area_margin.gd" id="2_safe"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/close.svg" id="3_close"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/music_note.svg" id="4_music"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/volume_up.svg" id="5_sound"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/vibration.svg" id="6_vibration"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/animation.svg" id="7_motion"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/groups.svg" id="8_credits"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/privacy_tip.svg" id="9_privacy"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/restart_alt.svg" id="10_restore"]
+
+[node name="SettingsPopup" type="Control" unique_id=1173080972]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+sheet_max_width = 680.0
+
+[node name="Safe" type="MarginContainer" parent="." unique_id=2076673721]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_safe")
+extra_margin = 24
+
+[node name="Center" type="CenterContainer" parent="Safe" unique_id=550182924]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Sheet" type="PanelContainer" parent="Safe/Center" unique_id=1738953051]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SheetPanel"
+
+[node name="Content" type="VBoxContainer" parent="Safe/Center/Sheet" unique_id=1798238243]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Header" type="HBoxContainer" parent="Safe/Center/Sheet/Content" unique_id=402330327]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="Safe/Center/Sheet/Content/Header" unique_id=348594604]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"HeaderLabel"
+text = "Settings"
+vertical_alignment = 1
+
+[node name="CloseButton" type="Button" parent="Safe/Center/Sheet/Content/Header" unique_id=1164380134]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"IconButton"
+icon = ExtResource("3_close")
+
+[node name="Scroll" type="ScrollContainer" parent="Safe/Center/Sheet/Content" unique_id=912374848]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Rows" type="VBoxContainer" parent="Safe/Center/Sheet/Content/Scroll" unique_id=417736211]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="MusicRow" type="HBoxContainer" parent="Safe/Center/Sheet/Content/Scroll/Rows" unique_id=2059608495]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="MusicIcon" type="TextureRect" parent="Safe/Center/Sheet/Content/Scroll/Rows/MusicRow" unique_id=1136627913]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("4_music")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MusicLabel" type="Label" parent="Safe/Center/Sheet/Content/Scroll/Rows/MusicRow" unique_id=2014947903]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Music"
+
+[node name="MusicSlider" type="HSlider" parent="Safe/Center/Sheet/Content/Scroll/Rows/MusicRow" unique_id=19517859]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+max_value = 1.0
+step = 0.05
+value = 1.0
+
+[node name="SoundRow" type="HBoxContainer" parent="Safe/Center/Sheet/Content/Scroll/Rows" unique_id=1553426651]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="SoundIcon" type="TextureRect" parent="Safe/Center/Sheet/Content/Scroll/Rows/SoundRow" unique_id=980822908]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("5_sound")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SoundLabel" type="Label" parent="Safe/Center/Sheet/Content/Scroll/Rows/SoundRow" unique_id=871443263]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Sound"
+
+[node name="SoundSlider" type="HSlider" parent="Safe/Center/Sheet/Content/Scroll/Rows/SoundRow" unique_id=1031281625]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+max_value = 1.0
+step = 0.05
+value = 1.0
+
+[node name="HapticsRow" type="HBoxContainer" parent="Safe/Center/Sheet/Content/Scroll/Rows" unique_id=1357348112]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="HapticsIcon" type="TextureRect" parent="Safe/Center/Sheet/Content/Scroll/Rows/HapticsRow" unique_id=1099746465]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("6_vibration")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HapticsLabel" type="Label" parent="Safe/Center/Sheet/Content/Scroll/Rows/HapticsRow" unique_id=1524127938]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Vibration"
+
+[node name="HapticsToggle" type="CheckButton" parent="Safe/Center/Sheet/Content/Scroll/Rows/HapticsRow" unique_id=1774652819]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="MotionRow" type="HBoxContainer" parent="Safe/Center/Sheet/Content/Scroll/Rows" unique_id=2098732023]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="MotionIcon" type="TextureRect" parent="Safe/Center/Sheet/Content/Scroll/Rows/MotionRow" unique_id=1544210377]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("7_motion")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MotionLabel" type="Label" parent="Safe/Center/Sheet/Content/Scroll/Rows/MotionRow" unique_id=634913078]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Reduce motion"
+
+[node name="MotionToggle" type="CheckButton" parent="Safe/Center/Sheet/Content/Scroll/Rows/MotionRow" unique_id=1735090911]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Separator" type="HSeparator" parent="Safe/Center/Sheet/Content/Scroll/Rows" unique_id=592237000]
+layout_mode = 2
+
+[node name="Links" type="GridContainer" parent="Safe/Center/Sheet/Content/Scroll/Rows" unique_id=1336603409]
+layout_mode = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 16
+columns = 2
+
+[node name="CreditsButton" type="Button" parent="Safe/Center/Sheet/Content/Scroll/Rows/Links" unique_id=3776582]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Credits"
+icon = ExtResource("8_credits")
+
+[node name="PrivacyButton" type="Button" parent="Safe/Center/Sheet/Content/Scroll/Rows/Links" unique_id=411916983]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Privacy"
+icon = ExtResource("9_privacy")
+
+[node name="RestoreButton" type="Button" parent="Safe/Center/Sheet/Content/Scroll/Rows/Links" unique_id=1920787512]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Restore"
+icon = ExtResource("10_restore")
+
+[node name="ResetButton" type="Button" parent="Safe/Center/Sheet/Content/Scroll/Rows/Links" unique_id=1483177965]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"GhostButton"
+text = "Reset progress"
+
+[node name="Version" type="Label" parent="Safe/Center/Sheet/Content/Scroll/Rows" unique_id=920440851]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+text = "Version 0.1.0"
+horizontal_alignment = 1
+
+[node name="StyleSection" type="VBoxContainer" parent="Safe/Center/Sheet/Content/Scroll/Rows" unique_id=463592256]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="StyleLabel" type="Label" parent="Safe/Center/Sheet/Content/Scroll/Rows/StyleSection" unique_id=918836807]
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+text = "Style (debug builds only)"
+
+[node name="StyleChips" type="HFlowContainer" parent="Safe/Center/Sheet/Content/Scroll/Rows/StyleSection" unique_id=55174094]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+
+[node name="GalleryButton" type="Button" parent="Safe/Center/Sheet/Content/Scroll/Rows/StyleSection" unique_id=1953146579]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"GhostButton"
+text = "Open the UI kit gallery"

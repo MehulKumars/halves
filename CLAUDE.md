@@ -1,27 +1,29 @@
 # Mobile Game Template: rules for Claude Code
 
-Godot **4.7.2** (pinned) · GDScript only · 2D portrait, 720×1280 · Android first · Compatibility renderer.
+Godot **4.7.2** (pinned) · GDScript only · 2D portrait, 720 px wide canvas · Android first · Compatibility renderer.
 The human owns fun, feel, art, balance, the store page and release decisions. Claude builds code with a checkable answer.
 
 ## Project map
 - `core/` shared template systems. Change only on purpose and ask first.
   - `events.gd` autoload **Events**: global signal bus (incl. `app_paused`, `app_resumed`, `back_requested`).
   - `services/` autoload **Services**: `ads`, `iap`, `analytics`, `leaderboard`, `review` as interfaces with mocks.
-  - `app_lifecycle.gd` autoload **AppLifecycle**: Android pause/resume/Back -> Events; applies the player's
-    Reduce Motion and Haptics settings (Maaack `PlayerConfig`, section `GameSettings`).
-  - `ad_policy.gd` (when interstitials may show), `seed_service.gd` (stable seeds), `save_store.gd` (versioned JSON save).
-  - `feel/juice.gd` (pop, squash; honours `Juice.motion_scale`), `feel/haptics.gd` (honours `Haptics.enabled`),
-    `feel/hit_flash.gdshader`.
-  - `ui/mobile_theme.tres` (project theme: 32 px text, 96 px buttons), `ui/safe_area_margin.gd` (notch-safe container).
-  - `dev_tools.gd` autoload **DevTools**: debug-only console commands.
-- `scenes/`, `scripts/`, `resources/`, `assets/`: Maaack's Game Template menus, options, loading and credits. Edit per game.
-  The options menu hides desktop tabs (`show_desktop_tabs`); the Game tab has Reduce Motion and Haptics toggles.
+  - `app_lifecycle.gd` autoload **AppLifecycle**: Android pause/resume/Back -> Events; applies Reduce Motion and Haptics.
+  - `ad_policy.gd` (when interstitials may show), `seed_service.gd` (stable seeds), `save_store.gd` (versioned JSON save),
+    `progress.gd` (stars, unlocks, coins, purchases, daily streak), `settings.gd` (volume, vibration, reduce motion).
+  - `feel/`: `Juice` (pop, squash; honours `Juice.motion_scale`), `Haptics` (honours `Haptics.enabled`), `hit_flash.gdshader`.
+  - `ui/` the UI kit core: autoload **UI** (`ui.gd`: goto, open, confirm, toast, apply_style, button feel, focus rings),
+    `screen.gd` (base for screens), `modal.gd` (base for popups), `styled_background.gd`, `safe_area_margin.gd`,
+    `max_width_container.gd`, `adaptive_grid_container.gd`, `widgets/` (StarRating, CurrencyPill, LevelTile), `icons.gd`,
+    `styles/*.tres` (5 UIStyle resources), `themes/*.tres` (built from styles; never edit by hand), `fonts/`, `icons/`.
+  - `dev_tools.gd` autoload **DevTools**: debug-only console commands (`fps`, `log_input`, `display_info`, `safe_area`...).
+- `ui/` the game's screens (`ui/screens/`) and popups (`ui/popups/`); paths in `ui/screens.gd` (`Screens.*`). Edit per game.
+  `ui/screens/game.gd` hosts the gameplay: replace its %Board and call `finish(won, stars)`.
+- `scenes/opening/`, `scenes/loading_screens/`: Maaack's opening logo and loading screen (still used).
 - `game/` gameplay scenes and scripts (create per game). `data/` baked levels and configs (create per game).
 - `tests/` GUT tests named `test_*.gd`. `tools/` scripts and the hook. `addons/` vendored plugins.
-- `.claude/skills/`: game-design-review, godot-game-feel, level-generation, mobile-performance-audit, play-release.
-  Use them for those tasks.
-- `docs/`: human guides. `docs/ARCHITECTURE.md` has every module's API with examples; keep it in sync when
-  `core/` changes. `docs/CUSTOMIZING.md` lists what each new game must change.
+- `.claude/skills/`: mobile-ui, game-design-review, godot-game-feel, level-generation, mobile-performance-audit,
+  play-release. Use them for those tasks.
+- `docs/`: human guides. `docs/UI_KIT.md` and `docs/ARCHITECTURE.md` describe every module; keep them in sync.
 
 ## Never
 - Godot 3 APIs. Use the right column:
@@ -40,8 +42,13 @@ The human owns fun, feel, art, balance, the store page and release decisions. Cl
 - Show an interstitial anywhere except when a results screen opens, and only if `AdPolicy.can_show_interstitial()` is true.
   Never on Next / Retry / Play again, at level start, during play, after a fail with a continue offer, or in daily/zen modes.
 - Generate shipped levels at runtime. Generate offline, rate with a bot, bake to `data/` with a `gen_version`.
-- Hand-write `uid://` values or restructure `.tscn` files as text. Small property edits only; structural scene work happens in the editor.
-- Edit anything in `addons/`.
+- Hand-write `uid://` values or restructure existing `.tscn` files as text. Change properties with `tools/scene_edit.gd`;
+  structural scene work happens in the editor (or a new scene, which Godot re-saves).
+- Edit anything in `addons/`, or the generated `core/ui/themes/*.tres` (edit `core/ui/styles/` and run the builder).
+- Hard-code colours, fonts or sizes in screens. Use theme type variations and `Tokens` (see `docs/UI_KIT.md`).
+- Name a static function `reload`, `free` or another built-in Object/Script method: `Class.reload()` calls the built-in.
+- Create child nodes in member initialisers and add them in `_ready` (they leak if the node never enters the tree);
+  add them in `_init` instead.
 - Commit keystores, passwords or `build/` outputs.
 - Weaken, skip or delete a test to make it pass.
 - Add AI-generated art, audio or text content.
@@ -52,13 +59,16 @@ The human owns fun, feel, art, balance, the store page and release decisions. Cl
 - "Call down, signal up": parents call children, children emit signals, cross-system events go through `Events`.
 - New script = a 3-line header comment: what it does, who uses it, anything surprising.
 - Tweens: `create_tween()` each time; kill an old tween on the same property first (see `Juice`).
+- Screens extend `Screen` (Back via `on_back()`), popups extend `Modal` (open with `UI.open()`, `await .closed`).
+  Every screen: StyledBackground + SafeAreaMargin + MaxWidthContainer. One primary (accent) action per screen.
 - Touch targets at least 96 px on the 720-px canvas (48 dp). Primary actions in the bottom third.
+- After any UI change: run `tools/snapshots.ps1` for the affected screens and **look at the PNGs** before saying it works.
 - Every important event has a visual. Sound and haptics are extras, never the only signal.
 - Juice goes on player success. Calm games stay calm. Respect `Juice.motion_scale` and `Haptics.enabled`.
 - Never time gameplay to audio: Android audio lags 165–500 ms on some phones.
-- Performance: no full-screen translucent layers, no Light2D or HDR glow by default, pooled one-shot
+- Performance: no full-screen translucent layers in gameplay, no Light2D or HDR glow by default, pooled one-shot
   `CPUParticles2D`, sprite atlases, no per-enemy physics nodes for swarms, Lossless textures without mipmaps.
-- Save progress on `Events.app_paused`; open the pause menu (or go back a screen) on `Events.back_requested`.
+- Save progress on `Events.app_paused` (Progress saves on every change already).
 - Work in small steps: plan first, one feature at a time, run the done check, then commit.
 
 ## Ask the human first
@@ -72,14 +82,21 @@ file inside the project (`tools/hooks/check_script.gd`). If it reports errors, f
 ```
 powershell -ExecutionPolicy Bypass -File tools/check.ps1
 ```
-It runs a warm-up import, boots the game headless for 300 frames, and runs every GUT test.
+It runs a warm-up import, boots the game headless for 300 frames, and runs every GUT test (incl. contrast and
+touch-size checks of every style, and every screen at three sizes).
 Test cases for generators and solvers are written by the human or a separate session, not the one writing the code.
 
 ## Commands
 - Run the game: `godot --path .`  · Editor: `godot --path . -e`
-- Tests only: `godot --headless --path . -s addons/gut/gut_cmdln.gd -gexit`
+- Tests only: `godot --headless --path . -s addons/gut/gut_cmdln.gd -gexit` (one file: `-gselect=test_ui`)
 - Check one script: `godot --headless --path . -s tools/hooks/check_script.gd -- res://core/events.gd`
+- Screenshots of the UI: `powershell -ExecutionPolicy Bypass -File tools/snapshots.ps1 [-Styles all] [-Sizes 720x1600] [-Only main_menu,pause] [-Inset 0,64,0,32]`
+  -> `build/snapshots/<style>_<w>x<h>_<screen>.png` and `..._contact.png`
+- Rebuild themes after editing a style: `godot --headless --path . -s tools/build_theme.gd`
+- Set scene properties: `godot --headless --path . -s tools/scene_edit.gd -- res://ui/screens/shop.tscn Safe extra_margin 24`
 - Debug APK: `godot --headless --path . --export-debug "Android Debug APK" build/game-debug.apk`
+- Phone: `adb install -r build/game-debug.apk`, `adb exec-out screencap -p > shot.png`, Back = `adb shell input keyevent 4`,
+  console = `adb shell input keyevent 68` then `adb shell input text fps` + `adb shell input keyevent 66`, logs `adb logcat -s godot`.
 - Release AAB: see the play-release skill (needs the game's release keystore).
 - Version-exact API reference to search: `godot --doctool docs/api` (ignored by git)
 

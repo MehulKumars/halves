@@ -18,6 +18,16 @@ Author: [Jason Long](https://bsky.app/profile/jasonlong.me)
 Source: [git-scm.com : logos](https://git-scm.com/downloads/logos)  
 License: [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) 
 
+#### Fonts: Outfit, Fredoka, Orbitron, Exo 2, Nunito, Pixelify Sans, VT323
+Authors: The Outfit, Fredoka, Orbitron, Exo 2, Nunito, Pixelify Sans and VT323 Project Authors  
+Source: [Google Fonts](https://fonts.google.com/)  
+License: [SIL Open Font License 1.1](https://openfontlicense.org/)  
+
+#### Icons: Material Symbols
+Author: Google  
+Source: [github: material-design-icons](https://github.com/google/material-design-icons)  
+License: [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)  
+
 ## Tools
 #### Godot
 ![Godot Engine Logo](/assets/godot_engine_logo/logo_vertical_color_dark.png)  

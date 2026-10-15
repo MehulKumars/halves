@@ -1,0 +1,176 @@
+[gd_scene format=3 uid="uid://ben0keihiip3b"]
+
+[ext_resource type="Script" path="res://ui/screens/main_menu.gd" id="1_script"]
+[ext_resource type="Script" path="res://core/ui/styled_background.gd" id="2_bg"]
+[ext_resource type="Script" path="res://core/ui/safe_area_margin.gd" id="3_safe"]
+[ext_resource type="Script" path="res://core/ui/max_width_container.gd" id="4_column"]
+[ext_resource type="Script" path="res://core/ui/widgets/currency_pill.gd" id="5_pill"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/settings.svg" id="6_settings"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/play_arrow.svg" id="7_play"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/grid_view.svg" id="8_grid"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/shopping_cart.svg" id="9_shop"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/redeem.svg" id="10_gift"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/leaderboard.svg" id="11_ranks"]
+
+[node name="MainMenu" type="Control" unique_id=1970485192]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="." unique_id=861836630]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_bg")
+
+[node name="Safe" type="MarginContainer" parent="." unique_id=1200299235]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_safe")
+extra_margin = 32
+
+[node name="Column" type="Container" parent="Safe" unique_id=786004921]
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("4_column")
+
+[node name="Layout" type="VBoxContainer" parent="Safe/Column" unique_id=933343835]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="TopBar" type="HBoxContainer" parent="Safe/Column/Layout" unique_id=463363997]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="Coins" type="PanelContainer" parent="Safe/Column/Layout/TopBar" unique_id=1798993777]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_type_variation = &"PillPanel"
+script = ExtResource("5_pill")
+
+[node name="Spacer" type="Control" parent="Safe/Column/Layout/TopBar" unique_id=538633949]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="SettingsButton" type="Button" parent="Safe/Column/Layout/TopBar" unique_id=955624916]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"IconButton"
+icon = ExtResource("6_settings")
+
+[node name="TopSpace" type="Control" parent="Safe/Column/Layout" unique_id=1471060837]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="Logo" type="VBoxContainer" parent="Safe/Column/Layout" unique_id=1915183655]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Safe/Column/Layout/Logo" unique_id=244694281]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "Mobile Game"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Tagline" type="Label" parent="Safe/Column/Layout/Logo" unique_id=667040781]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"OnBgLabel"
+text = "Your tagline goes here"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="MidSpace" type="Control" parent="Safe/Column/Layout" unique_id=1156924041]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.6
+mouse_filter = 2
+
+[node name="PlayButton" type="Button" parent="Safe/Column/Layout" unique_id=1745651299]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeroButton"
+text = "Play"
+icon = ExtResource("7_play")
+
+[node name="Gap" type="Control" parent="Safe/Column/Layout" unique_id=17643792]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Links" type="GridContainer" parent="Safe/Column/Layout" unique_id=1941758828]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 2
+
+[node name="LevelsButton" type="Button" parent="Safe/Column/Layout/Links" unique_id=652123130]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Levels"
+icon = ExtResource("8_grid")
+
+[node name="ShopButton" type="Button" parent="Safe/Column/Layout/Links" unique_id=259863578]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Shop"
+icon = ExtResource("9_shop")
+
+[node name="DailyButton" type="Button" parent="Safe/Column/Layout/Links" unique_id=1320029712]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Daily"
+icon = ExtResource("10_gift")
+
+[node name="DailyDot" type="PanelContainer" parent="Safe/Column/Layout/Links/DailyButton" unique_id=1625234763]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -40.0
+offset_top = 10.0
+offset_right = -12.0
+offset_bottom = 38.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_type_variation = &"DotPanel"
+
+[node name="RanksButton" type="Button" parent="Safe/Column/Layout/Links" unique_id=1557009151]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Ranks"
+icon = ExtResource("11_ranks")
+
+[node name="BottomSpace" type="Control" parent="Safe/Column/Layout" unique_id=230485823]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+mouse_filter = 2

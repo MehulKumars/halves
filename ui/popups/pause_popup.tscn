@@ -1,0 +1,108 @@
+[gd_scene format=3 uid="uid://bblbf1hn5iar6"]
+
+[ext_resource type="Script" path="res://ui/popups/pause_popup.gd" id="1_script"]
+[ext_resource type="Script" path="res://core/ui/safe_area_margin.gd" id="2_safe"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/music_note.svg" id="3_music"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/volume_up.svg" id="4_sound"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/vibration.svg" id="5_vibration"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/play_arrow.svg" id="6_play"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/replay.svg" id="7_replay"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/settings.svg" id="8_settings"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/home.svg" id="9_home"]
+
+[node name="PausePopup" type="Control" unique_id=228870717]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+pauses_game = true
+sheet_max_width = 600.0
+
+[node name="Safe" type="MarginContainer" parent="." unique_id=1260967261]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_safe")
+extra_margin = 24
+
+[node name="Center" type="CenterContainer" parent="Safe" unique_id=497672575]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Sheet" type="PanelContainer" parent="Safe/Center" unique_id=1778913226]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SheetPanel"
+
+[node name="Content" type="VBoxContainer" parent="Safe/Center/Sheet" unique_id=669039926]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Title" type="Label" parent="Safe/Center/Sheet/Content" unique_id=1367229124]
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "Paused"
+horizontal_alignment = 1
+
+[node name="Toggles" type="HBoxContainer" parent="Safe/Center/Sheet/Content" unique_id=2130847511]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="MusicToggle" type="Button" parent="Safe/Center/Sheet/Content/Toggles" unique_id=1618219782]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ChipButton"
+toggle_mode = true
+icon = ExtResource("3_music")
+
+[node name="SoundToggle" type="Button" parent="Safe/Center/Sheet/Content/Toggles" unique_id=2055909931]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ChipButton"
+toggle_mode = true
+icon = ExtResource("4_sound")
+
+[node name="HapticsToggle" type="Button" parent="Safe/Center/Sheet/Content/Toggles" unique_id=234961582]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ChipButton"
+toggle_mode = true
+icon = ExtResource("5_vibration")
+
+[node name="Gap" type="Control" parent="Safe/Center/Sheet/Content" unique_id=1606266814]
+custom_minimum_size = Vector2(0, 4)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="ResumeButton" type="Button" parent="Safe/Center/Sheet/Content" unique_id=586158775]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeroButton"
+text = "Resume"
+icon = ExtResource("6_play")
+
+[node name="RestartButton" type="Button" parent="Safe/Center/Sheet/Content" unique_id=82131997]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Restart"
+icon = ExtResource("7_replay")
+
+[node name="SettingsButton" type="Button" parent="Safe/Center/Sheet/Content" unique_id=726118166]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Settings"
+icon = ExtResource("8_settings")
+
+[node name="HomeButton" type="Button" parent="Safe/Center/Sheet/Content" unique_id=728472710]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Main menu"
+icon = ExtResource("9_home")
