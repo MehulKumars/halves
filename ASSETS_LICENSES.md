@@ -11,6 +11,11 @@ Never: CC-BY-NC (bars ad-supported games), CC-BY-ND, GPL or CC-BY-SA in closed-s
 | GUT (Godot Unit Test) | 9.7.1 | Butch Wesley and contributors | MIT (`addons/gut/LICENSE.md`) | No (excluded from the release preset) |
 | LimboConsole | 0.8.0 | Serhii Snitsaruk | MIT (`addons/limbo_console/LICENSE.md`) | Yes, but disabled in release builds |
 
+## Written for this template
+| Item | Notes |
+|---|---|
+| `core/`, `tests/`, `tools/`, `core/ui/mobile_theme.tres`, `core/feel/hit_flash.gdshader` | Original work for this template; reuse freely in your games |
+
 ## Fonts
 | Font | Used by | Licence |
 |---|---|---|

@@ -5,14 +5,21 @@ The human owns fun, feel, art, balance, the store page and release decisions. Cl
 
 ## Project map
 - `core/` shared template systems. Change only on purpose and ask first.
-  - `events.gd` autoload **Events**: global signal bus.
+  - `events.gd` autoload **Events**: global signal bus (incl. `app_paused`, `app_resumed`, `back_requested`).
   - `services/` autoload **Services**: `ads`, `iap`, `analytics`, `leaderboard`, `review` as interfaces with mocks.
+  - `app_lifecycle.gd` autoload **AppLifecycle**: Android pause/resume/Back -> Events; applies the player's
+    Reduce Motion and Haptics settings (Maaack `PlayerConfig`, section `GameSettings`).
   - `ad_policy.gd` (when interstitials may show), `seed_service.gd` (stable seeds), `save_store.gd` (versioned JSON save).
-  - `feel/juice.gd` (pop, squash; honours `Juice.motion_scale`), `feel/haptics.gd` (honours `Haptics.enabled`).
-  - `ui/safe_area_margin.gd` (notch-safe container), `dev_tools.gd` autoload **DevTools** (debug-only console commands).
+  - `feel/juice.gd` (pop, squash; honours `Juice.motion_scale`), `feel/haptics.gd` (honours `Haptics.enabled`),
+    `feel/hit_flash.gdshader`.
+  - `ui/mobile_theme.tres` (project theme: 32 px text, 96 px buttons), `ui/safe_area_margin.gd` (notch-safe container).
+  - `dev_tools.gd` autoload **DevTools**: debug-only console commands.
 - `scenes/`, `scripts/`, `resources/`, `assets/`: Maaack's Game Template menus, options, loading and credits. Edit per game.
+  The options menu hides desktop tabs (`show_desktop_tabs`); the Game tab has Reduce Motion and Haptics toggles.
 - `game/` gameplay scenes and scripts (create per game). `data/` baked levels and configs (create per game).
-- `tests/` GUT tests named `test_*.gd`. `tools/` scripts. `addons/` vendored plugins.
+- `tests/` GUT tests named `test_*.gd`. `tools/` scripts and the hook. `addons/` vendored plugins.
+- `.claude/skills/`: game-design-review, godot-game-feel, level-generation, mobile-performance-audit, play-release.
+  Use them for those tasks.
 
 ## Never
 - Godot 3 APIs. Use the right column:
@@ -49,11 +56,15 @@ The human owns fun, feel, art, balance, the store page and release decisions. Cl
 - Never time gameplay to audio: Android audio lags 165–500 ms on some phones.
 - Performance: no full-screen translucent layers, no Light2D or HDR glow by default, pooled one-shot
   `CPUParticles2D`, sprite atlases, no per-enemy physics nodes for swarms, Lossless textures without mipmaps.
-- Save on `NOTIFICATION_APPLICATION_PAUSED`; Android Back opens the pause menu.
+- Save progress on `Events.app_paused`; open the pause menu (or go back a screen) on `Events.back_requested`.
 - Work in small steps: plan first, one feature at a time, run the done check, then commit.
 
 ## Ask the human first
 - A new autoload or addon, any change in `core/`, project settings, export presets, signing, package names.
+
+## Automatic check (hook)
+After every Edit/Write of a `.gd` file, `.claude/settings.json` runs `tools/hooks/gd_check.ps1`, which compiles the
+file inside the project (`tools/hooks/check_script.gd`). If it reports errors, fix them before doing anything else.
 
 ## Done = this passes
 ```
@@ -65,9 +76,9 @@ Test cases for generators and solvers are written by the human or a separate ses
 ## Commands
 - Run the game: `godot --path .`  · Editor: `godot --path . -e`
 - Tests only: `godot --headless --path . -s addons/gut/gut_cmdln.gd -gexit`
+- Check one script: `godot --headless --path . -s tools/hooks/check_script.gd -- res://core/events.gd`
 - Debug APK: `godot --headless --path . --export-debug "Android Debug APK" build/game-debug.apk`
-- Release AAB (after signing is set up for the game):
-  `godot --headless --path . --install-android-build-template --export-release "Android Release AAB" build/game-release.aab`
+- Release AAB: see the play-release skill (needs the game's release keystore).
 - Version-exact API reference to search: `godot --doctool docs/api` (ignored by git)
 
 ## Google Play rules this template assumes (Oct 2026)

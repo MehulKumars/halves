@@ -28,6 +28,9 @@ func _ready() -> void:
 	leaderboard.initialize()
 	review.initialize()
 
+	if not OS.is_debug_build() and ads is MockAdsService:
+		push_warning("Services: release build is using MockAdsService; no ads will show and no rewards are granted.")
+
 
 func _add(service: Node, service_name: String) -> Node:
 	service.name = service_name

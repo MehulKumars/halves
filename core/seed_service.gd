@@ -12,7 +12,12 @@ extends RefCounted
 static func make_seed(parts: Array, gen_version: int) -> int:
 	var strings := PackedStringArray()
 	for part: Variant in parts:
-		strings.append(str(part))
+		# JSON turns ints into floats (3 -> 3.0); treat whole floats as ints so seeds
+		# rebuilt from saved seed parts match the originals.
+		if part is float and is_equal_approx(part, roundf(part)):
+			strings.append(str(int(part)))
+		else:
+			strings.append(str(part))
 	strings.append("v%d" % gen_version)
 	var ctx := HashingContext.new()
 	ctx.start(HashingContext.HASH_SHA256)

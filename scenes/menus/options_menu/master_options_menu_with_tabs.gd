@@ -8,11 +8,19 @@ extends "res://addons/maaacks_game_template/base/nodes/menus/options_menu/pagina
 ## to get a float of the desired mouse sensitivity and apply it to the camera motion.
 ## Refer to the documentation on Options Menu Setup for more.
 @export var show_input_sensitivity := false
+## Mobile template: hides the Controls, Inputs and Video tabs (keyboard, mouse and window
+## settings that mean nothing on a phone). Turn on for a PC build.
+@export var show_desktop_tabs := false
+
+const DESKTOP_TABS: Array[String] = ["Controls", "Inputs", "Video"]
 
 
 func _ready():
 	var inputs_actions := AppSettings.get_action_names()
 	for iter in range(get_tab_count()):
+		if not show_desktop_tabs and get("tab_%d/title" % iter) in DESKTOP_TABS:
+			set("tab_%d/hidden" % iter, true)
+			continue
 		if get("tab_%d/title" % iter) == "Controls":
 			set("tab_%d/hidden" % iter, inputs_actions.is_empty() and not force_show_controls)
 			continue
