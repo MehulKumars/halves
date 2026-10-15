@@ -20,6 +20,8 @@ The human owns fun, feel, art, balance, the store page and release decisions. Cl
 - `tests/` GUT tests named `test_*.gd`. `tools/` scripts and the hook. `addons/` vendored plugins.
 - `.claude/skills/`: game-design-review, godot-game-feel, level-generation, mobile-performance-audit, play-release.
   Use them for those tasks.
+- `docs/`: human guides. `docs/ARCHITECTURE.md` has every module's API with examples; keep it in sync when
+  `core/` changes. `docs/CUSTOMIZING.md` lists what each new game must change.
 
 ## Never
 - Godot 3 APIs. Use the right column:

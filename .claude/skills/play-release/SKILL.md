@@ -51,7 +51,9 @@ Help pages named here before each first release of a game. Not legal or tax advi
       main icon at least 192 x 192, adaptive foreground and background at least 432 x 432 (optional
       monochrome 432 x 432), with important artwork inside the centred 66 dp circle (264 px) so
       launchers do not clip it. Godot generates the smaller sizes.
-- [ ] Godot, Git and Maaack logos removed from the opening scene; `ASSETS_LICENSES.md` complete and
+- [ ] Opening scene shows your logo (template default: the Godot logo), and `ATTRIBUTION.md` holds
+      your game's credits (the credits screen is built from it; the template's version shows the
+      Godot, Git and Maaack logos); `ASSETS_LICENSES.md` complete and
       credits shown in game; no AI-generated assets; no CC-BY-NC or GPL assets.
 - [ ] Release AAB installed and played on one Mali and one Adreno phone (via the internal testing
       track): no crash, no freeze, 48 dp touch targets, readable text, Back button opens pause.

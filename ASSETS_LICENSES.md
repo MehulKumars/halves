@@ -25,9 +25,9 @@ Never: CC-BY-NC (bars ad-supported games), CC-BY-ND, GPL or CC-BY-SA in closed-s
 ## Images from Maaack's template
 | Asset | Licence | Action before shipping a game |
 |---|---|---|
-| Godot Engine logo (`assets/godot_engine_logo/`) | CC BY 4.0 (Andrea Calabró) | Keep with credit, or remove from the opening scene |
-| Git logo (`assets/git_logo/`) | CC BY 3.0 (Jason Long) | Remove from the opening scene |
-| Maaack plugin logo (`assets/plugin_logo/`) | MIT | Remove from the opening scene |
+| Godot Engine logo (`assets/godot_engine_logo/`) | CC BY 4.0 (Andrea Calabró) | Shown in the opening scene and the credits. Keep with credit, or replace |
+| Git logo (`assets/git_logo/`) | CC BY 3.0 (Jason Long) | Shown in the credits (from `ATTRIBUTION.md`). Remove from your game's credits |
+| Maaack plugin logo (`assets/plugin_logo/`) | MIT | Shown in the credits (from `ATTRIBUTION.md`). Remove from your game's credits; keep the MIT notice as text |
 
 ## Game assets
 Add one row per asset as you add them: file, author, licence, source URL.
