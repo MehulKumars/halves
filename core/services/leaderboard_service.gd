@@ -16,5 +16,11 @@ func show_board(_board_id: String) -> void:
 	pass
 
 
+## True when show_board() opens the platform's own screen (Google Play Games). When false the
+## game shows its own ranks popup (ui/popups/ranks_popup.tscn).
+func has_native_ui() -> bool:
+	return false
+
+
 func get_local_best(_board_id: String) -> int:
 	return 0

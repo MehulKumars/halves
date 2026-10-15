@@ -21,7 +21,7 @@ func _ready() -> void:
 	%LevelsButton.pressed.connect(UI.goto.bind(Screens.LEVEL_SELECT))
 	%ShopButton.pressed.connect(UI.goto.bind(Screens.SHOP))
 	%DailyButton.pressed.connect(_on_daily)
-	%RanksButton.pressed.connect(func() -> void: Services.leaderboard.show_board("main"))
+	%RanksButton.pressed.connect(_on_ranks)
 	_refresh_daily_dot()
 	_intro()
 	if not _daily_shown_this_launch and Progress.daily_status().can_claim:
@@ -42,6 +42,14 @@ func _on_play() -> void:
 func _on_settings() -> void:
 	await UI.open(load(Screens.SETTINGS) as PackedScene).closed
 	_coins.value = Progress.coins()
+
+
+## Google Play Games shows its own leaderboard screen; until it is connected, show ours.
+func _on_ranks() -> void:
+	if Services.leaderboard.has_native_ui():
+		Services.leaderboard.show_board("stars")
+	else:
+		UI.open(load(Screens.RANKS) as PackedScene)
 
 
 func _on_daily() -> void:

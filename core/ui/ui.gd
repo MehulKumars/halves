@@ -131,6 +131,11 @@ func has_modal() -> bool:
 	return not _modals.is_empty()
 
 
+## The popup on top, or null.
+func top_modal() -> Modal:
+	return null if _modals.is_empty() else _modals.back()
+
+
 ## Removes every popup at once (no animation). Popups that paused the game unpause it.
 func close_all() -> void:
 	for modal in _modals.duplicate():

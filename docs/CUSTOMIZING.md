@@ -12,9 +12,9 @@ What to change for every game, what you can change if the game needs it, and wha
 | Package name | `export_presets.cfg` > `package/unique_name` (both presets) | For example `com.yourstudio.halves`. Never ship `com.changeme.template`; it can never change after the first upload |
 | App name on the phone | `export_presets.cfg` > `package/name` | |
 | Version | `version/code` (raise for every upload) and `version/name` in both presets; `config/version` in `project.godot` (shown in Settings) | |
-| Launcher icons | *Project > Export > Android* > Launcher Icons | The template's `icon.png` is a 64×64 placeholder. Main icon at least 192×192; adaptive foreground and background at least 432×432 (optional monochrome 432×432); keep important artwork inside the centred 66 dp circle (264 px) |
-| Opening logo | `scenes/opening/opening.tscn` | Shows the Godot logo. Replace with your studio logo, or point `run/main_scene` straight at `ui/screens/main_menu.tscn` |
-| Credits | `ATTRIBUTION.md` | The credits screen is built from this file. Replace Maaack's example entries and logos with your game's credits; keep the MIT notices for Maaack's template and Godot, and the font and icon entries |
+| App icon | `assets/template_icon/` and `icon.png` | The template ships its own placeholder (a play mark). Replace every file with your game's icon at the same sizes (the README there lists them); both export presets already point at them. Keep important artwork inside the centred 264 px circle of the 432 px adaptive foreground |
+| Splash | `ui/screens/splash.tscn` | Shows the game name and "Made with Godot" for about a second. Add your studio logo to `%Logo` if you have one |
+| Credits | `ATTRIBUTION.md` | Replace "Your Studio" and "Your Name" with your team; keep the "Made with", font and icon entries. The licence texts are added below automatically |
 | Privacy policy | `ui/popups/settings_popup.gd` > `PRIVACY_URL` | Google Play requires one; a GitHub Pages page works |
 | Release keystore | outside the repo | See the `play-release` skill |
 | Licence register | `ASSETS_LICENSES.md` | One row per asset you add |

@@ -17,16 +17,17 @@ It prints `CHECK PASSED` or `CHECK FAILED` with the relevant output, and exits 0
 
 ## Unit tests (GUT 9.7.1)
 
-Tests live in `tests/`, named `test_*.gd`. The template ships 63 tests (477 checks):
+Tests live in `tests/`, named `test_*.gd`. The template ships 67 tests (491 checks):
 
 | File | Covers |
 |---|---|
 | `test_theme.gd` | Every style: tokens present, WCAG AA text contrast (cards, background, every button state), 48 dp buttons, switches and sliders |
-| `test_screens.gd` | Every screen and popup at 720×1280, 720×1600 and 960×1280: tappable controls at least 96 px, on screen, not overlapping; level select shows every level |
+| `test_screens.gd` | Every screen and popup at 720×1280, 720×1600 and 960×1280: tappable controls at least 96 px, on screen, not overlapping; level select shows every level; credits carry the licence texts and no tappable links |
 | `test_ui.gd` | Style switching, Back closes only the top popup (and not the results popup), confirm answers, button squash and its Reduce Motion and opt-out, focus rings after touch vs keys, Back key mapped to `ui_cancel` |
 | `test_progress.gd` | Best stars, unlocks, coins, purchases, reload, daily streak (same day, next day, missed day, 7-day cycle, month ends) |
 | `test_responsive.gd` | Grid columns per width, the max-width column, simulated safe-area insets |
 | `test_services.gd` | Ads and purchase results arrive after the call (screens call, then await), and buying a coin pack in the shop adds the coins |
+| `test_touch_scroll.gd` | A drag that starts on a button scrolls the list and does not press it; a tap still presses it (fails on Godot's plain ScrollContainer) |
 | `test_ad_policy.gd` | Every interstitial rule (first session, level, wins, gaps, caps, rewarded cooldown, daily/zen) |
 | `test_seed_service.gd` | A known SHA-256 vector, reproducibility, JSON round-trips |
 | `test_save_store.gd` | Round trip, missing file, corrupt file |
@@ -97,7 +98,7 @@ Debug builds only (disabled in release; `addons/limbo_console.cfg`).
 
 | Phone | Result (debug APK, October 2026) |
 |---|---|
-| OnePlus 10R (CPH2423), Android 15, MediaTek Dimensity 8100, Mali-G610, 1080×2412, 8 GB | Every screen and popup, all five styles switched live, Back on every screen and popup, pause and resume, win and lose, rewarded continue, coin purchase, daily reward, scrolling. Cold start to first frame 0.85-1.1 s. 60 fps on every screen including Neon Arcade's animated grid (the phone runs this app at 60 Hz), 28-31 draw calls, about 50 MB engine memory (274 MB process PSS). No script errors in the log. The camera hole (top 96 px) and gesture bar are kept clear |
+| OnePlus 10R (CPH2423), Android 15, MediaTek Dimensity 8100, Mali-G610, 1080×2412, 8 GB | Every screen and popup, all five styles switched live, Back on every screen and popup, drag-scrolling the shop and credits from buttons and text (no accidental purchases or links), launch shows only the app icon then the title splash, pause and resume, win and lose, rewarded continue, coin purchase, daily reward, scrolling. Cold start to first frame 0.85-1.1 s. 60 fps on every screen including Neon Arcade's animated grid (the phone runs this app at 60 Hz), 28-31 draw calls, about 50 MB engine memory (274 MB process PSS). No script errors in the log. The camera hole (top 96 px) and gesture bar are kept clear |
 
 Not yet tested: a low-end phone (Adreno GPU, 2-3 GB RAM), a tablet, Android 10-12.
 

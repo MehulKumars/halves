@@ -1,13 +1,14 @@
 extends Node
 ## App lifecycle and player feel settings (autoload "AppLifecycle").
 ## Turns Android lifecycle notifications into Events signals, and applies the player's
-## motion and haptics choices from Maaack's PlayerConfig (user://player_config.cfg).
+## motion and haptics choices from Maaack's PlayerConfig (user://player_config.cfg). At start it
+## also restores the saved music and sound volumes.
 ##
 ## Games: save progress on Events.app_paused (Android may kill a paused app without
-## warning), and open the pause menu or go back one screen on Events.back_requested.
+## warning). Back arrives as the ui_cancel action (see UI); Events.back_requested also fires.
 ## project.godot sets application/config/quit_on_go_back=false so Back does not quit.
-## Options menu: bind OptionControls to section "GameSettings", keys "ReduceMotion" and
-## "Haptics", then call AppLifecycle.apply_settings() when the menu closes.
+## Settings (core/settings.gd) writes section "GameSettings", keys "ReduceMotion" and
+## "Haptics", and calls apply_settings().
 
 const SECTION: String = "GameSettings"
 const KEY_REDUCE_MOTION: String = "ReduceMotion"
@@ -15,6 +16,7 @@ const KEY_HAPTICS: String = "Haptics"
 
 
 func _ready() -> void:
+	AppSettings.set_audio_from_config()
 	apply_settings()
 
 

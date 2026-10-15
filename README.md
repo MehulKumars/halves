@@ -2,7 +2,7 @@
 
 A reusable **Godot 4.7.2** template for small 2D portrait games on Android, built to be developed
 with **Claude Code**. Every new game starts from this repo, so each one only adds gameplay, data
-and art. It ships a complete **mobile UI kit**: twelve screens and popups in **five visual
+and art. It ships a complete **mobile UI kit**: fourteen screens and popups in **five visual
 styles**, responsive from small phones to tablets.
 
 ![The main menu in all five styles](docs/images/styles.png)
@@ -13,8 +13,8 @@ styles**, responsive from small phones to tablets.
 |---|---|
 | Engine | Godot 4.7.2 stable, GDScript, Compatibility renderer |
 | Target | Android first, portrait, target API 36, AAB for Google Play |
-| UI | 5 styles (Sleek Dark, Candy Casual, Neon Arcade, Cozy Paper, Pixel Retro), 12 screens and popups, WCAG AA contrast and 48 dp touch targets checked by tests |
-| Tests | GUT 9.7.1, 63 tests (477 checks), one-command check (`tools/check.ps1`), screenshot tool for every screen × style × size |
+| UI | 5 styles (Sleek Dark, Candy Casual, Neon Arcade, Cozy Paper, Pixel Retro), 14 screens and popups, WCAG AA contrast and 48 dp touch targets checked by tests |
+| Tests | GUT 9.7.1, 67 tests (491 checks), one-command check (`tools/check.ps1`), screenshot tool for every screen × style × size |
 | AI workflow | `CLAUDE.md` rules, an auto-check hook, 6 project skills, tools that let Claude edit scenes safely and look at the UI |
 
 ## Documentation
@@ -34,8 +34,8 @@ styles**, responsive from small phones to tablets.
 
 | Part | Where | What it does |
 |---|---|---|
-| Screens | `ui/screens/` | Main menu, level select, game (HUD + placeholder board), shop, credits, UI kit gallery |
-| Popups | `ui/popups/` | Pause, results (win/lose with rewarded continue), settings, daily reward, confirm |
+| Screens | `ui/screens/` | Splash, main menu, level select, game (HUD + placeholder board), shop, credits (with licence notices), UI kit gallery |
+| Popups | `ui/popups/` | Pause, results (win/lose with rewarded continue), settings, daily reward, ranks, confirm |
 | Styles | `core/ui/styles/`, `core/ui/themes/`, `tools/build_theme.gd` | Five styles as Inspector-editable resources, built into themes; switch with one setting |
 | UI services | `core/ui/ui.gd` (autoload `UI`) | Screen fades, popups with a Back stack, toasts, confirm dialogs, button press feel + haptics, focus rings for keyboard/gamepad only |
 | Layout | `core/ui/` | Safe-area (notch) margins, max-width columns for tablets, adaptive grids, animated backgrounds |
@@ -53,7 +53,7 @@ styles**, responsive from small phones to tablets.
 | Android presets | `export_presets.cfg` | Debug APK (30 MB) and release AAB; tests, tools and editor-only addons left out |
 
 Built on [Maaack's Godot Game Template](https://github.com/Maaack/Godot-Game-Template) v1.7.0 (MIT)
-for the opening logo, scene loader, music and UI-sound controllers, config storage and credits
+for the scene loader, music and UI-sound controllers, config storage and the credits
 parser. The menus are the template's own.
 
 ## Architecture at a glance
@@ -125,10 +125,10 @@ keystore.
 - **Real platform services are not wired yet.** Every service uses its mock (mock ads do nothing in
   release builds; shop prices are placeholders). Add AdMob, Play Billing and Play Games Services when
   the first game needs them: [Services](docs/SERVICES.md).
-- **The app icon is a 64×64 placeholder.** Each game needs launcher icons: main at least 192×192,
-  adaptive foreground and background at least 432×432.
-- **The opening shows the Godot logo** and the credits list Maaack's template, Godot and Git. Replace
-  with your studio logo and your game's credits.
+- **The app icon is the template's placeholder** (a play mark). Each game replaces the files in
+  `assets/template_icon/` with its own icon at the same sizes.
+- **Credits and splash say "Your Studio" / "Mobile Game Template".** Put your team in `ATTRIBUTION.md`
+  and your game name in `project.godot`.
 - **No text-size setting or translations yet**, and no screen-reader support until Godot 4.8.
 - **Tested on one phone so far** (OnePlus 10R, Mali GPU, Android 15). Test on a low-end Adreno phone
   before a release.

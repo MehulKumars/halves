@@ -10,19 +10,21 @@ adapt to every phone shape, foldables and tablets (portrait).
 
 | | File | What it does |
 |---|---|---|
+| Splash | `ui/screens/splash.tscn` | The game's name on the style background for about a second after Android's launch screen (tap to skip); put your studio logo in `%Logo` |
 | Main menu | `ui/screens/main_menu.tscn` | Title, big **Play** button (next unbeaten level) and quick links in the thumb zone, coins, settings. Back asks before quitting. Opens the daily reward once per launch when it can be claimed |
 | Level select | `ui/screens/level_select.tscn` | Grid of levels with best stars and locks; 4 columns on phones, up to 6 on tablets; the next level is highlighted and scrolled into view |
 | Game | `ui/screens/game.tscn` | A real HUD (pause, level, coins, goal bar, booster buttons) around a placeholder board. Replace the board with your game |
 | Shop | `ui/screens/shop.tscn` | Remove-ads card, six coin packs, free coins for a rewarded video |
-| Credits | `ui/screens/credits.tscn` | Built from `ATTRIBUTION.md` |
+| Credits | `ui/screens/credits.tscn` | Built from `ATTRIBUTION.md` (your game first, then what it is made with), followed automatically by the licence notices the shipped code requires. Links are plain text |
 | UI kit gallery | `ui/screens/ui_gallery.tscn` | Every component on one page with a live style switcher (Settings > Open the UI kit gallery, debug builds) |
 | Pause | `ui/popups/pause_popup.tscn` | Resume, restart, settings, main menu, quick music/sound/vibration toggles. Pauses the game |
 | Results | `ui/popups/results_popup.tscn` | Win: stars pop in, coins count up, Next. Lose: "+5 moves (watch ad)", Retry, Home. Back does not dismiss it |
 | Settings | `ui/popups/settings_popup.tscn` | Music and sound volume, vibration, reduce motion, credits, privacy policy, restore purchases, reset progress, version; style picker in debug builds |
 | Daily reward | `ui/popups/daily_reward_popup.tscn` | Seven-day streak, day 7 is a gift; missing a day restarts it |
 | Confirm | `ui/popups/confirm_popup.tscn` | Yes/no question, `await UI.confirm(...)` |
+| Ranks | `ui/popups/ranks_popup.tscn` | The player's stars, levels and coins, and a star leaderboard with their row highlighted (sample players until Google Play Games is connected; then Google's own screen opens instead) |
 
-The flow: opening logo → main menu → (level select) → game → results → next / retry / home.
+The flow: Android launch screen (app icon) → splash → main menu → (level select) → game → results → next / retry / home.
 All paths are in `ui/screens.gd` (`Screens.MAIN_MENU`, `Screens.PAUSE`, ...).
 
 ## The five styles
@@ -93,6 +95,7 @@ Font sizes: `small`, `body`, `header`, `title`. Fonts: `display`, `body`.
 | `Modal` | `core/ui/modal.gd` | Base for popups: dimmed backdrop, pop-in, Back and backdrop taps close it when `dismissible`, `pauses_game`, `sheet_max_width`, `await popup.closed` for the result. A `%Scroll` inside the sheet scrolls when the content is taller than the screen |
 | `StyledBackground` | `core/ui/styled_background.gd` | Gradient and animated pattern from the style; stops moving with Reduce Motion |
 | `SafeAreaMargin` | `core/ui/safe_area_margin.gd` | Keeps content clear of the camera hole and gesture bar |
+| `TouchScrollContainer` | `core/ui/touch_scroll_container.gd` | Use for every scrolling list: scrolls when a drag starts on buttons or text too, never presses the button it started on, and flicks keep gliding (Godot's own ScrollContainer only scrolls where nothing takes the press) |
 | `MaxWidthContainer` | `core/ui/max_width_container.gd` | Centred column with a maximum width (tablets) |
 | `AdaptiveGridContainer` | `core/ui/adaptive_grid_container.gd` | Grid whose column count follows its width |
 | `StarRating`, `CurrencyPill`, `LevelTile` | `core/ui/widgets/` | Stars (with `reveal()`), counters (with `set_value()` count-up), level tiles |
@@ -109,7 +112,7 @@ Font sizes: `small`, `body`, `header`, `title`. Fonts: `display`, `body`.
    ├── Background   (ColorRect + StyledBackground)
    └── Safe         (SafeAreaMargin, extra_margin 32)
        └── Column   (MaxWidthContainer, max_width 680-960)
-           └── Layout (VBoxContainer): header row, content (ScrollContainer if it can grow), bottom actions
+           └── Layout (VBoxContainer): header row, content (TouchScrollContainer if it can grow), bottom actions
    ```
 2. Add its path to `ui/screens.gd`, open it with `UI.goto(Screens.YOUR_SCREEN)`.
 3. Add it to `PAGES` in `tests/test_screens.gd` and `SCREENS` in `tools/snapshots.gd`.

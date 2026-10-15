@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://core/ui/widgets/currency_pill.gd" id="5_pill"]
 [ext_resource type="Script" path="res://core/ui/adaptive_grid_container.gd" id="6_grid"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/arrow_back.svg" id="7_back"]
+[ext_resource type="Script" path="res://core/ui/touch_scroll_container.gd" id="8_qvk38"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/star.svg" id="8_star"]
 
 [node name="LevelSelect" type="Control" unique_id=1130529637]
@@ -82,6 +83,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
+script = ExtResource("8_qvk38")
 
 [node name="Grid" type="GridContainer" parent="Safe/Column/Layout/Scroll" unique_id=591453123]
 unique_name_in_owner = true

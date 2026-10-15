@@ -47,6 +47,7 @@ func finish(won: bool, stars: int) -> void:
 	if won:
 		Progress.record_win(_level, stars)
 		Progress.add_coins(coins)
+		Services.leaderboard.submit_score("stars", Progress.total_stars())
 		# Instant: the results popup pauses the game, which would freeze a count-up here.
 		%Coins.value = Progress.coins()
 	Events.level_finished.emit(str(_level), won, stars)

@@ -46,7 +46,8 @@ Register every new page in `ui/screens.gd`, `tests/test_screens.gd` (`PAGES`) an
 - One primary action per screen; secondary actions visibly weaker.
 - Text: 32 px body, 26 px minimum; numbers in `ValueLabel` (some display fonts have unclear
   digits: Orbitron's slashed zero, Pixelify Sans's 5).
-- Long content scrolls (`ScrollContainer` with `horizontal_scroll_mode = 0`); popups get a `%Scroll`
+- Long content scrolls in a `TouchScrollContainer` (never a plain `ScrollContainer`) with
+  `horizontal_scroll_mode = 0`; popups get a `%Scroll`
   and `refit()` after adding content in code.
 - Lists and grids: `AdaptiveGridContainer` (set `min_cell_width`), so tablets get more columns.
 - Feedback: buttons already squash and tick. Rewards pop (`Juice.pop`, `StarRating.reveal`,
@@ -81,3 +82,7 @@ State what was checked and on which sizes; say so if a phone check is still miss
   scene changes freeze.
 - `override.cfg` in the project root overrides project settings on PC only. Keep it deleted.
 - Snapshots of popups need time for the pop-in (0.3 s) and reveal animations before capture.
+- Godot's ScrollContainer does not scroll on a phone when the drag starts on a button or text
+  (they take the press). `TouchScrollContainer` fixes it and cancels the press; snapshots and
+  layout tests cannot catch this, so drag-test lists on a phone.
+- RichTextLabel links fire when tapping near them on a centred line; credits show URLs as text.

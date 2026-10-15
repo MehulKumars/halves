@@ -14,8 +14,8 @@ extends SceneTree
 const SETTLE_FRAMES: int = 40
 const SIZE_PRESETS: Array[Vector2i] = [Vector2i(720, 1280), Vector2i(720, 1600), Vector2i(960, 1280), Vector2i(1080, 1280)]
 const SCREENS: PackedStringArray = [
-	"main_menu", "level_select", "game", "pause", "results_win", "results_lose", "settings",
-	"shop", "daily_reward", "confirm", "credits", "gallery",
+	"splash", "main_menu", "level_select", "game", "pause", "results_win", "results_lose", "settings",
+	"shop", "daily_reward", "ranks", "confirm", "credits", "gallery",
 ]
 
 var _sizes: Array[Vector2i] = []
@@ -149,6 +149,10 @@ func _popup(path: String) -> Node:
 	return _ui.call(&"open", load(path))
 
 
+func _show_splash() -> bool:
+	return await _open(Screens.SPLASH)
+
+
 func _show_main_menu() -> bool:
 	if not await _open(Screens.MAIN_MENU):
 		return false
@@ -201,6 +205,10 @@ func _show_shop() -> bool:
 
 func _show_daily_reward() -> bool:
 	return await _show_main_menu() and _popup(Screens.DAILY_REWARD) != null
+
+
+func _show_ranks() -> bool:
+	return await _show_main_menu() and _popup(Screens.RANKS) != null
 
 
 func _show_confirm() -> bool:

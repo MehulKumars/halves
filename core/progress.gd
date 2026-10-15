@@ -42,6 +42,15 @@ static func next_level(level_count: int = LEVEL_COUNT_DEFAULT) -> int:
 	return level_count
 
 
+## Levels won at least once.
+static func levels_won() -> int:
+	var won := 0
+	for value: Variant in _levels().values():
+		if int(value) > 0:
+			won += 1
+	return won
+
+
 static func total_stars() -> int:
 	var total := 0
 	for value: Variant in _levels().values():

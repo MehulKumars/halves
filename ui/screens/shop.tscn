@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://core/ui/widgets/currency_pill.gd" id="5_pill"]
 [ext_resource type="Script" path="res://core/ui/adaptive_grid_container.gd" id="6_grid"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/arrow_back.svg" id="7_back"]
+[ext_resource type="Script" path="res://core/ui/touch_scroll_container.gd" id="7_c4j8o"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/block.svg" id="8_block"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/smart_display.svg" id="9_video"]
 
@@ -81,6 +82,7 @@ script = ExtResource("5_pill")
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
+script = ExtResource("7_c4j8o")
 
 [node name="Content" type="VBoxContainer" parent="Safe/Column/Layout/Scroll" unique_id=1134351961]
 layout_mode = 2

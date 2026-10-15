@@ -13,12 +13,12 @@ The human owns fun, feel, art, balance, the store page and release decisions. Cl
   - `feel/`: `Juice` (pop, squash; honours `Juice.motion_scale`), `Haptics` (honours `Haptics.enabled`), `hit_flash.gdshader`.
   - `ui/` the UI kit core: autoload **UI** (`ui.gd`: goto, open, confirm, toast, apply_style, button feel, focus rings),
     `screen.gd` (base for screens), `modal.gd` (base for popups), `styled_background.gd`, `safe_area_margin.gd`,
-    `max_width_container.gd`, `adaptive_grid_container.gd`, `widgets/` (StarRating, CurrencyPill, LevelTile), `icons.gd`,
+    `max_width_container.gd`, `adaptive_grid_container.gd`, `touch_scroll_container.gd`, `widgets/` (StarRating, CurrencyPill, LevelTile), `icons.gd`,
     `styles/*.tres` (5 UIStyle resources), `themes/*.tres` (built from styles; never edit by hand), `fonts/`, `icons/`.
   - `dev_tools.gd` autoload **DevTools**: debug-only console commands (`fps`, `log_input`, `display_info`, `safe_area`...).
 - `ui/` the game's screens (`ui/screens/`) and popups (`ui/popups/`); paths in `ui/screens.gd` (`Screens.*`). Edit per game.
   `ui/screens/game.gd` hosts the gameplay: replace its %Board and call `finish(won, stars)`.
-- `scenes/opening/`, `scenes/loading_screens/`: Maaack's opening logo and loading screen (still used).
+- `scenes/loading_screens/`: Maaack's loading screen, for SceneLoader (heavy scenes only). `assets/template_icon/`: placeholder app icon.
 - `game/` gameplay scenes and scripts (create per game). `data/` baked levels and configs (create per game).
 - `tests/` GUT tests named `test_*.gd`. `tools/` scripts and the hook. `addons/` vendored plugins.
 - `.claude/skills/`: mobile-ui, game-design-review, godot-game-feel, level-generation, mobile-performance-audit,
@@ -61,6 +61,8 @@ The human owns fun, feel, art, balance, the store page and release decisions. Cl
 - Tweens: `create_tween()` each time; kill an old tween on the same property first (see `Juice`).
 - Screens extend `Screen` (Back via `on_back()`), popups extend `Modal` (open with `UI.open()`, `await .closed`).
   Every screen: StyledBackground + SafeAreaMargin + MaxWidthContainer. One primary (accent) action per screen.
+  Scrolling lists use `TouchScrollContainer`, never a plain ScrollContainer (on phones it would not scroll
+  when the drag starts on a button or text).
 - Touch targets at least 96 px on the 720-px canvas (48 dp). Primary actions in the bottom third.
 - After any UI change: run `tools/snapshots.ps1` for the affected screens and **look at the PNGs** before saying it works.
 - Every important event has a visual. Sound and haptics are extras, never the only signal.

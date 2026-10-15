@@ -47,14 +47,13 @@ Help pages named here before each first release of a game. Not legal or tax advi
       release builds (no ads, no rewards); a release still on mocks earns nothing.
 - [ ] Release build has no dev console (LimboConsole `disable_in_release_build=true`; DevTools frees
       itself) and excludes `tests/` and `addons/gut/` (release preset exclude filter).
-- [ ] Launcher icons set in the Android export preset (the template's `icon.png` is only 64 x 64):
-      main icon at least 192 x 192, adaptive foreground and background at least 432 x 432 (optional
-      monochrome 432 x 432), with important artwork inside the centred 66 dp circle (264 px) so
-      launchers do not clip it. Godot generates the smaller sizes.
-- [ ] Opening scene shows your logo (template default: the Godot logo), and `ATTRIBUTION.md` holds
-      your game's credits (the credits screen is built from it; the template's version shows the
-      Godot, Git and Maaack logos); `ASSETS_LICENSES.md` complete and
-      credits shown in game; no AI-generated assets; no CC-BY-NC or GPL assets.
+- [ ] Your own launcher icons in `assets/template_icon/` (the template ships a placeholder play
+      mark; both presets already point at these files): main 192 x 192, adaptive foreground and
+      background 432 x 432, monochrome 432 x 432, splash 512 x 512, with important artwork inside the
+      centred 66 dp circle (264 px) so launchers do not clip it.
+- [ ] The splash shows your game name (and studio logo if any); `ATTRIBUTION.md` names your team
+      (the template says "Your Studio") and keeps the Godot, Maaack, font and icon entries; the
+      credits screen adds the licence texts itself; `ASSETS_LICENSES.md` complete; no AI-generated assets; no CC-BY-NC or GPL assets.
 - [ ] Release AAB installed and played on one Mali and one Adreno phone (via the internal testing
       track): no crash, no freeze, 48 dp touch targets, readable text, Back button opens pause.
 - [ ] Analytics logs the first-time funnel (`tutorial_step_1`, `first_win`, `level_3_start`) and seeds.

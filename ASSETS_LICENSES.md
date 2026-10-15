@@ -7,7 +7,7 @@ Never: CC-BY-NC (bars ad-supported games), CC-BY-ND, GPL or CC-BY-SA in closed-s
 ## Code (addons)
 | Item | Version | Author | Licence | Ships in release? |
 |---|---|---|---|---|
-| Maaack's Game Template, Scene Loader, Music Controller, UI Sound Controller | 1.7.0 | Marek Belski and contributors | MIT (`LICENSE.txt`) | Yes (examples folder excluded) |
+| Maaack's Game Template, Scene Loader, Music Controller, UI Sound Controller | 1.7.0 | Marek Belski and contributors | MIT (`LICENSE.txt`, packed into builds and shown in the credits) | Yes (examples folder and logos excluded) |
 | Maaack's Plugin Updater, Clean Copy Examples | 1.7.0 | Marek Belski and contributors | MIT | No (editor only, excluded) |
 | GUT (Godot Unit Test) | 9.7.1 | Butch Wesley and contributors | MIT (`addons/gut/LICENSE.md`) | No (excluded) |
 | LimboConsole | 0.8.0 | Serhii Snitsaruk | MIT (`addons/limbo_console/LICENSE.md`) | Yes, but disabled in release builds; its Monaspace fonts are excluded (the console uses `addons/limbo_console_theme.tres`) |
@@ -15,7 +15,7 @@ Never: CC-BY-NC (bars ad-supported games), CC-BY-ND, GPL or CC-BY-SA in closed-s
 ## Written for this template
 | Item | Notes |
 |---|---|
-| `core/`, `ui/`, `tests/`, `tools/`, the five styles and their themes, `styled_background.gdshader`, `hit_flash.gdshader`, the switch and slider artwork (SVG drawn in `tools/build_theme.gd`) | Original work for this template; reuse freely in your games |
+| `core/`, `ui/`, `tests/`, `tools/`, the five styles and their themes, `styled_background.gdshader`, `hit_flash.gdshader`, the switch and slider artwork (SVG drawn in `tools/build_theme.gd`), the placeholder app icon (`icon.png`, `assets/template_icon/`) | Original work for this template; reuse freely in your games |
 
 ## Fonts (all SIL Open Font License 1.1, from Google Fonts)
 The licence text for each is next to it in `core/ui/fonts/OFL_<name>.txt`. OFL fonts may be
@@ -37,13 +37,6 @@ bundled in commercial games if each copy carries the licence: both export preset
 | Item | Licence | Source |
 |---|---|---|
 | 38 icons in `core/ui/icons/` (Material Symbols Rounded, filled; recoloured white and resized to 48 px) | Apache 2.0 (`core/ui/icons/LICENSE_material_symbols.txt`) | Google, github.com/google/material-design-icons |
-
-## Images from Maaack's template
-| Asset | Licence | Action before shipping a game |
-|---|---|---|
-| Godot Engine logo (`assets/godot_engine_logo/`) | CC BY 4.0 (Andrea Calabró) | Shown in the opening scene and the credits. Keep with credit, or replace |
-| Git logo (`assets/git_logo/`) | CC BY 3.0 (Jason Long) | Shown in the credits (from `ATTRIBUTION.md`). Remove from your game's credits |
-| Maaack plugin logo (`assets/plugin_logo/`) | MIT | Shown in the credits (from `ATTRIBUTION.md`). Remove from your game's credits; keep the MIT notice as text |
 
 ## Game assets
 Add one row per asset as you add them: file, author, licence, source URL.

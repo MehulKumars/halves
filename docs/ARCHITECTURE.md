@@ -37,8 +37,8 @@ core/                  Template systems shared by every game (ours)
                        styles/ (5 UIStyle resources), themes/ (built), fonts/, icons/
   dev_tools.gd         Autoload DevTools: debug-only console commands
 ui/                    Screens (ui/screens/) and popups (ui/popups/) of the game. Yours to edit
-scenes/                Maaack's opening logo and loading screen
-assets/                Logos used by the opening and the credits
+scenes/                Maaack's loading screen (for SceneLoader, heavy scenes only)
+assets/template_icon/  Placeholder app icon (replace per game)
 game/, data/           (create per game) gameplay code and baked level data
 tests/                 GUT unit tests (test_*.gd)
 tools/                 check.ps1, snapshots, build_theme.gd, scene_edit.gd, hooks/ (Claude Code auto-check)
@@ -184,7 +184,7 @@ scripts. Tests point `Progress.path` at a temporary file. Its re-read function i
 ### UI kit (`core/ui/`, `ui/`)
 Five styles (`core/ui/styles/*.tres`, built into `core/ui/themes/` by `tools/build_theme.gd`),
 the `UI` autoload, `Screen` and `Modal` base classes, responsive containers, widgets and the game's
-twelve screens and popups. Everything is in [UI_KIT.md](UI_KIT.md).
+fourteen screens and popups. Everything is in [UI_KIT.md](UI_KIT.md).
 
 ### DevTools (`core/dev_tools.gd`)
 Debug builds only. Open the console with `` ` `` on PC or a three-finger tap on a phone.
@@ -210,3 +210,5 @@ to `set_seed` and `skip_level` through `Events.debug_command`.
 | SVG icons and switch art as `DPITexture` | Sharp at any screen density without shipping several bitmap sizes |
 | Back key mapped to `ui_cancel` | One code path for Android Back, Escape and gamepads; popups get it first |
 | No `override.cfg` | Godot applies it on the PC but it is not exported, so the PC and the phone would differ |
+| Own splash and icon, credits as text | The launch shows the game, not the tools; Godot and Maaack are credited in the credits with their full licence texts, which MIT requires |
+| TouchScrollContainer for lists | Godot's ScrollContainer only scrolls on touch where no control takes the press, so button and text lists felt stuck on phones (found in a device test) |

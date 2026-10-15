@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Mobile Game Template"
 config/version="0.1.0"
-run/main_scene="res://scenes/opening/opening.tscn"
+run/main_scene="res://ui/screens/splash.tscn"
 config/features=PackedStringArray("4.7")
 config/icon="res://icon.png"
 config/quit_on_go_back=false

@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://ui/popups/settings_popup.gd" id="1_script"]
 [ext_resource type="Script" path="res://core/ui/safe_area_margin.gd" id="2_safe"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/close.svg" id="3_close"]
+[ext_resource type="Script" path="res://core/ui/touch_scroll_container.gd" id="4_impvs"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/music_note.svg" id="4_music"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/volume_up.svg" id="5_sound"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/vibration.svg" id="6_vibration"]
@@ -66,6 +67,7 @@ icon = ExtResource("3_close")
 unique_name_in_owner = true
 layout_mode = 2
 horizontal_scroll_mode = 0
+script = ExtResource("4_impvs")
 
 [node name="Rows" type="VBoxContainer" parent="Safe/Center/Sheet/Content/Scroll" unique_id=417736211]
 layout_mode = 2

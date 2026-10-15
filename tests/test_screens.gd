@@ -7,9 +7,9 @@ extends GutTest
 const TOUCH := 96.0
 const SIZES: Array[Vector2i] = [Vector2i(720, 1280), Vector2i(720, 1600), Vector2i(960, 1280)]
 const PAGES: Array[String] = [
-	Screens.MAIN_MENU, Screens.LEVEL_SELECT, Screens.GAME, Screens.SHOP, Screens.CREDITS,
+	Screens.SPLASH, Screens.MAIN_MENU, Screens.LEVEL_SELECT, Screens.GAME, Screens.SHOP, Screens.CREDITS,
 	Screens.GALLERY, Screens.PAUSE, Screens.RESULTS, Screens.SETTINGS, Screens.DAILY_REWARD,
-	Screens.CONFIRM,
+	Screens.CONFIRM, Screens.RANKS,
 ]
 
 
@@ -99,3 +99,16 @@ func _in_scroll(control: Control) -> bool:
 			return true
 		parent = parent.get_parent()
 	return false
+
+
+func test_credits_carry_licences_and_no_tappable_links() -> void:
+	var viewport := _viewport(Vector2i(720, 1280))
+	var page := (load(Screens.CREDITS) as PackedScene).instantiate()
+	viewport.add_child(page)
+	await _settle()
+	var label := page.get_node(^"%CreditsText") as RichTextLabel
+	var text := label.get_parsed_text()
+	assert_string_contains(text, "Permission is hereby granted", "MIT notices are shown")
+	assert_string_contains(text, "Godot Engine")
+	assert_false(label.text.contains("[url"), "links are plain text so a tap never opens a browser")
+	viewport.free()

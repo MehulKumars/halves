@@ -1,0 +1,55 @@
+[gd_scene format=3 uid="uid://bi1from03x0gp"]
+
+[ext_resource type="Script" path="res://ui/screens/splash.gd" id="1_script"]
+[ext_resource type="Script" path="res://core/ui/styled_background.gd" id="2_bg"]
+
+[node name="Splash" type="Control" unique_id=881674555]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1236192382]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_bg")
+
+[node name="Center" type="CenterContainer" parent="." unique_id=1602382060]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Logo" type="VBoxContainer" parent="Center" unique_id=929644955]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(600, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="Center/Logo" unique_id=1169467903]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "Mobile Game"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="MadeWith" type="Label" parent="Center/Logo" unique_id=1943396814]
+modulate = Color(1, 1, 1, 0.7)
+layout_mode = 2
+theme_type_variation = &"OnBgLabel"
+theme_override_font_sizes/font_size = 26
+text = "Made with Godot"
+horizontal_alignment = 1
