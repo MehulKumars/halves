@@ -66,6 +66,18 @@ therefore visibility work, not polish.
    target; about 83% of active Play devices ran Android 11+ in Dec 2025).
 5. After launch, check Android vitals weekly for any phone model approaching 8%.
 
+### Baseline and device-test notes (October 2026)
+- OnePlus 10R (Mali-G610, debug APK): 60 fps on every template screen (the phone runs the app at
+  60 Hz), 28-31 draw calls on menus, about 50 MB engine memory, cold start 0.85-1.1 s. APK 28 MB:
+  engine 24 MB, template 1.4 MB, Android 2.2 MB. Compare new games against these.
+- PNGs inside the project (screenshots) get imported and shipped: keep `build/.gdignore`,
+  `docs/.gdignore` and the export exclude filters; check the APK with `unzip -l`.
+- adb from a PC: `input tap x y` (device pixels), `input swipe x1 y1 x2 y2 ms`, `input keyevent 4`
+  (Back), `keyevent 68` + `input text fps` + `keyevent 66` (console command), `exec-out screencap -p`,
+  `am start -W` (start time). In Git Bash set `MSYS_NO_PATHCONV=1` for `/sdcard` paths.
+- OnePlus/ColorOS: blocks `pm clear` (reinstall instead), shows a "HyperBoost" panel on launch, and
+  typing into the debug console leaves the picture about 12% darker until restart (debug only).
+
 ## 3. Report format
 ```
 ## Summary

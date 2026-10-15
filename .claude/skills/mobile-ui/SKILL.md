@@ -86,3 +86,9 @@ State what was checked and on which sizes; say so if a phone check is still miss
   (they take the press). `TouchScrollContainer` fixes it and cancels the press; snapshots and
   layout tests cannot catch this, so drag-test lists on a phone.
 - RichTextLabel links fire when tapping near them on a centred line; credits show URLs as text.
+- Service results must arrive after the call returns: a mock store that emitted inside `purchase()`
+  left the shop awaiting forever. Call, then `await` the signal.
+- Tweens under a paused tree freeze while a pausing popup is open: set values behind popups
+  instantly (the HUD coin count-up stuck at the old value).
+- `Array[StringName].sort()` is not alphabetical; sort by `String(a) < String(b)`.
+- Toasts go at the top: at the bottom they covered the thumb-zone buttons.

@@ -49,6 +49,7 @@ The human owns fun, feel, art, balance, the store page and release decisions. Cl
 - Name a static function `reload`, `free` or another built-in Object/Script method: `Class.reload()` calls the built-in.
 - Create child nodes in member initialisers and add them in `_ready` (they leak if the node never enters the tree);
   add them in `_init` instead.
+- Emit a service result (ads, purchases) inside the call: callers call, then `await` the signal.
 - Commit keystores, passwords or `build/` outputs.
 - Weaken, skip or delete a test to make it pass.
 - Add AI-generated art, audio or text content.

@@ -56,6 +56,10 @@ Help pages named here before each first release of a game. Not legal or tax advi
       credits screen adds the licence texts itself; `ASSETS_LICENSES.md` complete; no AI-generated assets; no CC-BY-NC or GPL assets.
 - [ ] Release AAB installed and played on one Mali and one Adreno phone (via the internal testing
       track): no crash, no freeze, 48 dp touch targets, readable text, Back button opens pause.
+- [ ] Android 12+ shows `splash_screen/icon` before the game starts: it must be your icon (the
+      template once shipped Maaack's logo there by accident).
+- [ ] Licence files still ship (`include_filter`: `LICENSE.txt`, `core/ui/fonts/OFL_*.txt`, the icon
+      licence) and the credits screen shows them, after any change to the export filters.
 - [ ] Analytics logs the first-time funnel (`tutorial_step_1`, `first_win`, `level_3_start`) and seeds.
 - [ ] Keep/kill lines for this game are written down.
 
