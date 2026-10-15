@@ -47,7 +47,8 @@ func finish(won: bool, stars: int) -> void:
 	if won:
 		Progress.record_win(_level, stars)
 		Progress.add_coins(coins)
-		%Coins.set_value(Progress.coins())
+		# Instant: the results popup pauses the game, which would freeze a count-up here.
+		%Coins.value = Progress.coins()
 	Events.level_finished.emit(str(_level), won, stars)
 	var popup := UI.open(load(Screens.RESULTS) as PackedScene)
 	if won:
@@ -93,7 +94,7 @@ func _use_move() -> void:
 func _update_goal() -> void:
 	%MovesLabel.text = "%d moves" % _moves
 	var bar: ProgressBar = %Goal
-	bar.max_value = START_MOVES
+	bar.max_value = maxi(START_MOVES, _moves)
 	var tween := create_tween()
 	tween.tween_property(bar, ^"value", float(_moves), 0.25 * Juice.motion_scale)
 

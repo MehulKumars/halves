@@ -58,7 +58,7 @@ clear win.
 | Mock | Debug builds (editor, PC, debug APK) | Release builds |
 |---|---|---|
 | `MockAdsService` | Ads are "ready"; after 0.5 s reports the result; `ads_grant false` in the console tests the no-reward path | Nothing is ready and no reward is ever granted; `Services` logs a warning |
-| `MockIAPService` | Every purchase succeeds for the session | Same (wire real billing before selling anything) |
+| `MockIAPService` | Every purchase succeeds for the session, answering after 0.3 s like a real store (results never arrive inside `purchase()`, so screens can call and then `await purchase_finished`) | Same (wire real billing before selling anything) |
 | `MockAnalyticsService` | Prints events to the Output panel | Prints only |
 | `MockLeaderboardService` | Keeps best scores in memory | Same |
 | `MockReviewService` | Prints | Prints |

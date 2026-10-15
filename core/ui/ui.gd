@@ -88,7 +88,8 @@ func confirm(title: String, message: String, confirm_text: String = "OK", destru
 	return result == true
 
 
-## Short message near the bottom of the screen, for example "+50 coins".
+## Short message at the top of the screen, for example "+50 coins". It sits under the top bar,
+## away from the thumb zone, so it never covers the buttons the player is about to tap.
 func toast(text: String, icon: Texture2D = null, seconds: float = 2.2) -> void:
 	for old in _toast_layer.get_children():
 		old.queue_free()
@@ -113,11 +114,11 @@ func toast(text: String, icon: Texture2D = null, seconds: float = 2.2) -> void:
 	_toast_layer.add_child(panel)
 	await get_tree().process_frame
 	var view := panel.get_viewport_rect().size
-	var bottom := SafeAreaMargin.get_insets(panel.get_viewport()).w
-	panel.position = Vector2((view.x - panel.size.x) / 2.0, view.y - bottom - panel.size.y - 160.0)
+	var top := SafeAreaMargin.get_insets(panel.get_viewport()).y
+	panel.position = Vector2((view.x - panel.size.x) / 2.0, top + 150.0)
 	panel.modulate.a = 0.0
 	var rest_y := panel.position.y
-	panel.position.y += 40.0 * Juice.motion_scale
+	panel.position.y -= 40.0 * Juice.motion_scale
 	var tween := panel.create_tween()
 	tween.tween_property(panel, ^"modulate:a", 1.0, 0.18)
 	tween.parallel().tween_property(panel, ^"position:y", rest_y, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -153,7 +154,8 @@ func list_styles() -> Array[StringName]:
 	for file in ResourceLoader.list_directory(THEMES_DIR):
 		if file.ends_with(".tres"):
 			ids.append(StringName(file.get_basename()))
-	ids.sort()
+	# StringName.sort() orders by internal id, not alphabetically.
+	ids.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 	return ids
 
 

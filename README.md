@@ -14,7 +14,7 @@ styles**, responsive from small phones to tablets.
 | Engine | Godot 4.7.2 stable, GDScript, Compatibility renderer |
 | Target | Android first, portrait, target API 36, AAB for Google Play |
 | UI | 5 styles (Sleek Dark, Candy Casual, Neon Arcade, Cozy Paper, Pixel Retro), 12 screens and popups, WCAG AA contrast and 48 dp touch targets checked by tests |
-| Tests | GUT 9.7.1, 59 tests (463 checks), one-command check (`tools/check.ps1`), screenshot tool for every screen × style × size |
+| Tests | GUT 9.7.1, 63 tests (477 checks), one-command check (`tools/check.ps1`), screenshot tool for every screen × style × size |
 | AI workflow | `CLAUDE.md` rules, an auto-check hook, 6 project skills, tools that let Claude edit scenes safely and look at the UI |
 
 ## Documentation

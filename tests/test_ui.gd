@@ -21,6 +21,8 @@ func after_all() -> void:
 func test_five_styles_are_listed() -> void:
 	var styles := UI.list_styles()
 	assert_eq(styles.size(), 5)
+	assert_eq(styles[0], &"candy_casual", "listed alphabetically")
+	assert_eq(styles[4], &"sleek_dark", "listed alphabetically")
 	for id in [&"candy_casual", &"cozy_paper", &"neon_arcade", &"pixel_retro", &"sleek_dark"]:
 		assert_has(styles, id)
 

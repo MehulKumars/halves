@@ -17,7 +17,7 @@ It prints `CHECK PASSED` or `CHECK FAILED` with the relevant output, and exits 0
 
 ## Unit tests (GUT 9.7.1)
 
-Tests live in `tests/`, named `test_*.gd`. The template ships 59 tests (463 checks):
+Tests live in `tests/`, named `test_*.gd`. The template ships 63 tests (477 checks):
 
 | File | Covers |
 |---|---|
@@ -26,6 +26,7 @@ Tests live in `tests/`, named `test_*.gd`. The template ships 59 tests (463 chec
 | `test_ui.gd` | Style switching, Back closes only the top popup (and not the results popup), confirm answers, button squash and its Reduce Motion and opt-out, focus rings after touch vs keys, Back key mapped to `ui_cancel` |
 | `test_progress.gd` | Best stars, unlocks, coins, purchases, reload, daily streak (same day, next day, missed day, 7-day cycle, month ends) |
 | `test_responsive.gd` | Grid columns per width, the max-width column, simulated safe-area insets |
+| `test_services.gd` | Ads and purchase results arrive after the call (screens call, then await), and buying a coin pack in the shop adds the coins |
 | `test_ad_policy.gd` | Every interstitial rule (first session, level, wins, gaps, caps, rewarded cooldown, daily/zen) |
 | `test_seed_service.gd` | A known SHA-256 vector, reproducibility, JSON round-trips |
 | `test_save_store.gd` | Round trip, missing file, corrupt file |
@@ -91,6 +92,18 @@ Debug builds only (disabled in release; `addons/limbo_console.cfg`).
   ```gdscript
   LimboConsole.register_command(_cmd_give_coins, "give_coins", "add coins: give_coins <amount>")
   ```
+
+## Tested on
+
+| Phone | Result (debug APK, October 2026) |
+|---|---|
+| OnePlus 10R (CPH2423), Android 15, MediaTek Dimensity 8100, Mali-G610, 1080×2412, 8 GB | Every screen and popup, all five styles switched live, Back on every screen and popup, pause and resume, win and lose, rewarded continue, coin purchase, daily reward, scrolling. Cold start to first frame 0.85-1.1 s. 60 fps on every screen including Neon Arcade's animated grid (the phone runs this app at 60 Hz), 28-31 draw calls, about 50 MB engine memory (274 MB process PSS). No script errors in the log. The camera hole (top 96 px) and gesture bar are kept clear |
+
+Not yet tested: a low-end phone (Adreno GPU, 2-3 GB RAM), a tablet, Android 10-12.
+
+Known debug-only quirk: on this phone, typing into the debug console leaves the picture about
+12% darker until the app restarts. It does not happen on PC or without the console, and the
+console does not exist in release builds.
 
 ## Debugging on a phone
 
