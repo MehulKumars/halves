@@ -84,7 +84,9 @@ func _draw() -> void:
 	draw_style_box(_card_box, Rect2(-card * 0.5, card))
 	var key := HalvesFace.pair_key(face_a)
 	HalvesShapes.draw_whole(self, key, Vector2.ZERO, extent * 1.1, lerpf(face_size.x * 0.12, 3.0, join))
-	# Sand speed lines along the cut direction, and four sparkles at the corners.
+	if Juice.motion_scale <= 0.0:
+		return
+	# Sand speed lines along the cut direction, and four sparkles at the corners (motion only).
 	var vertical := HalvesFace.cut(face_a) == HalvesFace.Cut.VERTICAL
 	var reach := (card.x if vertical else card.y) * 0.5
 	var along := Vector2.RIGHT if vertical else Vector2.DOWN

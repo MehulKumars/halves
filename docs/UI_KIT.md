@@ -36,6 +36,10 @@ All paths are in `ui/screens.gd` (`Screens.MAIN_MENU`, `Screens.PAUSE`, ...).
 | `neon_arcade` | Synthwave grid, glowing outline buttons that fill when pressed | Orbitron titles, Exo 2 text | Arcade, rhythm, action |
 | `cozy_paper` | Warm cream paper grain, terracotta accent, soft edges | Nunito | Word, cozy, card, relaxing |
 | `pixel_retro` | Square corners, hard borders, checker pattern | Pixelify Sans | Retro, platformer, roguelike |
+| `halves` (this game's default) | Cobalt gradient, ivory text, sand primary buttons, still dot pattern | Outfit | Halves: the concept palette (ivory, cobalt, terracotta, teal, sand) |
+
+The five template styles stay in the repo; `halves` is the sixth and the project theme. Its
+palette also lives, for the board art only, in `game/halves/halves_palette.gd`.
 
 **Pick your game's style:** Project Settings > GUI > Theme > Custom → `res://core/ui/themes/<id>.tres`.
 That is the default every screen uses. `UI.apply_style(&"candy_casual")` switches at runtime (the

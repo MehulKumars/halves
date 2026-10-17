@@ -1,8 +1,8 @@
 # Credits
 
-## Mobile Game Template
-A game by Your Studio  
-Design, code and art: Your Name  
+## Halves
+A game by Mehul Kumar  
+Tiles and shapes drawn in code from the Halves palette  
 
 ## Made with
 #### Godot Engine

@@ -42,3 +42,7 @@ bundled in commercial games if each copy carries the licence: both export preset
 Add one row per asset as you add them: file, author, licence, source URL.
 | File | Author | Licence | Source |
 |---|---|---|---|
+| `game/halves/icons/shuffle.svg` (Material Symbols Rounded "shuffle", filled; recoloured white, 48 px) | Google | Apache 2.0 (`core/ui/icons/LICENSE_material_symbols.txt`) | github.com/google/material-design-icons, `symbols/web/shuffle/materialsymbolsrounded/shuffle_fill1_24px.svg` |
+| Halves tiles, half shapes, snap card and shards | Drawn in code (`game/halves/halves_shapes.gd`, `halves_tile_view.gd`, `halves_snap_fx.gd`) from the concept's palette | Original work | - |
+| `data/levels/halves_v1.json` | Generated offline from the hand-made masks in `tools/levelgen/` | Original work | - |
+| Halves sounds | Not added yet: record porcelain and wood on a phone, then set the board's sound slots | - | - |

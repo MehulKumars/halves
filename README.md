@@ -1,4 +1,22 @@
-# Mobile Game Template
+# Halves
+
+**Halves** is a calm, mahjong-style stack-clearing puzzle for Android: tap a free tile, then its
+mirror-cut other half, and the two snap into one whole shape. Never match twins. 30 levels in three
+sawtooth packs, no timer and no lives; a mistake only costs the "flawless" star. Rules, data and code
+are in [docs/HALVES.md](docs/HALVES.md); regenerate the levels with
+`godot --headless --path . -s tools/levelgen/generate_halves.gd`.
+
+| | |
+|---|---|
+| Play | `game/halves/` (logic and board), `ui/screens/game.gd` (HUD, boosters, level flow) |
+| Levels | `tools/levelgen/` masks + plan → `data/levels/halves_v1.json` (baked, `gen_version` 1) |
+| Look | The `halves` style (`core/ui/styles/halves.tres`): cobalt, ivory, sand, terracotta, teal |
+| Check it | `tools/check.ps1`, `tools/snapshots.ps1 -Styles halves`, `tools/halves_playtest.gd` (windowed taps) |
+
+The game is built on the studio's **mobile game template** (below), which it shares with the next
+games.
+
+## The template
 
 A reusable **Godot 4.7.2** template for small 2D portrait games on Android, built to be developed
 with **Claude Code**. Every new game starts from this repo, so each one only adds gameplay, data

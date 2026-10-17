@@ -39,7 +39,9 @@ core/                  Template systems shared by every game (ours)
 ui/                    Screens (ui/screens/) and popups (ui/popups/) of the game. Yours to edit
 scenes/                Maaack's loading screen (for SceneLoader, heavy scenes only)
 assets/template_icon/  Placeholder app icon (replace per game)
-game/, data/           (create per game) gameplay code and baked level data
+game/halves/           Halves: pure logic (faces, geometry, state, fill, solver, bots, levels)
+                       and the board view (tiles, snap effect, shards). See HALVES.md
+data/levels/           Baked Halves levels (halves_v1.json), made by tools/levelgen/
 tests/                 GUT unit tests (test_*.gd)
 tools/                 check.ps1, snapshots, build_theme.gd, scene_edit.gd, hooks/ (Claude Code auto-check)
 addons/                Vendored plugins. Never edit.
@@ -182,9 +184,15 @@ scripts. Tests point `Progress.path` at a temporary file. Its re-read function i
   `"shader_parameter/flash"` from 1 to 0. One material per flashing node.
 
 ### UI kit (`core/ui/`, `ui/`)
-Five styles (`core/ui/styles/*.tres`, built into `core/ui/themes/` by `tools/build_theme.gd`),
-the `UI` autoload, `Screen` and `Modal` base classes, responsive containers, widgets and the game's
-fourteen screens and popups. Everything is in [UI_KIT.md](UI_KIT.md).
+Six styles (the template's five plus `halves`; `core/ui/styles/*.tres`, built into
+`core/ui/themes/` by `tools/build_theme.gd`), the `UI` autoload, `Screen` and `Modal` base classes,
+responsive containers, widgets and the game's screens and popups (plus Halves' booster popup).
+Everything is in [UI_KIT.md](UI_KIT.md).
+
+### Halves (`game/halves/`, `ui/screens/game.gd`, `tools/levelgen/`)
+The game: rules, data formats, the logic API and how to regenerate levels are in
+[HALVES.md](HALVES.md). `Progress.start_session()` (called by the splash once per launch) feeds
+`AdPolicy.start_session()` so the first session stays free of interstitials.
 
 ### DevTools (`core/dev_tools.gd`)
 Debug builds only. Open the console with `` ` `` on PC or a three-finger tap on a phone.

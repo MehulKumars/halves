@@ -286,7 +286,17 @@ levels: a careful player should rarely need the free shuffle), or (after level 1
 free pairs at the start. Output: `data/levels/halves_v1.json` and a report
 `tools/levelgen/reports/halves_v1.csv` (one row per level with its stats).
 
-## 5. Tuning
+## 5. Checking
+- `tools/check.ps1`: the logic tests (`tests/test_halves_*.gd`, written from this file by a
+  separate session), the baked-file checks, and `test_halves_game.gd` (96 px faces on every level
+  at three sizes and with a notch, a level played to the results, mistakes, undo, paid boosters,
+  shuffle, the stuck card).
+- `tools/snapshots.ps1 -Styles halves -Only game_l1,game_selected,game_l30,game_stuck,booster`.
+- `godot --path . -s tools/halves_playtest.gd -- 10` plays a level in a window with real taps and
+  saves the key frames (pick, mistake, snap, shuffle, results) to `build/playtest/`; add `still`
+  after the level to check Reduce Motion.
+
+## 6. Tuning
 - Difficulty dials: mask (how many tiles are free at once, how deep the stacks are), number of
   pair types vs copies (more copies = more twins), cuts and marks (near-twins), and the targets in
   the plan.
