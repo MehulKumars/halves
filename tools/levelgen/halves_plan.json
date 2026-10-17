@@ -1,0 +1,38 @@
+{
+	"format": 1,
+	"about": "Halves level order (draft for the human to tune): sawtooth packs of 10, level 5 hard, level 6 a rest that brings the next idea, level 10 a finale. target_win = share of random-bot games that clear without getting stuck; target_decoy = free near-twins per real pair. See docs/HALVES.md sections 3-5.",
+	"slots": [
+		{"level": 1, "role": "intro", "mask": "p1_intro", "types": ["circle:v:-", "tri:v:-"], "target_win": 1.0, "target_decoy": 0.15},
+		{"level": 2, "role": "rest", "mask": "p1_two_layers", "types": ["circle:v:-", "tri:v:-"], "target_win": 1.0, "target_decoy": 0.2},
+		{"level": 3, "role": "rest", "mask": "p1_terrace", "types": ["square:v:-", "circle:v:-", "tri:v:-"], "target_win": 0.98, "target_decoy": 0.25},
+		{"level": 4, "role": "ramp", "mask": "p1_shelf", "types": ["circle:v:-", "tri:v:-", "square:v:-"], "target_win": 0.95, "target_decoy": 0.3},
+		{"level": 5, "role": "hard", "mask": "p1_block", "types": ["circle:v:-", "tri:v:-", "square:v:-"], "target_win": 0.8, "target_decoy": 0.45},
+		{"level": 6, "role": "rest", "mask": "p1_pyramid", "types": ["square:v:-", "circle:v:-", "tri:v:-"], "target_win": 0.97, "target_decoy": 0.3},
+		{"level": 7, "role": "ramp", "mask": "p1_steps", "types": ["circle:v:-", "tri:v:-", "square:v:-"], "target_win": 0.92, "target_decoy": 0.4},
+		{"level": 8, "role": "ramp", "mask": "p1_towers", "types": ["tri:v:-", "square:v:-", "circle:v:-"], "target_win": 0.88, "target_decoy": 0.45},
+		{"level": 9, "role": "ramp", "mask": "p1_cross", "types": ["circle:v:-", "tri:v:-", "square:v:-"], "target_win": 0.85, "target_decoy": 0.5},
+		{"level": 10, "role": "finale", "mask": "p1_finale", "types": ["circle:v:-", "tri:v:-", "square:v:-"], "target_win": 0.72, "target_decoy": 0.55},
+
+		{"level": 11, "role": "rest", "mask": "p2_window", "types": ["circle:h:-", "circle:v:-", "tri:v:-", "square:v:-"], "target_win": 0.95, "target_decoy": 0.7},
+		{"level": 12, "role": "ramp", "mask": "p2_hex", "types": ["circle:v:-", "circle:h:-", "tri:v:-", "square:v:-"], "target_win": 0.92, "target_decoy": 0.8},
+		{"level": 13, "role": "ramp", "mask": "p2_twin_towers", "types": ["square:h:-", "circle:v:-", "circle:h:-", "tri:v:-", "square:v:-"], "target_win": 0.88, "target_decoy": 0.9},
+		{"level": 14, "role": "ramp", "mask": "p2_wall", "types": ["circle:v:-", "circle:h:-", "tri:v:-", "square:v:-", "square:h:-"], "target_win": 0.84, "target_decoy": 1.0},
+		{"level": 15, "role": "hard", "mask": "p2_keep", "types": ["circle:v:-", "circle:h:-", "tri:v:-", "square:v:-", "square:h:-"], "target_win": 0.68, "target_decoy": 1.2},
+		{"level": 16, "role": "rest", "mask": "p2_ring", "types": ["diamond:v:-", "circle:v:-", "circle:h:-", "tri:v:-", "square:v:-"], "target_win": 0.93, "target_decoy": 0.7},
+		{"level": 17, "role": "ramp", "mask": "p2_hourglass", "types": ["circle:v:-", "circle:h:-", "tri:v:-", "square:v:-", "square:h:-", "diamond:v:-"], "target_win": 0.82, "target_decoy": 1.0},
+		{"level": 18, "role": "ramp", "mask": "p2_terraces", "types": ["diamond:h:-", "circle:v:-", "circle:h:-", "tri:v:-", "square:v:-", "square:h:-", "diamond:v:-"], "target_win": 0.78, "target_decoy": 1.1},
+		{"level": 19, "role": "ramp", "mask": "p2_mound", "types": ["circle:v:-", "circle:h:-", "tri:v:-", "square:v:-", "square:h:-", "diamond:v:-", "diamond:h:-"], "target_win": 0.74, "target_decoy": 1.2},
+		{"level": 20, "role": "finale", "mask": "p2_finale", "types": ["circle:v:-", "circle:h:-", "tri:v:-", "square:v:-", "square:h:-", "diamond:v:-", "diamond:h:-"], "target_win": 0.62, "target_decoy": 1.3},
+
+		{"level": 21, "role": "rest", "mask": "p3_steps", "types": ["tri:v:dot", "tri:v:-", "circle:v:-", "circle:h:-", "square:v:-"], "target_win": 0.92, "target_decoy": 0.9},
+		{"level": 22, "role": "ramp", "mask": "p3_bridges", "types": ["circle:v:-", "circle:h:-", "tri:v:-", "tri:v:dot", "square:v:-", "square:h:-", "diamond:v:-"], "target_win": 0.86, "target_decoy": 1.1},
+		{"level": 23, "role": "ramp", "mask": "p3_lanterns", "types": ["circle:v:-", "circle:h:-", "tri:v:-", "tri:v:dot", "square:v:-", "square:h:-", "diamond:v:-", "diamond:h:-"], "target_win": 0.82, "target_decoy": 1.2},
+		{"level": 24, "role": "ramp", "mask": "p3_gate", "types": ["circle:v:-", "circle:h:-", "tri:v:-", "tri:v:dot", "square:v:-", "square:h:-", "diamond:v:-", "diamond:h:-"], "target_win": 0.78, "target_decoy": 1.3},
+		{"level": 25, "role": "hard", "mask": "p3_ziggurat", "types": ["circle:v:-", "circle:h:-", "tri:v:-", "tri:v:dot", "square:v:-", "square:h:-", "diamond:v:-", "diamond:h:-"], "target_win": 0.62, "target_decoy": 1.5},
+		{"level": 26, "role": "rest", "mask": "p3_pagoda", "types": ["square:v:line", "square:v:-", "tri:v:-", "tri:v:dot", "circle:v:-"], "target_win": 0.9, "target_decoy": 1.0},
+		{"level": 27, "role": "ramp", "mask": "p3_climb", "types": ["circle:v:-", "circle:h:-", "tri:v:-", "tri:v:dot", "square:v:-", "square:v:line", "square:h:-", "diamond:v:-"], "target_win": 0.72, "target_decoy": 1.4},
+		{"level": 28, "role": "ramp", "mask": "p3_dome", "types": ["circle:v:-", "circle:h:-", "circle:v:dot", "tri:v:-", "tri:v:dot", "square:v:-", "square:v:line", "square:h:-", "diamond:v:-", "diamond:h:-"], "target_win": 0.68, "target_decoy": 1.6},
+		{"level": 29, "role": "ramp", "mask": "p3_spire", "types": ["circle:v:-", "circle:h:-", "circle:v:dot", "tri:v:-", "tri:v:dot", "square:v:-", "square:v:line", "square:h:-", "diamond:v:-", "diamond:h:-"], "target_win": 0.64, "target_decoy": 1.7},
+		{"level": 30, "role": "finale", "mask": "p3_finale", "types": ["circle:v:-", "circle:h:-", "circle:v:dot", "tri:v:-", "tri:v:dot", "square:v:-", "square:v:line", "square:h:-", "diamond:v:-", "diamond:h:-", "diamond:v:line"], "target_win": 0.55, "target_decoy": 1.9}
+	]
+}
