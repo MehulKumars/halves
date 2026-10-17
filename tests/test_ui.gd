@@ -18,12 +18,13 @@ func after_all() -> void:
 		UI.apply_style(_style_before, false)
 
 
-func test_five_styles_are_listed() -> void:
+func test_template_styles_and_the_halves_style_are_listed() -> void:
 	var styles := UI.list_styles()
-	assert_eq(styles.size(), 5)
+	assert_eq(styles.size(), 6)
 	assert_eq(styles[0], &"candy_casual", "listed alphabetically")
-	assert_eq(styles[4], &"sleek_dark", "listed alphabetically")
-	for id in [&"candy_casual", &"cozy_paper", &"neon_arcade", &"pixel_retro", &"sleek_dark"]:
+	assert_eq(styles[2], &"halves", "listed alphabetically")
+	assert_eq(styles[5], &"sleek_dark", "listed alphabetically")
+	for id in [&"candy_casual", &"cozy_paper", &"halves", &"neon_arcade", &"pixel_retro", &"sleek_dark"]:
 		assert_has(styles, id)
 
 

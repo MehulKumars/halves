@@ -43,6 +43,16 @@ func test_progress_survives_a_reload() -> void:
 	assert_true(Progress.owns("remove_ads"))
 
 
+func test_sessions_count_launches_and_survive_a_reload() -> void:
+	assert_eq(Progress.session_index(), 0, "no launch counted yet")
+	assert_eq(Progress.start_session(), 1, "the first launch is session 1 (ad-free)")
+	assert_eq(Progress.start_session(), 2)
+	Progress.load_from_disk()
+	assert_eq(Progress.session_index(), 2)
+	Progress.reset()
+	assert_eq(Progress.session_index(), 0, "reset forgets the launches too")
+
+
 func test_spending_more_than_you_have_spends_nothing() -> void:
 	Progress.add_coins(50)
 	assert_false(Progress.spend_coins(80))

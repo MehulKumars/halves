@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="UIStyle" format=3]
+
+[ext_resource type="FontFile" path="res://core/ui/fonts/Outfit.ttf" id="1_outfit"]
+[ext_resource type="Script" path="res://core/ui/ui_style.gd" id="2_style"]
+
+[resource]
+script = ExtResource("2_style")
+id = &"halves"
+display_name = "Halves"
+description = "Cobalt, ivory and sand from the Halves concept: calm, tactile, adult."
+bg_top = Color(0.12941177, 0.2509804, 0.41568628, 1)
+bg_bottom = Color(0.101960786, 0.2, 0.32941177, 1)
+text_on_bg = Color(0.9843137, 0.972549, 0.9529412, 1)
+surface = Color(0.15686275, 0.28235295, 0.43529412, 1)
+surface_border = Color(0.22745098, 0.3647059, 0.5294118, 1)
+text = Color(0.9843137, 0.972549, 0.9529412, 1)
+text_muted = Color(0.72156864, 0.76862746, 0.827451, 1)
+raised = Color(0.20392157, 0.34901962, 0.5411765, 1)
+raised_edge = Color(0.078431375, 0.16470589, 0.27058825, 1)
+text_on_raised = Color(0.9843137, 0.972549, 0.9529412, 1)
+accent = Color(0.9490196, 0.8, 0.56078434, 1)
+accent_edge = Color(0.7882353, 0.63529414, 0.4, 1)
+on_accent = Color(0.12156863, 0.22745098, 0.37254903, 1)
+gold = Color(0.9490196, 0.8, 0.56078434, 1)
+positive = Color(0.42352942, 0.7882353, 0.7294118, 1)
+danger = Color(0.63529414, 0.22745098, 0.14117648, 1)
+on_danger = Color(0.9843137, 0.972549, 0.9529412, 1)
+scrim = Color(0.039215688, 0.078431375, 0.13725491, 0.8)
+body_font = ExtResource("1_outfit")
+display_font = ExtResource("1_outfit")
+title_size = 88
+button_shape = 1
+radius = 30
+panel_radius = 36
+edge_depth = 6
+shadow_size = 22
+shadow_offset = Vector2(0, 8)
+shadow_color = Color(0.02, 0.05, 0.1, 0.4)
+pattern = 1
+pattern_color = Color(0.9843137, 0.972549, 0.9529412, 0.035)
+pattern_scale = 44.0
+pattern_speed = 0.0

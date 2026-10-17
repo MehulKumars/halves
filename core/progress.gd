@@ -5,7 +5,8 @@ extends RefCounted
 ## change, so nothing is lost if Android kills the app. Swap or extend it per game.
 ## Tests point `path` at a temporary file.
 
-const LEVEL_COUNT_DEFAULT: int = 24
+## Halves ships 30 baked levels (HalvesLevels.COUNT; tests keep the two equal).
+const LEVEL_COUNT_DEFAULT: int = 30
 ## Coins for day 1..7 of the daily reward; day 7 is the big one, then the cycle restarts.
 const DAILY_REWARDS: Array[int] = [50, 75, 100, 150, 200, 300, 500]
 
@@ -111,6 +112,19 @@ static func claim_daily(today: String = "") -> int:
 	_daily()["streak"] = int(status.streak) + 1
 	add_coins(int(status.amount))
 	return int(status.amount)
+
+
+## Counts an app launch and returns its number (1 = the first launch ever). Call once per launch;
+## AdPolicy.start_session() uses it to keep the first session free of interstitials.
+static func start_session() -> int:
+	_root()["sessions"] = session_index() + 1
+	_save()
+	return session_index()
+
+
+## The current launch's number (0 before the first start_session()).
+static func session_index() -> int:
+	return int(_root().get("sessions", 0))
 
 
 ## Forgets everything (Settings > Reset progress).
