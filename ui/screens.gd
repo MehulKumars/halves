@@ -17,6 +17,7 @@ const SETTINGS: String = "res://ui/popups/settings_popup.tscn"
 const DAILY_REWARD: String = "res://ui/popups/daily_reward_popup.tscn"
 const CONFIRM: String = "res://ui/popups/confirm_popup.tscn"
 const RANKS: String = "res://ui/popups/ranks_popup.tscn"
+const BOOSTER: String = "res://ui/popups/booster_popup.tscn"
 
 ## Level the game screen plays next. Set it before UI.goto(Screens.GAME).
 static var level: int = 1

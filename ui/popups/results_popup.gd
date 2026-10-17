@@ -14,7 +14,7 @@ func _ready() -> void:
 
 func show_win(level: int, stars: int, coins: int) -> void:
 	%Headline.text = "Level %d complete!" % level
-	%Message.text = ["Done!", "Nice!", "Great!", "Perfect!"][clampi(stars, 0, 3)]
+	%Message.text = ["Done!", "Done!", "Nice!", "Flawless!"][clampi(stars, 0, 3)]
 	%ContinueButton.hide()
 	%NextButton.show()
 	%Stars.show()

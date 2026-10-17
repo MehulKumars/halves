@@ -1,0 +1,95 @@
+[gd_scene format=3 uid="uid://dvhcc6k60hwca"]
+
+[ext_resource type="Script" path="res://ui/popups/booster_popup.gd" id="1_script"]
+[ext_resource type="Script" path="res://core/ui/safe_area_margin.gd" id="2_safe"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/lightbulb.svg" id="3_hint"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/monetization_on.svg" id="4_coin"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/smart_display.svg" id="5_video"]
+
+[node name="BoosterPopup" type="Control" unique_id=1582295331]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+sheet_max_width = 600.0
+
+[node name="Safe" type="MarginContainer" parent="." unique_id=2001363016]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_safe")
+extra_margin = 24
+
+[node name="Center" type="CenterContainer" parent="Safe" unique_id=415105306]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Sheet" type="PanelContainer" parent="Safe/Center" unique_id=1670747973]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SheetPanel"
+
+[node name="Content" type="VBoxContainer" parent="Safe/Center/Sheet" unique_id=943551355]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Icon" type="TextureRect" parent="Safe/Center/Sheet/Content" unique_id=1487803475]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+texture = ExtResource("3_hint")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="Safe/Center/Sheet/Content" unique_id=1645631350]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "One more hint"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Message" type="Label" parent="Safe/Center/Sheet/Content" unique_id=1405870216]
+unique_name_in_owner = true
+layout_mode = 2
+text = "This level's free one is used."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Balance" type="Label" parent="Safe/Center/Sheet/Content" unique_id=132442091]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+text = "You have 0 coins"
+horizontal_alignment = 1
+
+[node name="Gap" type="Control" parent="Safe/Center/Sheet/Content" unique_id=387620464]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="CoinsButton" type="Button" parent="Safe/Center/Sheet/Content" unique_id=729977978]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"AccentButton"
+text = "Use for 30 coins"
+icon = ExtResource("4_coin")
+
+[node name="VideoButton" type="Button" parent="Safe/Center/Sheet/Content" unique_id=820743598]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Watch a video for one more"
+icon = ExtResource("5_video")
+
+[node name="CancelButton" type="Button" parent="Safe/Center/Sheet/Content" unique_id=1712298015]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"GhostButton"
+text = "Not now"

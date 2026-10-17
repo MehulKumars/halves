@@ -1,8 +1,7 @@
 extends Screen
 ## First screen after launch: the game's name on the style's background for about a second,
-## then the main menu (tap to skip). Put your studio logo in %Logo if you have one.
-## Android shows the app icon on its own launch splash just before this (export preset >
-## splash_screen/icon), so the two together read as one short, branded start.
+## then the main menu (tap to skip). Counts the launch for AdPolicy's ad-free first session.
+## A brand-new player goes straight into level 1 instead (Halves teaches by playing, no menus).
 
 const HOLD_SECONDS: float = 1.1
 
@@ -10,6 +9,7 @@ var _leaving: bool = false
 
 
 func _ready() -> void:
+	Progress.start_session()
 	%Title.text = ProjectSettings.get_setting("application/config/name", "Mobile Game")
 	var timer := Timer.new()
 	timer.one_shot = true
@@ -40,4 +40,8 @@ func _continue() -> void:
 	if _leaving:
 		return
 	_leaving = true
-	UI.goto(Screens.MAIN_MENU)
+	if Progress.levels_won() == 0:
+		Screens.level = 1
+		UI.goto(Screens.GAME)
+	else:
+		UI.goto(Screens.MAIN_MENU)

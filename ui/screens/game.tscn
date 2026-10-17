@@ -4,14 +4,12 @@
 [ext_resource type="Script" path="res://core/ui/styled_background.gd" id="2_bg"]
 [ext_resource type="Script" path="res://core/ui/safe_area_margin.gd" id="3_safe"]
 [ext_resource type="Script" path="res://core/ui/max_width_container.gd" id="4_column"]
-[ext_resource type="Script" path="res://core/ui/widgets/currency_pill.gd" id="5_pill"]
+[ext_resource type="Script" path="res://core/ui/widgets/star_rating.gd" id="6_h4rbc"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/pause.svg" id="6_pause"]
-[ext_resource type="Texture2D" path="res://core/ui/icons/bolt.svg" id="7_bolt"]
-[ext_resource type="Texture2D" path="res://core/ui/icons/grid_view.svg" id="8_board"]
-[ext_resource type="Texture2D" path="res://core/ui/icons/star.svg" id="9_star"]
+[ext_resource type="Script" path="res://game/halves/halves_board_view.gd" id="7_kiepg"]
+[ext_resource type="Texture2D" path="res://game/halves/icons/shuffle.svg" id="8_quhog"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/lightbulb.svg" id="10_hint"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/undo.svg" id="11_undo"]
-[ext_resource type="Texture2D" path="res://core/ui/icons/restart_alt.svg" id="12_shuffle"]
 
 [node name="Game" type="Control" unique_id=1556409171]
 layout_mode = 3
@@ -73,108 +71,57 @@ text = "Level 1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Coins" type="PanelContainer" parent="Safe/Column/Layout/Hud" unique_id=1783643448]
+[node name="Stars" type="HBoxContainer" parent="Safe/Column/Layout/Hud" unique_id=580935343]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 4
-mouse_filter = 2
-theme_type_variation = &"PillPanel"
-script = ExtResource("5_pill")
-
-[node name="GoalCard" type="PanelContainer" parent="Safe/Column/Layout" unique_id=150745532]
-layout_mode = 2
-theme_type_variation = &"TilePanel"
-
-[node name="GoalRow" type="HBoxContainer" parent="Safe/Column/Layout/GoalCard" unique_id=274779380]
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="GoalIcon" type="TextureRect" parent="Safe/Column/Layout/GoalCard/GoalRow" unique_id=344572687]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(44, 44)
-layout_mode = 2
-size_flags_vertical = 4
-texture = ExtResource("7_bolt")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="MovesLabel" type="Label" parent="Safe/Column/Layout/GoalCard/GoalRow" unique_id=503237573]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(160, 0)
-layout_mode = 2
-theme_type_variation = &"ValueLabel"
-text = "12 moves"
-vertical_alignment = 1
-
-[node name="Goal" type="ProgressBar" parent="Safe/Column/Layout/GoalCard/GoalRow" unique_id=777487267]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-max_value = 12.0
-value = 12.0
-show_percentage = false
+script = ExtResource("6_h4rbc")
+star_size = 44.0
 
 [node name="Board" type="PanelContainer" parent="Safe/Column/Layout" unique_id=748913066]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
+theme_type_variation = &"BarPanel"
 
-[node name="BoardContent" type="VBoxContainer" parent="Safe/Column/Layout/Board" unique_id=1445195168]
-layout_mode = 2
-theme_override_constants/separation = 18
-alignment = 1
-
-[node name="BoardIcon" type="TextureRect" parent="Safe/Column/Layout/Board/BoardContent" unique_id=1664326322]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 112)
-layout_mode = 2
-texture = ExtResource("8_board")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="BoardTitle" type="Label" parent="Safe/Column/Layout/Board/BoardContent" unique_id=1774191752]
-layout_mode = 2
-theme_type_variation = &"HeaderLabel"
-text = "Your game goes here"
-horizontal_alignment = 1
-autowrap_mode = 2
-
-[node name="BoardText" type="Label" parent="Safe/Column/Layout/Board/BoardContent" unique_id=1853452089]
-layout_mode = 2
-theme_type_variation = &"CaptionLabel"
-text = "This placeholder level tests the whole flow: moves, pause, win, lose and results."
-horizontal_alignment = 1
-autowrap_mode = 2
-
-[node name="MoveButton" type="Button" parent="Safe/Column/Layout/Board/BoardContent" unique_id=674783660]
+[node name="HalvesBoard" type="Control" parent="Safe/Column/Layout/Board" unique_id=1689272835]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Make a move"
+script = ExtResource("7_kiepg")
 
-[node name="Win3Button" type="Button" parent="Safe/Column/Layout/Board/BoardContent" unique_id=569439291]
+[node name="StuckCenter" type="CenterContainer" parent="Safe/Column/Layout/Board" unique_id=1252016458]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
-theme_type_variation = &"AccentButton"
-text = "Win with 3 stars"
-icon = ExtResource("9_star")
+mouse_filter = 2
 
-[node name="Row" type="HBoxContainer" parent="Safe/Column/Layout/Board/BoardContent" unique_id=1660449610]
+[node name="StuckCard" type="PanelContainer" parent="Safe/Column/Layout/Board/StuckCenter" unique_id=549332015]
+custom_minimum_size = Vector2(520, 0)
+layout_mode = 2
+
+[node name="StuckBox" type="VBoxContainer" parent="Safe/Column/Layout/Board/StuckCenter/StuckCard" unique_id=408868338]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="Win1Button" type="Button" parent="Safe/Column/Layout/Board/BoardContent/Row" unique_id=1725310470]
-unique_name_in_owner = true
+[node name="StuckTitle" type="Label" parent="Safe/Column/Layout/Board/StuckCenter/StuckCard/StuckBox" unique_id=126479544]
 layout_mode = 2
-size_flags_horizontal = 3
-text = "Win, 1 star"
+theme_type_variation = &"HeaderLabel"
+text = "No pairs left"
+horizontal_alignment = 1
 
-[node name="LoseButton" type="Button" parent="Safe/Column/Layout/Board/BoardContent/Row" unique_id=906506882]
+[node name="StuckText" type="Label" parent="Safe/Column/Layout/Board/StuckCenter/StuckCard/StuckBox" unique_id=1401285522]
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+text = "A free shuffle deals the tiles into a board you can finish."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="StuckButton" type="Button" parent="Safe/Column/Layout/Board/StuckCenter/StuckCard/StuckBox" unique_id=287142817]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
-theme_type_variation = &"DangerButton"
-text = "Lose"
+theme_type_variation = &"AccentButton"
+text = "Shuffle · free"
+icon = ExtResource("8_quhog")
 
 [node name="Boosters" type="HBoxContainer" parent="Safe/Column/Layout" unique_id=724359918]
 layout_mode = 2
@@ -184,17 +131,17 @@ alignment = 1
 [node name="HintButton" type="Button" parent="Safe/Column/Layout/Boosters" unique_id=98929441]
 unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = &"IconButton"
+theme_type_variation = &"AccentIconButton"
 icon = ExtResource("10_hint")
 
 [node name="UndoButton" type="Button" parent="Safe/Column/Layout/Boosters" unique_id=317949957]
 unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = &"IconButton"
+theme_type_variation = &"AccentIconButton"
 icon = ExtResource("11_undo")
 
 [node name="ShuffleButton" type="Button" parent="Safe/Column/Layout/Boosters" unique_id=18010936]
 unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = &"IconButton"
-icon = ExtResource("12_shuffle")
+theme_type_variation = &"AccentIconButton"
+icon = ExtResource("8_quhog")

@@ -9,7 +9,7 @@ const SIZES: Array[Vector2i] = [Vector2i(720, 1280), Vector2i(720, 1600), Vector
 const PAGES: Array[String] = [
 	Screens.SPLASH, Screens.MAIN_MENU, Screens.LEVEL_SELECT, Screens.GAME, Screens.SHOP, Screens.CREDITS,
 	Screens.GALLERY, Screens.PAUSE, Screens.RESULTS, Screens.SETTINGS, Screens.DAILY_REWARD,
-	Screens.CONFIRM, Screens.RANKS,
+	Screens.CONFIRM, Screens.RANKS, Screens.BOOSTER,
 ]
 
 

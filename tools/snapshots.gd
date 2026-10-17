@@ -16,6 +16,7 @@ const SIZE_PRESETS: Array[Vector2i] = [Vector2i(720, 1280), Vector2i(720, 1600),
 const SCREENS: PackedStringArray = [
 	"splash", "main_menu", "level_select", "game", "pause", "results_win", "results_lose", "settings",
 	"shop", "daily_reward", "ranks", "confirm", "credits", "gallery",
+	"game_l1", "game_selected", "game_l16", "game_l26", "game_l30", "game_stuck", "booster",
 ]
 
 var _sizes: Array[Vector2i] = []
@@ -227,6 +228,59 @@ func _show_credits() -> bool:
 
 func _show_gallery() -> bool:
 	return await _open(Screens.GALLERY)
+
+
+## Halves boards: a level as the player first sees it (tutorial pulse on level 1).
+func _show_game_level(level: int) -> bool:
+	Screens.level = level
+	if not await _open(Screens.GAME):
+		return false
+	await _frames(6)
+	return true
+
+
+func _show_game_l1() -> bool:
+	return await _show_game_level(1)
+
+
+func _show_game_l16() -> bool:
+	return await _show_game_level(16)
+
+
+func _show_game_l26() -> bool:
+	return await _show_game_level(26)
+
+
+func _show_game_l30() -> bool:
+	return await _show_game_level(30)
+
+
+## Level 2 with a tile picked: it lifts with a sand ring and its free mate pulses (tutorial).
+func _show_game_selected() -> bool:
+	if not await _show_game_level(2):
+		return false
+	var board := current_scene.get_node(^"%HalvesBoard") as HalvesBoardView
+	board.tap(board.state.free_pairs()[0].x)
+	await _frames(20)
+	return true
+
+
+func _show_game_stuck() -> bool:
+	if not await _show_game_level(5):
+		return false
+	current_scene.call(&"_on_stuck")
+	await _frames(20)
+	return true
+
+
+func _show_booster() -> bool:
+	if not await _show_game_level(3):
+		return false
+	var popup := _popup(Screens.BOOSTER)
+	if popup == null:
+		return false
+	popup.call(&"setup", "hint", "One more hint", Icons.HINT, 30, 1250)
+	return true
 
 
 ## All shots of one style and size, a third of their size, in SCREENS order.
