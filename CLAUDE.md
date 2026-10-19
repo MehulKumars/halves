@@ -20,7 +20,9 @@ The human owns fun, feel, art, balance, the store page and release decisions. Cl
   `ui/screens/game.gd` hosts the gameplay: replace its %Board and call `finish(won, stars)`.
 - `scenes/loading_screens/`: Maaack's loading screen, for SceneLoader (heavy scenes only). `assets/template_icon/`: placeholder app icon.
 - `game/` gameplay scenes and scripts (create per game). `data/` baked levels and configs (create per game).
-  This repo is **Halves**: `game/halves/`, `data/levels/halves_v1.json`, `tools/levelgen/`; rules and API in `docs/HALVES.md`.
+  This repo is **Halves**: `game/halves/`, `data/levels/halves_v2.json` (+ daily/zen/rush pools), `tools/levelgen/`,
+  `tools/art/` (chapter prints, icon), `tools/audio/` (sound build), autoload **Sound** (`core/audio/sound.gd`);
+  rules and API in `docs/HALVES.md`.
 - `tests/` GUT tests named `test_*.gd`. `tools/` scripts and the hook. `addons/` vendored plugins.
 - `.claude/skills/`: mobile-ui, game-design-review, godot-game-feel, level-generation, mobile-performance-audit,
   play-release. Use them for those tasks.

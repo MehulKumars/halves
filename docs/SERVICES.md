@@ -41,6 +41,8 @@ func log_event(event_name: String, params: Dictionary = {}) -> void
 func submit_score(board_id: String, score: int) -> void
 func show_board(board_id: String) -> void
 func get_local_best(board_id: String) -> int
+func submit_time(board_id: String, ms: int) -> void       # lower is better (set the Play Games board to "smaller is better")
+func get_local_best_time(board_id: String) -> int
 
 # Services.review (ReviewService)
 func request_review() -> void

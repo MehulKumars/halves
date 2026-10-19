@@ -30,20 +30,23 @@ core/                  Template systems shared by every game (ours)
   ad_policy.gd         When an interstitial may show (pure logic)
   seed_service.gd      Stable SHA-256 seeds
   save_store.gd        Versioned JSON save
-  progress.gd          Stars, unlocks, coins, purchases, daily streak (uses SaveStore)
-  settings.gd          Volume, vibration, reduce motion
+  progress.gd          Stars, unlocks, best times, coins, purchases, daily streak, game sections (uses SaveStore)
+  settings.gd          Volume, vibration, reduce motion, show timer
+  audio/sound.gd       Autoload Sound: pooled sound effects, button clicks, looping music with crossfades
   feel/                Juice (tweens), Haptics, hit_flash.gdshader
   ui/                  The UI kit: autoload UI, Screen, Modal, layout containers, widgets,
                        styles/ (5 UIStyle resources), themes/ (built), fonts/, icons/
   dev_tools.gd         Autoload DevTools: debug-only console commands
 ui/                    Screens (ui/screens/) and popups (ui/popups/) of the game. Yours to edit
 scenes/                Maaack's loading screen (for SceneLoader, heavy scenes only)
-assets/template_icon/  Placeholder app icon (replace per game)
-game/halves/           Halves: pure logic (faces, geometry, state, fill, solver, bots, levels)
-                       and the board view (tiles, snap effect, shards). See HALVES.md
-data/levels/           Baked Halves levels (halves_v1.json), made by tools/levelgen/
+assets/                Halves art and audio: chapters/ (baked prints), audio/sfx, audio/music, icon/ (app icons);
+                       template_icon/ is the template's placeholder (no longer used by Halves)
+game/halves/           Halves: pure logic (faces, geometry, features, state, fill, solver, bots, run clock,
+                       levels, pools), the board view and effects, chapters, records, tips. See HALVES.md
+data/levels/           Baked Halves levels and the daily, zen and rush pools (*_v2.json), made by tools/levelgen/
 tests/                 GUT unit tests (test_*.gd)
-tools/                 check.ps1, snapshots, build_theme.gd, scene_edit.gd, hooks/ (Claude Code auto-check)
+tools/                 check.ps1, snapshots, build_theme.gd, scene_edit.gd, hooks/ (Claude Code auto-check),
+                       levelgen/ (levels and pools), art/ (prints, icon), audio/ (sound and music build)
 addons/                Vendored plugins. Never edit.
 .claude/               Claude Code settings (hook) and project skills
 docs/                  These guides
@@ -83,6 +86,7 @@ Defined in `project.godot`, in this order:
 | `Events` | `core/events.gd` | Signal bus |
 | `Services` | `core/services/services.gd` | Service hub |
 | `AppLifecycle` | `core/app_lifecycle.gd` | Lifecycle and feel settings (needs `Events`) |
+| `Sound` | `core/audio/sound.gd` | Sound effects, button clicks, music through `ProjectMusicController` |
 | `UI` | `core/ui/ui.gd` | Screen changes, popups and Back, toasts, styles, button feel (needs the above) |
 | `DevTools` | `core/dev_tools.gd` | Console commands (needs all of the above; frees itself in release) |
 
@@ -166,13 +170,24 @@ levels to data files** and only generate disposable content at runtime (see the
 `save_data(data: Dictionary, path := "user://save.json") -> Error`, `load_data(path) -> Dictionary`,
 `delete_save(path)`. Writes to a temp file, then replaces the save, so a crash mid-write never
 corrupts it. Every save carries a `version`; bump `CURRENT_VERSION` and add a step to `_migrate()`
-when the layout changes. A corrupt file loads as a fresh save with a warning.
+when the layout changes. A corrupt file loads as a fresh save with a warning. Version 2 added the
+`best` section (best times); stars stay keyed by level number, so unlocks survive a bigger level set.
 
 **Progress** (`core/progress.gd`) is the template's player progress on top of SaveStore: best stars
-per level, unlocks, coins, owned items and the daily reward streak, saved on every change. It
+per level, unlocks, coins, owned items and the daily reward streak, saved on every change.
+Best times per board: `best_time(board)`, `best_record(board)`, `record_time(board, ms, extra)` (lowest
+wins). Games keep their own data in `section(name)` and call `save()` after changing it. It
 replaces Maaack's `GameState` (removed), which saved Resource files that can carry injected
 scripts. Tests point `Progress.path` at a temporary file. Its re-read function is
 `load_from_disk()`: a static function named `reload()` would be shadowed by `Script.reload()`.
+
+### Sound (`core/audio/sound.gd`)
+`Sound.play(id, pitch := 1.0, volume_db := 0.0)` plays `assets/audio/sfx/<id>.wav` from a pool of 12
+players (±4% pitch, except steady tones such as stars); `play_step(id, semitones)` climbs a combo
+ladder; `play_music(path)` loops an Ogg through Maaack's `ProjectMusicController` (crossfades, keeps
+playing across scenes); `duck(seconds)` lowers the music under a fanfare. Every button press clicks
+(opt out with the meta `ui_sound = false`). Game code that must compile in tool scripts calls it
+through a run-time lookup (`HalvesSfx`) instead of naming the autoload.
 
 ### Juice and Haptics (`core/feel/`)
 - `Juice.pop(node, peak := 1.08, duration := 0.12)` and `Juice.squash(node, scale := Vector2(1.12, 0.9), duration := 0.14)`
@@ -192,11 +207,15 @@ Everything is in [UI_KIT.md](UI_KIT.md).
 ### Halves (`game/halves/`, `ui/screens/game.gd`, `tools/levelgen/`)
 The game: rules, data formats, the logic API and how to regenerate levels are in
 [HALVES.md](HALVES.md). `Progress.start_session()` (called by the splash once per launch) feeds
-`AdPolicy.start_session()` so the first session stays free of interstitials.
+`AdPolicy.start_session()` so the first session stays free of interstitials. The game screen
+plays four modes (`Screens.mode`: levels, daily, zen, rush); `HalvesChapters` gives each 20 levels a
+print, music and ambience (`ChapterBackground` puts the print behind any screen and hides its
+`StyledBackground`); `HalvesRecords` keeps best times, Swift medals, best-run move logs
+(`user://halves_runs.json`), the daily streak, zen and rush records and seen tip cards.
 
 ### DevTools (`core/dev_tools.gd`)
 Debug builds only. Open the console with `` ` `` on PC or a three-finger tap on a phone.
-Commands: `set_seed <text>`, `skip_level`, `ads_grant <true|false>`, `motion <0..1>`,
+Commands: `set_seed <text>`, `skip_level`, `stats` (the game's per-level records), `ads_grant <true|false>`, `motion <0..1>`,
 `reset_save`, `fps` (FPS, frame time, draw calls, memory overlay), `log_input` (print every key,
 touch and action event), `display_info`, `safe_area <l> <t> <r> <b>` (fake a notch), plus LimboConsole's built-ins (`help`, `commands`, `fps_max`, ...). Your game reacts
 to `set_seed` and `skip_level` through `Events.debug_command`.
