@@ -39,3 +39,6 @@ docs/api/
 # Plugin specific
 addons/script-ide/
 addons/ef_ds_uids/
+
+# Downloaded print sources (tools/art/fetch_prints.ps1)
+tools/art/src/
