@@ -42,6 +42,88 @@ static func assign_faces(order: Array[Vector2i], pair_keys: PackedInt32Array,
 	return faces
 
 
+## Places where a trap can be built: (q, p, x, y) with x (step q) covering y (step p > q) while the
+## other tile of step p is already free before step q. Sorted ascending.
+static func trap_links(geometry: HalvesGeometry, order: Array[Vector2i]) -> Array[Vector4i]:
+	var links: Array[Vector4i] = []
+	var before := _free_before(geometry, order)
+	for q in order.size():
+		for p in range(q + 1, order.size()):
+			for x: int in [order[q].x, order[q].y]:
+				for y: int in [order[p].x, order[p].y]:
+					if geometry.cover[y] & (1 << x) != 0 and before[q] & (1 << _other(order[p], y)) != 0:
+						links.append(Vector4i(q, p, x, y))
+	links.sort_custom(func(a: Vector4i, b: Vector4i) -> bool: return a < b)
+	return links
+
+
+## assign_faces, but about trap_rate * pairs / 2 links of trap_links get mated faces on their
+## stacked tiles: pairing the two outer halves first strands a half on top of its only mate.
+static func assign_faces_trapped(geometry: HalvesGeometry, order: Array[Vector2i],
+		pair_keys: PackedInt32Array, rng: RandomNumberGenerator, tile_count: int,
+		trap_rate: float) -> PackedInt32Array:
+	assert(pair_keys.size() == order.size(), "one pair key per pair of the order")
+	var links := trap_links(geometry, order)
+	for i in range(links.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var held := links[i]
+		links[i] = links[j]
+		links[j] = held
+	var keys := pair_keys.duplicate()
+	shuffle_ints(keys, rng)
+	var faces := PackedInt32Array()
+	faces.resize(tile_count)
+	faces.fill(-1)
+	var key_used := PackedByteArray()
+	key_used.resize(keys.size())
+	var step_done := PackedByteArray()
+	step_done.resize(order.size())
+	var wanted := roundi(trap_rate * order.size() / 2.0)
+	var made := 0
+	for link in links:
+		if made >= wanted:
+			break
+		if step_done[link.x] != 0 or step_done[link.y] != 0:
+			continue
+		var key := _take_key_twice(keys, key_used)
+		if key < 0:
+			break
+		var s := rng.randi_range(0, 1)
+		faces[link.z] = key << 1 | s
+		faces[_other(order[link.x], link.z)] = key << 1 | (1 - s)
+		faces[link.w] = key << 1 | (1 - s)
+		faces[_other(order[link.y], link.w)] = key << 1 | s
+		step_done[link.x] = 1
+		step_done[link.y] = 1
+		made += 1
+	var next := 0
+	for k in order.size():
+		if step_done[k] != 0:
+			continue
+		while key_used[next] != 0:
+			next += 1
+		key_used[next] = 1
+		var first_side := rng.randi_range(0, 1)
+		faces[order[k].x] = keys[next] << 1 | first_side
+		faces[order[k].y] = keys[next] << 1 | (1 - first_side)
+	return faces
+
+
+## How many trap links carry a real trap with these faces.
+static func live_traps(geometry: HalvesGeometry, order: Array[Vector2i], faces: PackedInt32Array) -> int:
+	var count := 0
+	for link in trap_links(geometry, order):
+		if is_live_link(order, faces, link):
+			count += 1
+	return count
+
+
+## True when the four tiles of a trap link carry two mated pairs (x with y, and the other two).
+static func is_live_link(order: Array[Vector2i], faces: PackedInt32Array, link: Vector4i) -> bool:
+	return HalvesFace.matches(faces[link.z], faces[link.w]) \
+			and HalvesFace.matches(faces[_other(order[link.x], link.z)], faces[_other(order[link.y], link.w)])
+
+
 ## A full, solvable board: {"faces", "solution"}, or {} if no removal order was found.
 static func deal(geometry: HalvesGeometry, pair_keys: PackedInt32Array, rng: RandomNumberGenerator) -> Dictionary:
 	if pair_keys.size() * 2 != geometry.size():
@@ -50,6 +132,21 @@ static func deal(geometry: HalvesGeometry, pair_keys: PackedInt32Array, rng: Ran
 	if order.is_empty():
 		return {}
 	return {"faces": assign_faces(order, pair_keys, rng, geometry.size()), "solution": order}
+
+
+## A v2 board: removal order, trap-seeded faces, then features, all from one rng.
+## {"faces", "solution", "features", "traps"}, or {} if no removal order was found.
+static func deal_v2(geometry: HalvesGeometry, pair_keys: PackedInt32Array, rng: RandomNumberGenerator,
+		trap_rate: float, feature_spec: Dictionary) -> Dictionary:
+	if pair_keys.size() * 2 != geometry.size():
+		return {}
+	var plain := geometry.with_features({}) if geometry.has_features() else geometry
+	var order := removal_order(plain, plain.full_mask(), rng)
+	if order.is_empty():
+		return {}
+	var faces := assign_faces_trapped(plain, order, pair_keys, rng, plain.size(), trap_rate)
+	var features := HalvesFeatures.place(plain, order, faces, feature_spec, rng)
+	return {"faces": faces, "solution": order, "features": features, "traps": live_traps(plain, order, faces)}
 
 
 ## The pair key of every remaining side-A face, sorted: what a re-deal has to place.
@@ -154,6 +251,35 @@ static func _weighted_pick(free: PackedInt32Array, weights: PackedInt32Array,
 		if roll < 0:
 			return tile
 	return free[free.size() - 1] if free[free.size() - 1] != skip else free[0]
+
+
+## The free mask before each step of `order`, starting from the tiles `order` uses.
+static func _free_before(geometry: HalvesGeometry, order: Array[Vector2i]) -> PackedInt64Array:
+	var left_over := 0
+	for pair in order:
+		left_over |= (1 << pair.x) | (1 << pair.y)
+	var before := PackedInt64Array()
+	for pair in order:
+		before.append(geometry.free_mask(left_over))
+		left_over &= ~(1 << pair.x) & ~(1 << pair.y)
+	return before
+
+
+static func _other(pair: Vector2i, tile: int) -> int:
+	return pair.y if pair.x == tile else pair.x
+
+
+## The first key value in `keys` with two unused copies; marks both used. -1 if none.
+static func _take_key_twice(keys: PackedInt32Array, used: PackedByteArray) -> int:
+	for i in keys.size():
+		if used[i] != 0:
+			continue
+		for j in range(i + 1, keys.size()):
+			if used[j] == 0 and keys[j] == keys[i]:
+				used[i] = 1
+				used[j] = 1
+				return keys[i]
+	return -1
 
 
 ## 1 + how many tiles each tile covers or flanks on the full board.

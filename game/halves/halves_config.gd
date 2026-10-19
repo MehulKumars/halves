@@ -28,3 +28,28 @@ const STUCK_DELAY: float = 0.5
 
 ## Coins per star at the end of a level (the template's default economy).
 const COINS_PER_STAR: int = 10
+
+## Rewards: coins per gold tile cleared, for the first Swift medal, and for a combo of COMBO_COINS_AT.
+const GOLD_COINS: int = 5
+const SWIFT_COINS: int = 10
+## Snaps closer together than this (seconds) build a combo chain.
+const COMBO_WINDOW: float = 2.5
+const COMBO_COINS_AT: int = 5
+const COMBO_COINS: int = 5
+
+## Modes: unlock levels and the Rush clock (seconds).
+const ZEN_UNLOCK_LEVEL: int = 10
+const RUSH_UNLOCK_LEVEL: int = 15
+const RUSH_SECONDS: int = 180
+const RUSH_BOARD_BONUS_S: int = 5
+const RUSH_MISTAKE_PENALTY_S: int = 3
+const RUSH_BOARD_POINTS: int = 10
+
+## Par time (docs/HALVES.md section 4), for the human to tune after real plays.
+const PAR_BASE_S: float = 10.0
+const PAR_PER_PAIR_S: float = 2.2
+const PAR_PER_TYPE_S: float = 1.5
+const PAR_PER_LAYER_S: float = 3.0
+const PAR_PER_FEATURE_S: float = 1.0
+const PAR_DIFFICULTY_SCALE: float = 0.005
+const PAR_ROUND_S: int = 5

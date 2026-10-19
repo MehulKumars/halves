@@ -24,8 +24,8 @@ static func solve(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: 
 	return {"status": Status.UNKNOWN, "moves": [] as Array[Vector2i]}
 
 
-## A free pair that keeps the board solvable; the most freeing pair if the solver ran out of
-## budget; (-1, -1) if the board can't be cleared or has no free pair.
+## A free pair that keeps the board solvable; if the solver ran out of budget, the most freeing
+## pair that is not a trap move (or of all pairs); (-1, -1) if unsolvable or no free pair.
 static func hint(state: HalvesState, budget: int = 5000) -> Vector2i:
 	var result := solve(state.geometry, state.faces, state.remaining, budget)
 	var moves: Array[Vector2i] = result.moves
@@ -33,7 +33,12 @@ static func hint(state: HalvesState, budget: int = 5000) -> Vector2i:
 		return moves[0]
 	if result.status == Status.UNSOLVABLE:
 		return Vector2i(-1, -1)
-	return most_freeing_pair(state.geometry, state.remaining, state.free_pairs())
+	var pairs := state.free_pairs()
+	var safe: Array[Vector2i] = []
+	for pair in pairs:
+		if not HalvesBot.is_trap_move(state.geometry, state.faces, state.remaining, pair):
+			safe.append(pair)
+	return most_freeing_pair(state.geometry, state.remaining, safe if not safe.is_empty() else pairs)
 
 
 ## The pair (from `pairs`) that leaves the most free tiles; ties keep the earliest.

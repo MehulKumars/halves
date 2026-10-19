@@ -1,8 +1,8 @@
 class_name HalvesLevelData
 extends RefCounted
 ## One baked Halves level: tile positions and faces, the solution it was built from, and its bot
-## stats. Made by HalvesLevels from the JSON file and by the generator; the game screen asks it for
-## a fresh HalvesState. The solution is also what Shuffle reseats into when a board is truly stuck.
+## stats and features. Made by HalvesLevels and HalvesPools from JSON and by the generator; the game
+## screen asks it for a fresh HalvesState. Shuffle reseats into the solution when truly stuck.
 
 var level: int = 0
 var role: String = ""
@@ -11,6 +11,10 @@ var seed_parts: Array = []
 var positions: Array[Vector3i] = []
 var faces: PackedInt32Array = PackedInt32Array()
 var solution: Array[Vector2i] = []
+## Lock groups, frost, mist, gold (HalvesFeatures format, normalised); {} for none.
+var features: Dictionary = {}
+## The tip card this level shows (HalvesTips id), "" for none.
+var tip: String = ""
 var stats: Dictionary = {}
 
 var _geometry: HalvesGeometry
@@ -30,6 +34,8 @@ static func from_dict(entry: Dictionary) -> HalvesLevelData:
 	for step: Variant in entry.get("solution", []):
 		var s: Array = step
 		data.solution.append(Vector2i(int(s[0]), int(s[1])))
+	data.features = HalvesFeatures.normalize(entry.get("features", {}))
+	data.tip = str(entry.get("tip", ""))
 	data.stats = entry.get("stats", {})
 	return data
 
@@ -42,20 +48,32 @@ func to_dict() -> Dictionary:
 	var steps: Array = []
 	for pair in solution:
 		steps.append([pair.x, pair.y])
-	return {
+	var out := {
 		"level": level,
 		"role": role,
 		"mask": mask,
 		"seed_parts": seed_parts,
 		"tiles": tiles,
 		"solution": steps,
-		"stats": stats,
 	}
+	if not features.is_empty():
+		out["features"] = features
+	if tip != "":
+		out["tip"] = tip
+	out["stats"] = stats
+	return out
+
+
+## The baked par time in ms (0 if the level has none).
+func par_ms() -> int:
+	return int(stats.get("par_ms", 0))
 
 
 func geometry() -> HalvesGeometry:
 	if _geometry == null:
 		_geometry = HalvesGeometry.from_positions(positions)
+		if not features.is_empty():
+			_geometry = _geometry.with_features(features)
 	return _geometry
 
 
