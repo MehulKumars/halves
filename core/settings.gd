@@ -2,10 +2,11 @@ class_name Settings
 extends RefCounted
 ## The player's settings in one place, for the settings and pause popups and for game code.
 ## Volumes go through Maaack's AppSettings (bus volume, saved per bus in user://player_config.cfg);
-## vibration and reduce motion use the GameSettings keys that AppLifecycle applies.
+## vibration, reduce motion and the game clock use GameSettings keys (AppLifecycle applies the first two).
 
 const MUSIC_BUS: StringName = &"Music"
 const SFX_BUS: StringName = &"SFX"
+const KEY_SHOW_TIMER: String = "ShowTimer"
 
 
 ## Linear volume 0..1 of an audio bus ("Music", "SFX", "Master").
@@ -41,6 +42,15 @@ static func reduce_motion() -> bool:
 static func set_reduce_motion(enabled: bool) -> void:
 	PlayerConfig.set_config(AppLifecycle.SECTION, AppLifecycle.KEY_REDUCE_MOTION, enabled)
 	_apply()
+
+
+## The clock in the game HUD (time is always recorded; this only hides it during play).
+static func show_timer() -> bool:
+	return PlayerConfig.get_config(AppLifecycle.SECTION, KEY_SHOW_TIMER, true)
+
+
+static func set_show_timer(enabled: bool) -> void:
+	PlayerConfig.set_config(AppLifecycle.SECTION, KEY_SHOW_TIMER, enabled)
 
 
 static func _apply() -> void:

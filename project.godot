@@ -28,6 +28,7 @@ LimboConsole="*res://addons/limbo_console/limbo_console.gd"
 Events="*res://core/events.gd"
 Services="*res://core/services/services.gd"
 AppLifecycle="*res://core/app_lifecycle.gd"
+Sound="*res://core/audio/sound.gd"
 UI="*res://core/ui/ui.gd"
 DevTools="*res://core/dev_tools.gd"
 

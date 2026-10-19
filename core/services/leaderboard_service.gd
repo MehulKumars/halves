@@ -24,3 +24,13 @@ func has_native_ui() -> bool:
 
 func get_local_best(_board_id: String) -> int:
 	return 0
+
+
+## Times are lower-is-better boards (ms); Play Games boards for them are set to "smaller is better".
+func submit_time(_board_id: String, _ms: int) -> void:
+	pass
+
+
+## The best (lowest) time submitted this session, 0 if none.
+func get_local_best_time(_board_id: String) -> int:
+	return 0

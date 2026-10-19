@@ -1,12 +1,12 @@
 class_name Progress
 extends RefCounted
-## Player progress used by the template screens: best stars per level, coins, purchases and the
-## daily reward streak. Stored in the versioned JSON save (SaveStore) and written on every
-## change, so nothing is lost if Android kills the app. Swap or extend it per game.
-## Tests point `path` at a temporary file.
+## Player progress used by the template screens: best stars per level, best times, coins, purchases
+## and the daily reward streak; games keep their own sections through section() and save().
+## Stored in the versioned JSON save (SaveStore) and written on every change, so nothing is lost
+## if Android kills the app. Tests point `path` at a temporary file.
 
-## Halves ships 30 baked levels (HalvesLevels.COUNT; tests keep the two equal).
-const LEVEL_COUNT_DEFAULT: int = 30
+## Halves ships 100 baked levels (HalvesLevels.COUNT; tests keep the two equal).
+const LEVEL_COUNT_DEFAULT: int = 100
 ## Coins for day 1..7 of the daily reward; day 7 is the big one, then the cycle restarts.
 const DAILY_REWARDS: Array[int] = [50, 75, 100, 150, 200, 300, 500]
 
@@ -125,6 +125,38 @@ static func start_session() -> int:
 ## The current launch's number (0 before the first start_session()).
 static func session_index() -> int:
 	return int(_root().get("sessions", 0))
+
+
+## The best (lowest) time in ms on a board ("level_12", "daily_2026-10-21"...), 0 if none yet.
+static func best_time(board: String) -> int:
+	return int(best_record(board).get("ms", 0))
+
+
+## The record that set the best time: {"ms": int, ...whatever record_time() was given}; {} if none.
+static func best_record(board: String) -> Dictionary:
+	var record: Variant = _section("best").get(board, {})
+	return record if record is Dictionary else {}
+
+
+## Keeps `ms` (with `extra` fields) as the board's best time if it beats the old one. True if new.
+static func record_time(board: String, ms: int, extra: Dictionary = {}) -> bool:
+	var old := best_time(board)
+	if ms <= 0 or (old > 0 and ms >= old):
+		return false
+	var record := extra.duplicate(true)
+	record["ms"] = ms
+	_section("best")[board] = record
+	_save()
+	return true
+
+
+## A game's own part of the save (created empty on first use). Call save() after changing it.
+static func section(key: String) -> Dictionary:
+	return _section(key)
+
+
+static func save() -> void:
+	_save()
 
 
 ## Forgets everything (Settings > Reset progress).

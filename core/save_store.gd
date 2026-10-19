@@ -7,7 +7,7 @@ extends RefCounted
 ## Writes go to a temp file first, then replace the old save, so a crash mid-write
 ## never leaves a half-written save.
 
-const CURRENT_VERSION: int = 1
+const CURRENT_VERSION: int = 2
 const DEFAULT_PATH: String = "user://save.json"
 
 
@@ -43,9 +43,12 @@ static func delete_save(path: String = DEFAULT_PATH) -> void:
 
 static func _migrate(data: Dictionary) -> Dictionary:
 	var version: int = int(data.get("version", 0))
-	# Add one step per layout change, for example:
-	# if version < 2:
-	# 	data["settings"] = {}
-	# 	version = 2
+	# One step per layout change.
+	if version < 2:
+		# v2: best times per board ("best"); level stars are kept by number so unlocks survive
+		# the move from 30 to 100 Halves levels.
+		if not data.get("best") is Dictionary:
+			data["best"] = {}
+		version = 2
 	data["version"] = maxi(version, CURRENT_VERSION)
 	return data

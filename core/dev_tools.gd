@@ -20,6 +20,7 @@ func _ready() -> void:
 	set_process(false)
 	LimboConsole.register_command(_cmd_set_seed, "set_seed", "override the level seed: set_seed <text>")
 	LimboConsole.register_command(_cmd_skip_level, "skip_level", "finish the current level as a win")
+	LimboConsole.register_command(_cmd_stats, "stats", "print the game's per-level records (best time, par, slips)")
 	LimboConsole.register_command(_cmd_ads_grant, "ads_grant", "mock rewarded ads give rewards: ads_grant <true|false>")
 	LimboConsole.register_command(_cmd_motion, "motion", "set motion scale 0..1 (0 = reduced motion)")
 	LimboConsole.register_command(_cmd_reset_save, "reset_save", "delete the JSON save file")
@@ -91,6 +92,10 @@ func _cmd_set_seed(text: String) -> void:
 func _cmd_skip_level() -> void:
 	Events.debug_command.emit(&"skip_level", [])
 	LimboConsole.info("Requested skip_level")
+
+
+func _cmd_stats() -> void:
+	Events.debug_command.emit(&"stats", [])
 
 
 func _cmd_ads_grant(grant: bool) -> void:
