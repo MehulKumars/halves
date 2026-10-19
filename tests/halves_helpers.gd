@@ -196,3 +196,97 @@ static func sorted_ints(values: PackedInt32Array) -> Array[int]:
 		out.append(v)
 	out.sort()
 	return out
+
+
+# --- v2 helpers (contract v2), also written from docs/HALVES.md alone ---
+
+
+## Untyped list of Vector4i -> the typed array trap_links returns.
+static func links(list: Array) -> Array[Vector4i]:
+	var out: Array[Vector4i] = []
+	for l: Vector4i in list:
+		out.append(l)
+	return out
+
+
+## JSON text with sorted keys: compares values and tells ints (3) from floats (3.0), whatever the
+## container type (Array, typed Array or PackedInt32Array all print as [..]).
+static func js(value: Variant) -> String:
+	return JSON.stringify(value, "", true)
+
+
+## Ids of the set bits of `mask`, ascending.
+static func ids(mask: int) -> Array[int]:
+	var out: Array[int] = []
+	for i: int in 64:
+		if (mask & (1 << i)) != 0:
+			out.append(i)
+	return out
+
+
+## step[t] = the step of `order` that removes tile t, or -1.
+static func steps_of(order: Array, size: int) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	out.resize(size)
+	out.fill(-1)
+	for k: int in order.size():
+		var p: Vector2i = order[k]
+		out[p.x] = k
+		out[p.y] = k
+	return out
+
+
+## A free pair of tiles that would be a mistake (same shape, not mates), or (-1, -1).
+static func free_decoy(s: HalvesState) -> Vector2i:
+	var free := s.geometry.free_tiles(s.remaining)
+	for i: int in free.size():
+		for j: int in range(i + 1, free.size()):
+			if HalvesFace.is_decoy(s.faces[free[i]], s.faces[free[j]]):
+				return Vector2i(free[i], free[j])
+	return Vector2i(-1, -1)
+
+
+## A line of free matching pairs from the start of `data` that ends stuck (tiles left, no free
+## pair), found by seeded random play; [] if none of `attempts` games got stuck.
+static func stuck_line(data: HalvesLevelData, attempts: int = 20) -> Array[Vector2i]:
+	for attempt: int in attempts:
+		var rng := SeedService.make_rng(["halves_helpers", "stuck", data.level, attempt], 1)
+		var s := data.new_state()
+		var moves: Array[Vector2i] = []
+		var pairs := s.free_pairs()
+		while not pairs.is_empty():
+			var p: Vector2i = pairs[rng.randi_range(0, pairs.size() - 1)]
+			s.try_pair(p.x, p.y)
+			moves.append(p)
+			pairs = s.free_pairs()
+		if not s.is_cleared():
+			return moves
+	return []
+
+
+## docs/HALVES.md section 3: the slot's "features" spec with JSON floats cast back to ints.
+static func slot_feature_spec(slot: Dictionary) -> Dictionary:
+	var raw: Dictionary = slot.get("features", {})
+	var out := {}
+	for key: String in raw:
+		out[key] = int(raw[key])
+	return out
+
+
+## docs/HALVES.md section 4: trap_rate = lo + (hi - lo) * (k % 4) / 3.0, "trap" defaulting to [0, 0].
+static func slot_trap_rate(slot: Dictionary, k: int) -> float:
+	var trap: Array = slot.get("trap", [0.0, 0.0])
+	var lo := float(trap[0])
+	var hi := float(trap[1])
+	return lo + (hi - lo) * (k % 4) / 3.0
+
+
+## docs/HALVES.md section 3: min_careful defaults to 0.8, or 0.6 for hard and finale; min_wary to 0.
+static func slot_min_careful(slot: Dictionary) -> float:
+	var role := String(slot.get("role", ""))
+	var fallback := 0.6 if role == "hard" or role == "finale" else 0.8
+	return float(slot.get("min_careful", fallback))
+
+
+static func slot_min_wary(slot: Dictionary) -> float:
+	return float(slot.get("min_wary", 0.0))

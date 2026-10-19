@@ -4,7 +4,7 @@ extends RefCounted
 ## Read by the game screen, the board view and the logic in game/halves/ (see docs/HALVES.md).
 ## Changing GEN_VERSION means baking a new data/levels/halves_v<N>.json; never edit a shipped file.
 
-const GEN_VERSION: int = 1
+const GEN_VERSION: int = 2
 
 ## Boosters: free uses per level, then coins or a rewarded video for one more use.
 const FREE_USES: int = 1
@@ -16,7 +16,7 @@ const PRICE_SHUFFLE: int = 40
 const STAR2_MAX_MISTAKES: int = 2
 
 ## Levels 1..N forgive the first mistake (and show the mate) so the rule is taught, not punished.
-const TUTORIAL_FORGIVE_LEVELS: int = 3
+const TUTORIAL_FORGIVE_LEVELS: int = 4
 ## Levels 1..N pulse the mate of the selected tile.
 const MATE_PULSE_LEVELS: int = 2
 
@@ -47,9 +47,9 @@ const RUSH_BOARD_POINTS: int = 10
 
 ## Par time (docs/HALVES.md section 4), for the human to tune after real plays.
 const PAR_BASE_S: float = 10.0
-const PAR_PER_PAIR_S: float = 2.2
+const PAR_PER_PAIR_S: float = 1.6
 const PAR_PER_TYPE_S: float = 1.5
 const PAR_PER_LAYER_S: float = 3.0
 const PAR_PER_FEATURE_S: float = 1.0
-const PAR_DIFFICULTY_SCALE: float = 0.005
+const PAR_DIFFICULTY_SCALE: float = 0.004
 const PAR_ROUND_S: int = 5

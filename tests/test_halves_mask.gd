@@ -2,6 +2,7 @@ extends GutTest
 ## HalvesMask: parsing half-unit ASCII masks and every validation rule, plus the hand-made data in
 ## tools/levelgen/ (every mask validates, every plan slot points at a mask and uses valid pair types).
 ## Written from docs/HALVES.md alone; each invalid board breaks exactly one rule and is otherwise valid.
+## (v2) The plan's slot count comes from HalvesLevels.COUNT, and its optional v2 fields are checked.
 
 const H := preload("res://tests/halves_helpers.gd")
 
@@ -131,9 +132,10 @@ func test_every_mask_in_the_data_parses_and_validates() -> void:
 		assert_true(errors.is_empty(), "%s: %s" % [mask_name, ", ".join(errors)])
 
 
-func test_plan_has_levels_1_to_30_in_order() -> void:
+## (v2) The plan has HalvesLevels.COUNT (100) slots; v1 pinned 30.
+func test_plan_has_levels_1_to_count_in_order() -> void:
 	var slots := H.plan_slots()
-	assert_eq(slots.size(), 30)
+	assert_eq(slots.size(), HalvesLevels.COUNT)
 	for i: int in slots.size():
 		var slot: Dictionary = slots[i]
 		assert_eq(int(slot.get("level", 0)), i + 1, "slot %d" % i)
@@ -153,3 +155,36 @@ func test_plan_masks_exist_and_types_are_valid() -> void:
 		var target_win := float(slot.get("target_win", -1.0))
 		assert_between(target_win, 0.0, 1.0, "level %d target_win" % level)
 		assert_true(float(slot.get("target_decoy", -1.0)) >= 0.0, "level %d target_decoy" % level)
+
+
+func _is_whole_number(v: Variant) -> bool:
+	return (v is int) or (v is float and is_equal_approx(v, roundf(v)))
+
+
+## docs/HALVES.md section 3 (v2): the optional slot fields trap, features, min_careful, min_wary, tip.
+func test_plan_v2_fields_are_valid() -> void:
+	const FEATURE_SPEC_KEYS: Array[String] = ["key_pairs", "locked", "frost", "mist", "gold"]
+	for slot: Dictionary in H.plan_slots():
+		var level := int(slot.get("level", 0))
+		if slot.has("trap"):
+			var trap: Variant = slot["trap"]
+			assert_true(trap is Array and (trap as Array).size() == 2, "level %d: trap is [lo, hi]" % level)
+			if trap is Array and (trap as Array).size() == 2:
+				var lo := float(trap[0])
+				var hi := float(trap[1])
+				assert_true(0.0 <= lo and lo <= hi and hi <= 1.0, "level %d: 0 <= lo <= hi <= 1, got [%s, %s]" % [level, lo, hi])
+		if slot.has("features"):
+			var spec: Variant = slot["features"]
+			assert_true(spec is Dictionary, "level %d: features is an object" % level)
+			if spec is Dictionary:
+				for key: Variant in spec:
+					assert_has(FEATURE_SPEC_KEYS, String(key), "level %d: feature spec key '%s'" % [level, key])
+					var v: Variant = (spec as Dictionary)[key]
+					assert_true(_is_whole_number(v) and float(v) >= 0.0, "level %d: %s is a non-negative int" % [level, key])
+		for key: String in ["min_careful", "min_wary"]:
+			if slot.has(key):
+				var v: Variant = slot[key]
+				assert_true(v is float or v is int, "level %d: %s is a number" % [level, key])
+				assert_between(float(v), 0.0, 1.0, "level %d %s" % [level, key])
+		if slot.has("tip"):
+			assert_true(slot["tip"] is String, "level %d: tip is a string" % level)

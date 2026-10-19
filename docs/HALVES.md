@@ -45,7 +45,7 @@ A level may carry **features**: sets of tile ids with extra rules. All of them a
 | Feature | Rule | Shown as |
 |---|---|---|
 | **Lock** group `{keys, locked}` | A tile in `locked` is not free while **any** tile of the same group's `keys` remains. | Key tiles carry a small key; locked tiles a padlock that opens when the last key is cleared. |
-| **Frost** | A frosted tile is not free until at least one tile **touching** it has been removed (ever, by any pair). | A frosted rim that cracks when it thaws. |
+| **Frost** | A frosted tile is not free until at least one tile **touching** it has been removed (ever, by any pair). A tile that touches no tile at all cannot be frosted (the rule is skipped; `place` never picks one). | A frosted rim that cracks when it thaws. |
 | **Mist** | No effect on the rules. The face stays hidden until the tile is free for the first time; once shown it stays shown. | A veiled face that flips over. |
 | **Gold** | No effect on the rules. Clearing a gold tile earns `HalvesConfig.GOLD_COINS` coins at the end of the level. | A gold rim. |
 
@@ -75,10 +75,12 @@ The level ends when the board is clear.
   left, no free pair), whether it is the free shuffle of the stuck card or the Shuffle booster.
   Backing out of a dead end with Undo is not a slip.
 - Stars: **3** with no slips ("flawless"), **2** with 1 to `STAR2_MAX_MISTAKES` (2) slips,
-  **1** otherwise. Boosters never cost stars by themselves.
+  **1** otherwise. Boosters never cost stars by themselves: a shuffle applied while stuck is a slip
+  because of the dead end, whichever button applied it.
 
 ### Time, par and the Swift medal (v2)
-- The clock starts at the player's **first tap** on the board and counts only active play: it does
+- The clock starts at the player's **first tap** on the board (the game calls `HalvesRun.start()` on it, even
+  when that tap only selects a tile) and counts only active play: it does
   not run while the game is paused, a popup is open or the app is in the background.
 - Each level has a baked **par time** (`stats.par_ms`, section 4). Clearing a level at or under par
   earns the **Swift** medal (⚡), once per level, and `SWIFT_COINS` coins the first time.
@@ -389,7 +391,7 @@ func record(kind: Event, a: int = -1, b: int = -1) -> void   # starts the clock 
 func finish() -> void
 func to_dict() -> Dictionary
 static func from_dict(data: Dictionary) -> HalvesRun
-static func replay(level: HalvesLevelData, run: Dictionary) -> Dictionary
+static func replay(level: HalvesLevelData, run: Dictionary, level_gen: int = -1) -> Dictionary
 ```
 - Event arguments: `PAIR a b` and `MISMATCH a b` are the two tiles in tap order; `UNDO` none;
   `SHUFFLE count stuck`: `count` is the board's shuffle counter used for `shuffle_rng` and `stuck`
@@ -404,7 +406,8 @@ static func replay(level: HalvesLevelData, run: Dictionary) -> Dictionary
   `apply_deal(..., stuck == 1)`. Event times must never decrease and never exceed `active_ms`.
   Returns `{"ok": bool, "error": String, "cleared": bool, "stars": int, "slips": int}`; `ok` is
   false (with a readable `error`) at the first event that does not hold, and when the run's `gen`
-  differs from `level`'s gen version (`HalvesLevels.gen_version()` for levels, the pool's for pools).
+  differs from the board's gen version: `level_gen` when given (pools pass `HalvesPools.gen_version`),
+  else `HalvesLevels.gen_version()`.
 
 ### `HalvesLevels` (`halves_levels.gd`) and `HalvesLevelData`
 ```
@@ -468,8 +471,9 @@ One slot per level: `{"level", "role" (intro/ramp/hard/rest/finale), "mask", "ty
 in text form), "target_win", "target_decoy"}` and (v2, all optional):
 - `"trap": [lo, hi]`: trap rates for the candidates (default `[0, 0]`);
 - `"features": {"key_pairs", "locked", "frost", "mist", "gold"}`: the `HalvesFeatures.place` spec (default `{}`);
-- `"min_careful"`: lowest accepted CAREFUL win rate (default 0.8, or 0.6 for hard and finale);
-- `"min_wary"`: lowest accepted WARY win rate (default 0);
+- `"min_careful"`: lowest accepted CAREFUL win rate (default when missing: 0.8, or 0.6 for hard and finale);
+- `"min_wary"`: lowest accepted WARY win rate (default when missing: 0). The table in section 6 is what
+  the drafted plan uses; the defaults only apply to slots without the field;
 - `"tip"`: the tip card shown on this level (default none).
 The mask's tile count / 2 pairs are spread over `types` round-robin in the listed order (so earlier
 types get the extra copies).
@@ -515,8 +519,8 @@ start. Output: `data/levels/halves_v2.json` and a report `tools/levelgen/reports
 + feature_tiles * PAR_PER_FEATURE_S) * (1 + difficulty * PAR_DIFFICULTY_SCALE)`, where `types` is
 the number of distinct pair keys, `layers = max_z + 1` and `feature_tiles =
 HalvesFeatures.tile_count(features)`. Constants in `HalvesConfig`: `PAR_BASE_S = 10.0`,
-`PAR_PER_PAIR_S = 2.2`, `PAR_PER_TYPE_S = 1.5`, `PAR_PER_LAYER_S = 3.0`, `PAR_PER_FEATURE_S = 1.0`,
-`PAR_DIFFICULTY_SCALE = 0.005`, `PAR_ROUND_S = 5`. They are for the human to tune after real plays
+`PAR_PER_PAIR_S = 1.6`, `PAR_PER_TYPE_S = 1.5`, `PAR_PER_LAYER_S = 3.0`, `PAR_PER_FEATURE_S = 1.0`,
+`PAR_DIFFICULTY_SCALE = 0.004`, `PAR_ROUND_S = 5`. They are for the human to tune after real plays
 (the dev console's `stats` command lists times per level).
 
 **Pools** use the same steps with fewer candidates (`POOL_CANDIDATES`), the recipe of
@@ -537,7 +541,7 @@ Sunday), and seed parts `["halves", kind, i, k]`.
   marks (near-twins), features, and the targets in the plan.
 - **Sawtooth in packs of 10:** a rest level brings each new idea (x1 or x6), x5 is hard and x0 is a
   finale. Core rules are all taught by level 10: layers (2), side blocking (3), decoys (4), the
-  first trap (5), horizontal cuts (6), diamonds (7), dot marks and gold (8), line marks (9). New
+  first trap (5), horizontal cuts (6), diamonds (7), dot marks (8), line marks (9); gold tiles arrive at 11. New
   features open the later chapters: mist (21), locks (41), frost (61); chapter 5 (81-100) mixes all.
 - **Role targets** (random / min WARY / min CAREFUL / trap rate):
 

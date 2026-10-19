@@ -1,11 +1,11 @@
 class_name HalvesLevels
 extends RefCounted
-## Loads the 30 baked Halves levels from data/levels/halves_v1.json (made offline by
+## Loads the 100 baked Halves levels from data/levels/halves_v2.json (made offline by
 ## tools/levelgen/generate_halves.gd) and caches them. Used by the game screen and level select.
 ## JSON hands numbers back as floats; everything is cast to int here so seeds and ids stay exact.
 
-const PATH: String = "res://data/levels/halves_v1.json"
-const COUNT: int = 30
+const PATH: String = "res://data/levels/halves_v2.json"
+const COUNT: int = 100
 
 static var _levels: Array[HalvesLevelData] = []
 static var _gen_version: int = 0

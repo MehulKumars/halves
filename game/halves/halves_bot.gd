@@ -33,8 +33,14 @@ static func play(geometry: HalvesGeometry, faces: PackedInt32Array, rng: RandomN
 		decoy_sum += float(decoys) / maxi(1, pairs.size())
 		if pairs.is_empty():
 			break
-		var pick := pairs[rng.randi_range(0, pairs.size() - 1)] if policy == Policy.RANDOM \
-				else _careful_pick(geometry, remaining, pairs, rng)
+		var pick: Vector2i
+		match policy:
+			Policy.CAREFUL:
+				pick = _careful_pick(geometry, remaining, pairs, rng)
+			Policy.WARY:
+				pick = _wary_pick(geometry, faces, remaining, pairs, rng)
+			_:
+				pick = pairs[rng.randi_range(0, pairs.size() - 1)]
 		remaining &= ~(1 << pick.x) & ~(1 << pick.y)
 		steps += 1
 	return {

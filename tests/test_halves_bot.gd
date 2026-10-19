@@ -5,7 +5,9 @@ extends GutTest
 ## the final stuck board included (the doc's max(1, free pairs) only matters there); a clear board is not a step.
 
 const H := preload("res://tests/halves_helpers.gd")
-const RATE_KEYS: Array[String] = ["runs", "random_win", "careful_win", "avg_free_pairs", "decoy_exposure", "difficulty"]
+## (v2) rate also returns wary_win (the WARY games run after RANDOM and CAREFUL).
+const RATE_KEYS: Array[String] = ["runs", "random_win", "careful_win", "wary_win", "avg_free_pairs", "decoy_exposure",
+		"difficulty"]
 const PLAY_KEYS: Array[String] = ["cleared", "steps", "free_pairs", "decoy"]
 
 
@@ -136,6 +138,7 @@ func test_rate_keys_ranges_and_determinism() -> void:
 	assert_eq(a.get("runs"), 5)
 	assert_between(float(a.get("random_win", -1.0)), 0.0, 1.0)
 	assert_between(float(a.get("careful_win", -1.0)), 0.0, 1.0)
+	assert_between(float(a.get("wary_win", -1.0)), 0.0, 1.0)
 	assert_between(float(a.get("difficulty", -1.0)), 0.0, 100.0)
 	assert_true(float(a.get("avg_free_pairs", -1.0)) >= 0.0)
 	assert_true(float(a.get("decoy_exposure", -1.0)) >= 0.0)
@@ -147,6 +150,7 @@ func test_rate_of_the_forced_board() -> void:
 	var r := HalvesBot.rate(s.geometry, s.faces, ["test_halves_bot", "forced"], 4)
 	assert_almost_eq(float(r.get("random_win", -1.0)), 1.0, 1e-6)
 	assert_almost_eq(float(r.get("careful_win", -1.0)), 1.0, 1e-6)
+	assert_almost_eq(float(r.get("wary_win", -1.0)), 1.0, 1e-6, "forced: no move is a trap")
 	assert_almost_eq(float(r.get("avg_free_pairs", -1.0)), 1.0, 1e-6)
 	assert_almost_eq(float(r.get("decoy_exposure", -1.0)), 1.0, 1e-6)
 	# 100 * (0.6 * 0 + 0.25 * (1 / 1.5) + 0.15 * (1 - 1 / 6)) = 100 * (1/6 + 1/8) = 29.1666...
