@@ -6,6 +6,8 @@ extends Node2D
 
 const POOL_SIZE: int = 4
 const SHARDS: int = 12
+## Bursts grow with combos but never past this many shards.
+const MAX_SHARDS: int = 28
 
 var _emitters: Array[CPUParticles2D] = []
 var _next: int = 0
@@ -37,8 +39,9 @@ func _init() -> void:
 		_emitters.append(emitter)
 
 
-## Throws shards in sand and the shape's colour from `at` (pool coordinates). Off without motion.
-func burst(at: Vector2, colour: Color, size_scale: float = 1.0) -> void:
+## Throws shards in sand and the shape's colour from `at` (pool coordinates); `amount_scale` grows
+## the burst along a combo chain. Off without motion.
+func burst(at: Vector2, colour: Color, size_scale: float = 1.0, amount_scale: float = 1.0) -> void:
 	if Juice.motion_scale <= 0.0:
 		return
 	var emitter := _emitters[_next]
@@ -47,7 +50,7 @@ func burst(at: Vector2, colour: Color, size_scale: float = 1.0) -> void:
 	colours.set_color(0, HalvesPalette.SAND)
 	colours.set_color(1, colour)
 	emitter.color_initial_ramp = colours
-	emitter.amount = maxi(4, roundi(SHARDS * Juice.motion_scale))
+	emitter.amount = clampi(roundi(SHARDS * amount_scale * Juice.motion_scale), 4, MAX_SHARDS)
 	emitter.initial_velocity_min = 160.0 * size_scale
 	emitter.initial_velocity_max = 320.0 * size_scale
 	emitter.scale_amount_min = 5.0 * size_scale

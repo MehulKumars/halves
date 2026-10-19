@@ -9,7 +9,7 @@ const SIZES: Array[Vector2i] = [Vector2i(720, 1280), Vector2i(720, 1600), Vector
 const PAGES: Array[String] = [
 	Screens.SPLASH, Screens.MAIN_MENU, Screens.LEVEL_SELECT, Screens.GAME, Screens.SHOP, Screens.CREDITS,
 	Screens.GALLERY, Screens.PAUSE, Screens.RESULTS, Screens.SETTINGS, Screens.DAILY_REWARD,
-	Screens.CONFIRM, Screens.RANKS, Screens.BOOSTER,
+	Screens.CONFIRM, Screens.RANKS, Screens.BOOSTER, Screens.TIP, Screens.CHAPTER, Screens.DAILY,
 ]
 
 
@@ -54,6 +54,10 @@ func _layout_problems(path: String, size: Vector2i) -> Array[String]:
 		page.call(&"show_win", 3, 2, 20)
 	if path == Screens.CONFIRM:
 		page.call(&"setup", "Reset progress?", "Stars and coins on this phone are deleted.", "Reset", true)
+	if path == Screens.TIP:
+		page.call(&"setup_all")
+	if path == Screens.CHAPTER:
+		page.call(&"setup", 0, true)
 	await _settle()
 	var problems: Array[String] = []
 	var screen := Rect2(Vector2.ZERO, Vector2(size))

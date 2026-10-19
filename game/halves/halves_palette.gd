@@ -11,6 +11,12 @@ const TEAL: Color = Color("#2A8C80")
 const SAND: Color = Color("#F2CC8F")
 ## The dark edge under every tile face.
 const SIDE: Color = Color("#142A45")
+## Feature overlays: mist waves, frost wash and rim, gold coin badges.
+const MIST: Color = Color("#8FA6BF")
+const ICE: Color = Color("#BFE3F5")
+const ICE_EDGE: Color = Color("#E8F7FF")
+const GOLD: Color = Color("#E8B84A")
+const GOLD_DARK: Color = Color("#A9792A")
 ## Multiplied over a tile that can't be picked yet (a tint, not transparency, so nothing shows through).
 const BLOCKED_TINT: Color = Color(0.7, 0.72, 0.76)
 

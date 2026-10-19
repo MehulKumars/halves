@@ -2,7 +2,8 @@ class_name HalvesTileView
 extends Node2D
 ## One tile on the board: an ivory face over a dark side, with its half shape drawn in code.
 ## Made and laid out by HalvesBoardView; its origin is the face centre, so scale pops from the middle.
-## Drawing is cached by Godot until a property here changes (queue_redraw), so idle tiles cost nothing.
+## Feature overlays (mist veil, key, padlock, frost, gold) are drawn here too; idle tiles cost nothing
+## because Godot caches the drawing until a property changes (queue_redraw).
 
 enum Ring { NONE, SELECTED, HINT, MISTAKE }
 
@@ -42,16 +43,40 @@ var layer_shade: float = 1.0:
 	set(value):
 		layer_shade = value
 		_apply_tint()
+## Feature overlays (see HalvesFeatures): a hidden face, a key, a padlock (0 = gone), frost (0 = thawed), gold.
+var veiled: bool = false:
+	set(value):
+		veiled = value
+		queue_redraw()
+var key_mark: bool = false:
+	set(value):
+		key_mark = value
+		queue_redraw()
+var lock_amount: float = 0.0:
+	set(value):
+		lock_amount = value
+		queue_redraw()
+var frost: float = 0.0:
+	set(value):
+		frost = value
+		queue_redraw()
+var gold: bool = false:
+	set(value):
+		gold = value
+		queue_redraw()
 ## Where layout put the tile; shakes and nudges return here.
 var rest_position: Vector2 = Vector2.ZERO
 
 var _lift_tween: Tween
 var _move_tween: Tween
 var _ring_tween: Tween
+var _feature_tween: Tween
+var _pop_tween: Tween
 
 static var _side_box: StyleBoxFlat = _make_box(HalvesPalette.SIDE)
 static var _face_box: StyleBoxFlat = _make_box(HalvesPalette.IVORY)
 static var _ring_box: StyleBoxFlat = _make_ring_box()
+static var _frost_box: StyleBoxFlat = _make_box(HalvesPalette.ICE)
 
 
 ## The tappable area in board coordinates (face plus side, following the lift).
@@ -127,7 +152,19 @@ func _draw() -> void:
 	_face_box.set_corner_radius_all(radius)
 	draw_style_box(_side_box, Rect2(-w * 0.5, top + depth, w, h + lift))
 	draw_style_box(_face_box, Rect2(-w * 0.5, top, w, h))
-	HalvesShapes.draw_half(self, face, Vector2(0.0, top + h * 0.5), w * 0.31)
+	var face_rect := Rect2(-w * 0.5, top, w, h)
+	if veiled:
+		_draw_mist(face_rect)
+	else:
+		HalvesShapes.draw_half(self, face, Vector2(0.0, top + h * 0.5), w * 0.31)
+	if frost > 0.0:
+		_draw_frost(face_rect, radius)
+	if gold:
+		_draw_coin(Vector2(w * 0.5 - w * 0.15, top + w * 0.15), w * 0.1)
+	if key_mark:
+		_draw_key(Vector2(-w * 0.5 + w * 0.15, top + w * 0.15), w * 0.11)
+	if lock_amount > 0.0:
+		_draw_padlock(Vector2(0.0, top + h - w * 0.17), w * 0.13, lock_amount)
 	if ring != Ring.NONE:
 		var colour := HalvesPalette.TERRACOTTA if ring == Ring.MISTAKE else HalvesPalette.SAND
 		colour.a = ring_alpha
@@ -135,6 +172,123 @@ func _draw() -> void:
 		_ring_box.set_border_width_all(maxi(4, int(round(w * (0.065 if ring == Ring.SELECTED else 0.055)))))
 		_ring_box.set_corner_radius_all(radius)
 		draw_style_box(_ring_box, Rect2(-w * 0.5, top, w, h))
+
+
+## A small pop when the tile becomes free (it can be played now).
+func pop() -> void:
+	if Juice.motion_scale <= 0.0:
+		return
+	if _pop_tween != null:
+		_pop_tween.kill()
+	scale = Vector2.ONE
+	_pop_tween = create_tween()
+	_pop_tween.tween_property(self, ^"scale", Vector2.ONE * (1.0 + 0.07 * Juice.motion_scale), 0.09) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_pop_tween.tween_property(self, ^"scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+## Mist lifts: the tile flips and shows its face.
+func reveal() -> void:
+	if Juice.motion_scale <= 0.0:
+		veiled = false
+		return
+	_kill_feature_tween()
+	_feature_tween = create_tween()
+	_feature_tween.tween_property(self, ^"scale:x", 0.0, 0.12).set_trans(Tween.TRANS_SINE)
+	_feature_tween.tween_callback(func() -> void: veiled = false)
+	_feature_tween.tween_property(self, ^"scale:x", 1.0, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+## The padlock pops open and fades.
+func unlock() -> void:
+	if Juice.motion_scale <= 0.0:
+		lock_amount = 0.0
+		return
+	_kill_feature_tween()
+	_feature_tween = create_tween()
+	_feature_tween.tween_property(self, ^"lock_amount", 1.35, 0.1).set_trans(Tween.TRANS_SINE)
+	_feature_tween.tween_property(self, ^"lock_amount", 0.0, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+
+## The frost cracks and melts away.
+func thaw() -> void:
+	if Juice.motion_scale <= 0.0:
+		frost = 0.0
+		return
+	_kill_feature_tween()
+	_feature_tween = create_tween()
+	_feature_tween.tween_property(self, ^"frost", 1.25, 0.08)
+	_feature_tween.tween_property(self, ^"frost", 0.0, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+func _kill_feature_tween() -> void:
+	if _feature_tween != null:
+		_feature_tween.kill()
+		_feature_tween = null
+		scale = Vector2.ONE
+
+
+## Mist: three soft waves across a pale face (the tile is there, its half is not shown yet).
+func _draw_mist(rect: Rect2) -> void:
+	var colour := HalvesPalette.MIST
+	var waves := 3
+	var width := maxf(2.0, rect.size.x * 0.045)
+	for k in waves:
+		var y := rect.position.y + rect.size.y * (0.3 + 0.2 * k)
+		var points := PackedVector2Array()
+		for s in 13:
+			var t := s / 12.0
+			var x := rect.position.x + rect.size.x * (0.16 + 0.68 * t)
+			points.append(Vector2(x, y + sin(t * TAU * 1.5 + k) * rect.size.x * 0.035))
+		draw_polyline(points, colour, width, true)
+
+
+## Frost: an icy wash and rim, with small crystals in two corners; `frost` above 1 is the crack.
+func _draw_frost(rect: Rect2, radius: int) -> void:
+	var amount := minf(frost, 1.0)
+	var wash := HalvesPalette.ICE
+	wash.a = 0.32 * amount
+	_frost_box.bg_color = wash
+	_frost_box.border_color = Color(HalvesPalette.ICE_EDGE, 0.95 * amount)
+	_frost_box.set_border_width_all(maxi(3, int(round(rect.size.x * 0.05))))
+	_frost_box.set_corner_radius_all(radius)
+	draw_style_box(_frost_box, rect)
+	var arm := rect.size.x * 0.1
+	var line := Color(HalvesPalette.ICE_EDGE, amount)
+	for corner in [rect.position + Vector2(arm * 1.4, arm * 1.4), rect.end - Vector2(arm * 1.4, arm * 1.4)]:
+		for k in 3:
+			var d := Vector2.RIGHT.rotated(PI / 3.0 * k) * arm
+			draw_line(corner - d, corner + d, line, maxf(2.0, rect.size.x * 0.025), true)
+	if frost > 1.0:
+		var crack := Color(1, 1, 1, (frost - 1.0) * 4.0)
+		draw_polyline(PackedVector2Array([rect.position + rect.size * Vector2(0.2, 0.1),
+				rect.position + rect.size * Vector2(0.45, 0.45), rect.position + rect.size * Vector2(0.4, 0.7),
+				rect.position + rect.size * Vector2(0.7, 0.92)]), crack, maxf(2.0, rect.size.x * 0.03), true)
+
+
+func _draw_coin(at: Vector2, r: float) -> void:
+	draw_circle(at, r * 1.15, HalvesPalette.GOLD_DARK, true, -1.0, true)
+	draw_circle(at, r, HalvesPalette.GOLD, true, -1.0, true)
+	draw_circle(at + Vector2(-r * 0.3, -r * 0.3), r * 0.25, Color(1, 1, 1, 0.7), true, -1.0, true)
+
+
+func _draw_key(at: Vector2, r: float) -> void:
+	draw_circle(at, r * 1.25, HalvesPalette.SIDE, true, -1.0, true)
+	var w := maxf(2.0, r * 0.28)
+	draw_arc(at + Vector2(-r * 0.35, 0), r * 0.38, 0.0, TAU, 16, HalvesPalette.GOLD, w, true)
+	draw_line(at + Vector2(0.0, 0), at + Vector2(r * 0.8, 0), HalvesPalette.GOLD, w, true)
+	draw_line(at + Vector2(r * 0.55, 0), at + Vector2(r * 0.55, r * 0.4), HalvesPalette.GOLD, w, true)
+	draw_line(at + Vector2(r * 0.8, 0), at + Vector2(r * 0.8, r * 0.3), HalvesPalette.GOLD, w, true)
+
+
+## A padlock badge; `amount` 1 shown, 0 gone, above 1 the shackle springs up (opening).
+func _draw_padlock(at: Vector2, r: float, amount: float) -> void:
+	var alpha := clampf(amount, 0.0, 1.0)
+	var lift_up := maxf(0.0, amount - 1.0) * r * 1.5
+	draw_circle(at, r * 1.3, Color(HalvesPalette.SIDE, alpha), true, -1.0, true)
+	var body := Rect2(at + Vector2(-r * 0.6, -r * 0.15), Vector2(r * 1.2, r * 0.9))
+	draw_rect(body, Color(HalvesPalette.SAND, alpha))
+	draw_arc(at + Vector2(0, -r * 0.2 - lift_up), r * 0.42, PI, TAU, 12, Color(HalvesPalette.SAND, alpha), maxf(2.0, r * 0.25), true)
 
 
 func _apply_tint() -> void:

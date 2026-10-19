@@ -1,5 +1,5 @@
 extends Modal
-## Settings: music and sound volume, vibration, reduce motion, links and version.
+## Settings: music and sound volume, vibration, reduce motion, the game clock, links and version.
 ## The style picker shows in debug builds so you can compare the five styles on a phone;
 ## turn on `show_style_picker` to let players choose. Values are saved through Settings.
 
@@ -17,6 +17,7 @@ func _ready() -> void:
 	%HapticsToggle.toggled.connect(Settings.set_haptics)
 	%MotionToggle.button_pressed = Settings.reduce_motion()
 	%MotionToggle.toggled.connect(Settings.set_reduce_motion)
+	_add_timer_row()
 	%CloseButton.pressed.connect(close)
 	%CreditsButton.pressed.connect(UI.goto.bind(Screens.CREDITS))
 	%PrivacyButton.pressed.connect(OS.shell_open.bind(PRIVACY_URL))
@@ -30,6 +31,31 @@ func _ready() -> void:
 	if %StyleSection.visible:
 		_build_style_chips()
 	refit()
+
+
+## "Show timer": the game clock in the HUD (built like the Reduce Motion row under it).
+func _add_timer_row() -> void:
+	var model: HBoxContainer = %MotionToggle.get_parent()
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", model.get_theme_constant(&"separation"))
+	var icon := TextureRect.new()
+	icon.texture = Icons.TIMER
+	icon.custom_minimum_size = %MotionIcon.custom_minimum_size
+	icon.expand_mode = %MotionIcon.expand_mode
+	icon.stretch_mode = %MotionIcon.stretch_mode
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.modulate = get_theme_color(&"text_muted", &"Tokens")
+	row.add_child(icon)
+	var label := Label.new()
+	label.text = "Show timer"
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+	var toggle := CheckButton.new()
+	toggle.button_pressed = Settings.show_timer()
+	toggle.toggled.connect(Settings.set_show_timer)
+	row.add_child(toggle)
+	model.get_parent().add_child(row)
+	model.get_parent().move_child(row, model.get_index() + 1)
 
 
 func _bind_slider(slider: HSlider, bus: StringName) -> void:

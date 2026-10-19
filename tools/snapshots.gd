@@ -16,7 +16,8 @@ const SIZE_PRESETS: Array[Vector2i] = [Vector2i(720, 1280), Vector2i(720, 1600),
 const SCREENS: PackedStringArray = [
 	"splash", "main_menu", "level_select", "game", "pause", "results_win", "results_lose", "settings",
 	"shop", "daily_reward", "ranks", "confirm", "credits", "gallery",
-	"game_l1", "game_selected", "game_l16", "game_l26", "game_l30", "game_stuck", "booster",
+	"game_l1", "game_selected", "game_l21", "game_l41", "game_l61", "game_l100", "game_stuck", "booster",
+	"results_best", "results_rush", "chapter", "daily", "tip", "zen", "rush",
 ]
 
 var _sizes: Array[Vector2i] = []
@@ -79,6 +80,9 @@ func _demo_progress() -> void:
 	Progress.claim_daily(Time.get_date_string_from_unix_time(int(now) - 2 * 86400))
 	Progress.claim_daily(Time.get_date_string_from_unix_time(int(now) - 86400))
 	Progress.add_coins(1250 - Progress.coins())
+	# Tip cards were seen, so board shots show the board; the "tip" shot opens one on purpose.
+	for id: String in HalvesTips.ids():
+		HalvesRecords.mark_tip(id)
 
 
 func _parse_args() -> void:
@@ -167,6 +171,7 @@ func _show_level_select() -> bool:
 
 
 func _show_game() -> bool:
+	Screens.mode = Screens.Mode.LEVELS
 	Screens.level = 3
 	return await _open(Screens.GAME)
 
@@ -232,6 +237,7 @@ func _show_gallery() -> bool:
 
 ## Halves boards: a level as the player first sees it (tutorial pulse on level 1).
 func _show_game_level(level: int) -> bool:
+	Screens.mode = Screens.Mode.LEVELS
 	Screens.level = level
 	if not await _open(Screens.GAME):
 		return false
@@ -243,16 +249,79 @@ func _show_game_l1() -> bool:
 	return await _show_game_level(1)
 
 
-func _show_game_l16() -> bool:
-	return await _show_game_level(16)
+func _show_game_l21() -> bool:
+	return await _show_game_level(21)
 
 
-func _show_game_l26() -> bool:
-	return await _show_game_level(26)
+func _show_game_l41() -> bool:
+	return await _show_game_level(41)
 
 
-func _show_game_l30() -> bool:
-	return await _show_game_level(30)
+func _show_game_l61() -> bool:
+	return await _show_game_level(61)
+
+
+func _show_game_l100() -> bool:
+	return await _show_game_level(100)
+
+
+## A level-12 clear with a new best and the Swift medal, after the reveal has played.
+func _show_results_best() -> bool:
+	if not await _show_game_level(12):
+		return false
+	var popup := _popup(Screens.RESULTS)
+	if popup == null:
+		return false
+	popup.call(&"show_win", 12, 3, 85, {"time_ms": 64300, "par_ms": 70000, "best_ms": 64300, "new_best": true,
+			"swift": true, "swift_new": true, "gold_coins": 10, "chapter": 0})
+	await _frames(150)
+	return true
+
+
+func _show_results_rush() -> bool:
+	if not await _show_game():
+		return false
+	var popup := _popup(Screens.RESULTS)
+	if popup == null:
+		return false
+	popup.call(&"show_win", 0, 0, 24, {"rush": true, "score": 186, "best_score": 186, "new_best": true, "boards": 9})
+	await _frames(120)
+	return true
+
+
+func _show_chapter() -> bool:
+	if not await _show_main_menu():
+		return false
+	var popup := _popup(Screens.CHAPTER)
+	if popup == null:
+		return false
+	popup.call(&"setup", 0, true)
+	await _frames(60)
+	return true
+
+
+func _show_daily() -> bool:
+	return await _show_main_menu() and _popup(Screens.DAILY) != null
+
+
+func _show_tip() -> bool:
+	if not await _show_game_level(3):
+		return false
+	var popup := _popup(Screens.TIP)
+	if popup == null:
+		return false
+	popup.call(&"setup", "lock")
+	return true
+
+
+func _show_zen() -> bool:
+	Screens.mode = Screens.Mode.ZEN
+	return await _open(Screens.GAME)
+
+
+func _show_rush() -> bool:
+	Screens.mode = Screens.Mode.RUSH
+	return await _open(Screens.GAME)
 
 
 ## Level 2 with a tile picked: it lifts with a sand ring and its free mate pulses (tutorial).

@@ -1,5 +1,6 @@
 extends Modal
-## Ranks: the player's own stats and a star leaderboard with the player's row highlighted.
+## Ranks: the player's own stats and records (Swift medals, rush best, daily streak) and a star
+## leaderboard with the player's row highlighted.
 ## Until Google Play Games is connected the board shows sample players, labelled as such. With
 ## Play Games, the main menu opens Google's own leaderboard screen instead (has_native_ui()).
 
@@ -16,8 +17,44 @@ func _ready() -> void:
 	%StarsValue.text = str(Progress.total_stars())
 	%LevelsValue.text = str(Progress.levels_won())
 	%CoinsValue.text = CurrencyPill.format_number(Progress.coins())
+	_build_records()
 	_build_board(Progress.total_stars())
 	refit()
+
+
+## A second row of records under the stats, and a word on friends' boards.
+func _build_records() -> void:
+	var stats: HBoxContainer = %StarsValue.get_parent().get_parent().get_parent()
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", stats.get_theme_constant(&"separation"))
+	var daily := HalvesRecords.daily_state()
+	for entry: Array in [[str(HalvesRecords.swift_count()), "Swift ⚡"], [str(HalvesRecords.rush_best()), "Rush best"],
+			[str(int(daily.streak)), "Daily streak"]]:
+		var tile := PanelContainer.new()
+		tile.theme_type_variation = &"TilePanel"
+		tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var box := VBoxContainer.new()
+		tile.add_child(box)
+		var value := Label.new()
+		value.theme_type_variation = &"ValueLabel"
+		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		value.text = entry[0]
+		box.add_child(value)
+		var caption := Label.new()
+		caption.theme_type_variation = &"CaptionLabel"
+		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		caption.text = entry[1]
+		box.add_child(caption)
+		row.add_child(tile)
+	stats.get_parent().add_child(row)
+	stats.get_parent().move_child(row, stats.get_index() + 1)
+	var note := Label.new()
+	note.theme_type_variation = &"CaptionLabel"
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.text = "Friends' boards are coming. Your best times keep their moves, so they can be checked."
+	stats.get_parent().add_child(note)
+	stats.get_parent().move_child(note, row.get_index() + 1)
 
 
 func _build_board(my_score: int) -> void:

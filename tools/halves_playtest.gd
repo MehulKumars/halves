@@ -23,7 +23,11 @@ func _initialize() -> void:
 	Progress.path = "user://playtest_progress.json"
 	Progress.reset()
 	Progress.add_coins(200)
+	# Tip cards would cover the board; the playtest is about the board.
+	for id: String in HalvesTips.ids():
+		HalvesRecords.mark_tip(id)
 	root.size = SIZE
+	Screens.mode = Screens.Mode.LEVELS
 	Screens.level = level
 	change_scene_to_file(Screens.GAME)
 	await _frames(30)

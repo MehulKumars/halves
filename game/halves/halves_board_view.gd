@@ -1,16 +1,28 @@
 class_name HalvesBoardView
 extends Control
 ## The Halves board: lays the tiles out to fit this Control, turns taps into HalvesState moves and
-## plays the feedback (lift, snap, mistake shake, shuffle flip). The game screen calls setup(),
-## show_hint(), undo() and shuffle(); the board signals matches, mistakes, stuck and cleared.
+## plays the feedback (lift, snap, combo, mistake shake, shuffle flip, mist/lock/frost/gold).
+## The game screen calls setup(), show_hint(), undo() and shuffle(); the board signals what happened.
 
 signal matched(a: int, b: int)
 ## A mistake was made; `forgiven` when the tutorial let it go without costing a star.
 signal mistake_made(forgiven: bool)
+## The two tiles of a mistake (for the run log), emitted with mistake_made.
+signal mismatched(a: int, b: int)
 ## Stars, tiles or the undo history changed (HUD and booster badges refresh).
 signal changed
 signal stuck
 signal cleared
+## The first tap on this board (the clock starts here).
+signal first_tap
+## Snaps close together: `count` in a row (1 = no chain), at the snap point.
+signal combo(count: int, at: Vector2)
+## A tap on a tile that can't be played; `reason` is a HalvesGeometry.Block.
+signal blocked_tap(tile: int, reason: int)
+## A shuffle was applied: the board's shuffle counter (for shuffle_rng) and whether it was stuck.
+signal shuffled(count: int, was_stuck: bool)
+## Gold tiles cleared by a snap, at the snap point (board coordinates).
+signal gold_collected(tiles: int, at: Vector2)
 
 ## Layout in units of the column pitch u: face size, row pitch, side depth, layer rise, lift.
 const FACE_W: float = 0.96
@@ -21,30 +33,27 @@ const LAYER_RISE: float = 0.1
 const LIFT: float = 0.25
 ## Small boards would get huge tiles; cap the pitch so level 1 still looks like a game.
 const MAX_UNIT: float = 150.0
-## Settings.SFX_BUS, named here so the board compiles without autoloads (tools, tests).
-const SFX_BUS: StringName = &"SFX"
-
-## Sound slots for the human's porcelain and wood recordings (none shipped yet). WAV, on the SFX bus.
-@export var select_sound: AudioStream
-@export var snap_sound: AudioStream
-@export var mistake_sound: AudioStream
-@export var shuffle_sound: AudioStream
+## The combo ladder stops climbing after this many semitones.
+const MAX_COMBO_STEP: int = 9
 
 var level_data: HalvesLevelData
 var state: HalvesState
 ## Pulse the free mates of a picked tile (tutorial levels).
 var show_mates: bool = false
 var shuffles: int = 0
+## The current chain of quick snaps (1 after a lone snap).
+var combo_count: int = 0
 
 var _tiles: Array[HalvesTileView] = []
 var _selected: int = -1
 var _guides: Array[int] = []
 var _busy: bool = false
+var _tapped: bool = false
+var _last_snap_ms: int = -100000
 var _unit: float = 100.0
 var _origin: Vector2 = Vector2.ZERO
 var _fx_layer: Node2D
 var _shards: HalvesShardPool
-var _players: Array[AudioStreamPlayer] = []
 
 
 func _init() -> void:
@@ -54,17 +63,13 @@ func _init() -> void:
 	add_child(_fx_layer)
 	_shards = HalvesShardPool.new()
 	_fx_layer.add_child(_shards)
-	for i in 4:
-		var player := AudioStreamPlayer.new()
-		player.bus = SFX_BUS
-		add_child(player)
-		_players.append(player)
 
 
 func setup(data: HalvesLevelData, board_state: HalvesState) -> void:
 	level_data = data
 	state = board_state
 	shuffles = 0
+	combo_count = 0
 	_selected = -1
 	_guides.clear()
 	_busy = false
@@ -77,6 +82,7 @@ func setup(data: HalvesLevelData, board_state: HalvesState) -> void:
 		tile.face = state.faces[i]
 		add_child(tile)
 		_tiles.append(tile)
+	move_child(_fx_layer, -1)
 	_layout()
 	_refresh()
 
@@ -147,6 +153,9 @@ func _gui_input(event: InputEvent) -> void:
 func tap(i: int) -> void:
 	if _busy or state == null or state.remaining & (1 << i) == 0:
 		return
+	if not _tapped:
+		_tapped = true
+		first_tap.emit()
 	_stop_guides()
 	if not state.geometry.is_free(i, state.remaining):
 		_nudge(i)
@@ -156,12 +165,14 @@ func tap(i: int) -> void:
 		return
 	if _selected == i:
 		_deselect()
+		HalvesSfx.play(&"deselect")
 		return
 	var first := _selected
 	var mistakes_before := state.mistakes
+	var before := _snapshot()
 	match state.try_pair(first, i):
 		HalvesState.Result.MATCH:
-			_on_match(first, i)
+			_on_match(first, i, before)
 		HalvesState.Result.MISMATCH:
 			_on_mistake(first, i, state.mistakes == mistakes_before)
 		HalvesState.Result.SWITCH:
@@ -179,6 +190,7 @@ func show_hint(pair: Vector2i) -> void:
 	_deselect()
 	_guide(pair.x)
 	_guide(pair.y)
+	HalvesSfx.play(&"hint")
 
 
 ## Level 1: one free tile whose mate is free pulses, no text.
@@ -196,7 +208,9 @@ func undo() -> bool:
 	_deselect()
 	var last := state.last_action()
 	state.undo()
+	combo_count = 0
 	_refresh()
+	HalvesSfx.play(&"undo")
 	if last.kind == "pair":
 		for i: int in [int(last.a), int(last.b)]:
 			var tile := _tiles[i]
@@ -208,19 +222,22 @@ func undo() -> bool:
 	return true
 
 
-## Re-deals the remaining tiles into a solvable board, with a quick flip.
-func shuffle() -> void:
+## Re-deals the remaining tiles into a solvable board, with a quick flip. `was_stuck`: the board
+## had no free pair when the shuffle was asked for (a slip).
+func shuffle(was_stuck: bool = false) -> void:
 	if _busy or state.is_cleared():
 		return
 	_stop_guides()
 	_deselect()
 	shuffles += 1
+	combo_count = 0
 	var before := state.remaining
 	var result := HalvesFill.shuffle(state, level_data.solution, HalvesFill.shuffle_rng(level_data.level, shuffles))
 	if result.is_empty():
 		return
-	state.apply_deal(result.remaining, result.faces)
-	_play(shuffle_sound)
+	state.apply_deal(result.remaining, result.faces, was_stuck)
+	shuffled.emit(shuffles, was_stuck)
+	HalvesSfx.play(&"shuffle")
 	Haptics.tick()
 	if Juice.motion_scale <= 0.0:
 		_refresh()
@@ -248,7 +265,7 @@ func _select(i: int) -> void:
 	tile.set_lifted(true, LIFT * _unit)
 	tile.ring = HalvesTileView.Ring.SELECTED
 	Haptics.tick()
-	_play(select_sound)
+	HalvesSfx.play(&"select")
 	if show_mates:
 		_guide_mates(i)
 
@@ -262,21 +279,31 @@ func _deselect() -> void:
 	_selected = -1
 
 
-func _on_match(a: int, b: int) -> void:
+func _on_match(a: int, b: int, before: Dictionary) -> void:
 	var start_a := _tiles[a].position + Vector2(0, -_tiles[a].lift)
 	var start_b := _tiles[b].position + Vector2(0, -_tiles[b].lift)
+	var at := (start_a + start_b) * 0.5
 	_selected = -1
 	for i in [a, b]:
 		_tiles[i].stop_ring()
 		_tiles[i].lift = 0.0
+	var now := Time.get_ticks_msec()
+	combo_count = combo_count + 1 if now - _last_snap_ms <= int(HalvesConfig.COMBO_WINDOW * 1000.0) else 1
+	_last_snap_ms = now
+	var chain := mini(combo_count - 1, MAX_COMBO_STEP)
 	var fx := HalvesSnapFx.new()
 	_fx_layer.add_child(fx)
 	var colour := HalvesPalette.shape_color(HalvesFace.shape(state.faces[a]))
-	fx.snapped.connect(func(at: Vector2) -> void: _shards.burst(at, colour, _unit / 110.0))
+	var burst := 1.0 + 0.12 * chain
+	fx.snapped.connect(func(point: Vector2) -> void: _shards.burst(point, colour, _unit / 110.0, burst))
 	fx.play(state.faces[a], state.faces[b], start_a, start_b, _tiles[a].face_size)
-	Haptics.pulse(15)
-	_play(snap_sound)
+	Haptics.pulse(15 + 3 * mini(chain, 5))
+	HalvesSfx.step(&"snap_big" if combo_count >= HalvesConfig.COMBO_COINS_AT else &"snap", chain)
 	_refresh()
+	_feature_feedback(before, at, a, b)
+	if combo_count >= 2:
+		_float(at + Vector2(0, -_unit * 0.6), "×%d" % combo_count, HalvesPalette.SAND, 0.42)
+	combo.emit(combo_count, at)
 	matched.emit(a, b)
 	changed.emit()
 	if state.is_cleared():
@@ -288,22 +315,66 @@ func _on_match(a: int, b: int) -> void:
 		_check_stuck_later()
 
 
+## What a snap changed besides the pair: tiles that became free pop, mist lifts, locks open,
+## frost thaws, gold pays.
+func _feature_feedback(before: Dictionary, at: Vector2, a: int, b: int) -> void:
+	var after := _snapshot()
+	var freed: int = after.free & ~int(before.free) & state.remaining
+	var revealed: int = int(before.veiled) & ~state.veiled
+	var opened: int = int(before.locked) & ~int(after.locked)
+	var thawed: int = int(before.frosted) & ~int(after.frosted)
+	for tile in _tiles:
+		var bit := 1 << tile.index
+		if revealed & bit != 0:
+			tile.veiled = true
+			tile.reveal()
+		elif freed & bit != 0:
+			tile.pop()
+		if opened & bit != 0:
+			tile.unlock()
+		if thawed & bit != 0:
+			tile.thaw()
+	if revealed != 0:
+		HalvesSfx.play(&"reveal")
+	if opened != 0:
+		HalvesSfx.play(&"unlock")
+		Haptics.success()
+	if thawed != 0:
+		HalvesSfx.play(&"thaw")
+	var gold := HalvesGeometry.popcount(state.gold & ((1 << a) | (1 << b)))
+	if gold > 0:
+		HalvesSfx.play(&"gold")
+		_float(at + Vector2(0, _unit * 0.2), "+%d" % (gold * HalvesConfig.GOLD_COINS), HalvesPalette.GOLD, 0.36)
+		gold_collected.emit(gold, at)
+
+
 func _on_mistake(a: int, b: int, forgiven: bool) -> void:
 	_deselect()
+	combo_count = 0
 	for i in [a, b]:
 		_tiles[i].shake(0.07 * _unit)
 		_tiles[i].flash_ring(HalvesTileView.Ring.MISTAKE, 0.5)
-	_play(mistake_sound)
+	HalvesSfx.play(&"mistake")
+	mismatched.emit(a, b)
 	mistake_made.emit(forgiven)
 	changed.emit()
 	if forgiven or show_mates:
 		_guide_mates(a)
 
 
-## Blocked tiles only bump: down when something lies on them, sideways when both sides are taken.
+## Blocked tiles only bump: down when something lies on them, sideways when both sides are taken,
+## a little shiver when a lock or frost holds them.
 func _nudge(i: int) -> void:
-	var covered := state.remaining & state.geometry.cover[i] != 0
-	_tiles[i].shake(0.04 * _unit, Vector2.DOWN if covered else Vector2.RIGHT, 1)
+	var reason := state.geometry.blocked_reason(i, state.remaining)
+	match reason:
+		HalvesGeometry.Block.COVERED:
+			_tiles[i].shake(0.04 * _unit, Vector2.DOWN, 1)
+		HalvesGeometry.Block.SIDES:
+			_tiles[i].shake(0.04 * _unit, Vector2.RIGHT, 1)
+		_:
+			_tiles[i].shake(0.025 * _unit, Vector2.RIGHT, 2)
+	HalvesSfx.play(&"blocked")
+	blocked_tap.emit(i, reason)
 
 
 func _guide(i: int) -> void:
@@ -332,6 +403,12 @@ func _check_stuck_later() -> void:
 		stuck.emit()
 
 
+func _float(at: Vector2, text: String, colour: Color, size_units: float) -> void:
+	var label := HalvesFloatText.new()
+	_fx_layer.add_child(label)
+	label.play(at, text, colour, get_theme_font(&"font", &"Label"), maxi(28, roundi(_unit * size_units)))
+
+
 func _layout() -> void:
 	if state == null or size.x <= 0.0 or size.y <= 0.0:
 		return
@@ -349,21 +426,36 @@ func _layout() -> void:
 			tile.lift = LIFT * _unit
 
 
+## Free, veiled, locked and frosted tiles right now (masks), to see what a snap changed.
+func _snapshot() -> Dictionary:
+	var g := state.geometry
+	var locked := 0
+	var frosted := 0
+	if not g.lock_need.is_empty():
+		for i in g.size():
+			if state.remaining & (1 << i) == 0:
+				continue
+			if state.remaining & g.lock_need[i] != 0:
+				locked |= 1 << i
+			if g.frost_need[i] != 0 and g.frost_need[i] & ~state.remaining == 0:
+				frosted |= 1 << i
+	return {"free": g.free_mask(state.remaining), "veiled": state.veiled, "locked": locked, "frosted": frosted}
+
+
 func _refresh() -> void:
+	var now := _snapshot()
+	var keys := 0
+	for group: Dictionary in state.geometry.features.get("locks", []):
+		keys |= HalvesFeatures.mask(group.keys)
 	for tile in _tiles:
-		var present := state.remaining & (1 << tile.index) != 0
+		var bit := 1 << tile.index
+		var present := state.remaining & bit != 0
 		tile.visible = present
 		tile.face = state.faces[tile.index]
 		if present:
-			tile.blocked = not state.geometry.is_free(tile.index, state.remaining)
-
-
-func _play(stream: AudioStream) -> void:
-	if stream == null:
-		return
-	for player in _players:
-		if not player.playing:
-			player.stream = stream
-			player.pitch_scale = randf_range(0.96, 1.04)
-			player.play()
-			return
+			tile.blocked = int(now.free) & bit == 0
+			tile.veiled = state.veiled & bit != 0
+			tile.key_mark = keys & bit != 0
+			tile.lock_amount = 1.0 if int(now.locked) & bit != 0 else 0.0
+			tile.frost = 1.0 if int(now.frosted) & bit != 0 else 0.0
+			tile.gold = state.gold & bit != 0

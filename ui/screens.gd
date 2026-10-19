@@ -18,6 +18,14 @@ const DAILY_REWARD: String = "res://ui/popups/daily_reward_popup.tscn"
 const CONFIRM: String = "res://ui/popups/confirm_popup.tscn"
 const RANKS: String = "res://ui/popups/ranks_popup.tscn"
 const BOOSTER: String = "res://ui/popups/booster_popup.tscn"
+const TIP: String = "res://ui/popups/tip_popup.tscn"
+const CHAPTER: String = "res://ui/popups/chapter_popup.tscn"
+const DAILY: String = "res://ui/popups/daily_popup.tscn"
+
+## What the game screen plays: the level journey, today's daily, endless zen or a timed rush.
+enum Mode { LEVELS, DAILY, ZEN, RUSH }
 
 ## Level the game screen plays next. Set it before UI.goto(Screens.GAME).
 static var level: int = 1
+## The mode the game screen plays next (with `level` for LEVELS).
+static var mode: Mode = Mode.LEVELS
