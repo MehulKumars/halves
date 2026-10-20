@@ -2,9 +2,9 @@
 
 **A calm puzzle of mirror halves.** Tap a free tile, then its mirror-cut other half, and the two
 snap into one whole shape. Never match twins. Stack-clearing like mahjong solitaire, played over
-Hiroshige's woodblock prints as the seasons turn.
+ten places in Japan, from cherry blossoms to snowy lantern streets, to lo-fi beats or rain.
 
-![Main menu, a level with locks and keys, the results, a chapter's print and the level select](docs/images/halves_screens.jpg)
+![Home screen over Mount Fuji, a level over Tokyo Tower, the level select, a place revealed, the drawn home screen and Settings](docs/images/halves_screens.jpg)
 
 Made with Godot 4.7 for Android phones (portrait). Version 1 is being shared with friends before a
 Google Play closed test.
@@ -32,18 +32,21 @@ New rules arrive one at a time, each with a short card:
 
 ## What's in version 1
 
-- **100 levels in five chapters:**
+- **100 levels in ten places of ten levels.** Each place has its own wallpaper-quality photo, ambient
+  petals, rain, leaves or snow, its own win jingle and burst, and a reveal when its ten levels are done:
 
-  | Chapter | Levels | Print |
-  |---|---|---|
-  | Spring | 1-20 | Plum Garden at Kameido |
-  | Summer | 21-40 | Sudden Shower over Shin-Ōhashi |
-  | Autumn | 41-60 | Maple Trees at Mama |
-  | Winter | 61-80 | Kinryūzan Temple in snow |
-  | Moon | 81-100 | Night View of Saruwaka-machi |
+  | Levels | Place | Levels | Place |
+  |---|---|---|---|
+  | 1-10 | Sakura, Ashino Park | 51-60 | Autumn Path, Nara Park |
+  | 11-20 | Old Kyoto, Yasaka-dori | 61-70 | Night Glow, Kiyomizu-dera |
+  | 21-30 | Bamboo Grove, Arashiyama | 71-80 | Golden Snow, Kinkaku-ji |
+  | 31-40 | Floating Gate, Miyajima | 81-90 | Snow Lanterns, Ginzan Onsen |
+  | 41-50 | City Lights, Tokyo Tower | 91-100 | Thousand Gates, Fushimi Inari |
 
-  Each chapter has its own Hiroshige print, music, falling petals, rain, leaves, snow or fireflies,
-  and its own celebration. Finishing a chapter reveals the whole print.
+  The home screen has its own (Mount Fuji at sunset). Settings can switch every background to a
+  **drawn** version of the same place, made in code.
+- **Music you pick:** Lo-fi beats, Calm (soft piano and ambient), Rain, Nature (waves, a forest
+  stream, crickets at night) or Focus (a soft binaural tone over brown noise).
 - **A sawtooth difficulty curve.** Every pack of 10 has a gentle level that brings a new idea, a
   climb, a hard level at 5 and a finale at 10.
 - **Modes:**
@@ -57,8 +60,9 @@ New rules arrive one at a time, each with a short card:
   - porcelain-and-wood clacks, combo chains that climb in pitch, shards, and pops as tiles come free;
   - mist flips, padlocks springing open, frost cracking, gold coins;
   - a gentle haptic tick on each snap.
-- **Kind to every player:** Reduce Motion, vibration on/off, a hideable clock, and shapes that
-  never rely on colour alone. No lives and no fail screen: a board can always be finished.
+- **Kind to every player:** Reduce Motion (fewer animations and particles), vibration on/off, a
+  hideable clock, and shapes that never rely on colour alone. No lives and no fail screen: a board
+  can always be finished.
 
 ## Build and run
 
@@ -72,6 +76,9 @@ godot --headless --path . --export-debug "Android Debug APK" build/game-debug.ap
 adb install -r build/game-debug.apk                 # put it on a phone
 ```
 
+Debug builds have **Settings > Developer > Dev mode**: every level open and a Skip button in play,
+for testing. Release exports never show it (it checks `OS.is_debug_build()`).
+
 ## How it's made
 
 | Part | Where |
@@ -79,8 +86,8 @@ adb install -r build/game-debug.apk                 # put it on a phone
 | Rules, logic and data contract (the tests are written from it) | [docs/HALVES.md](docs/HALVES.md), `game/halves/` |
 | Board view, feel and effects | `game/halves/halves_board_view.gd`, `halves_tile_view.gd`, `halves_snap_fx.gd` |
 | Game screen, modes, clock and records | `ui/screens/game.gd`, `game/halves/halves_records.gd` |
-| Chapters, prints and ambience | `game/halves/halves_chapters.gd`, `chapter_background.gd`, `tools/art/` |
-| Sound and music | `core/audio/sound.gd` (autoload `Sound`), `tools/audio/build_audio.sh` |
+| Places, photos, drawn scenes and ambience | `game/halves/halves_chapters.gd`, `chapter_background.gd`, `halves_scenery.gd`, `tools/art/` |
+| Sound and music | `core/audio/sound.gd` (autoload `Sound`), `game/halves/halves_music.gd`, `tools/audio/` |
 | Levels and daily, zen and rush boards | `tools/levelgen/` → `data/levels/*_v2.json` |
 
 **Levels are generated offline and baked; nothing is made up at run time.**
@@ -115,13 +122,11 @@ saves and the test setup. The template's guides are in [docs/](docs/): [UI kit](
 A game by **Mehul Kumar**, built with [Godot Engine](https://godotengine.org) and
 [Maaack's Godot Game Template](https://github.com/Maaack/Godot-Game-Template) (MIT).
 
-- **Art:** woodblock prints by **Utagawa Hiroshige**, *One Hundred Famous Views of Edo*
-  (1856-58), public domain. Scans from the Rijksmuseum, The Metropolitan Museum of Art (Open
-  Access, CC0) and the Library of Congress. Tiles, shapes and effects are drawn in code.
-- **Music (CC0):**
-  - "Oriental Somber" by Tozan;
-  - "Hot Springs Town" by Kistol;
-  - "Another August", "Vaporware", "November Snow" and "Lifewave 2k" by The Cynic Project.
+- **Photos** (Wikimedia Commons, CC0 / CC BY / CC BY-SA): Romain Guy, 掬茶, Basile Morin, Jakub
+  Hałun, kakidai, Martin Falbisoner, Takeshi Kuboki and さかおり. Tiles, shapes, effects and the
+  drawn backgrounds are made in code.
+- **Music:** HoliznaCC0, Purrple Cat, AvapXia, Lee Rosevere, Memoraphile and Matthew C. Wright;
+  ambience by Gravity Sound and BigSoundBank (Joseph Sardin, Pierre Sibanarco); focus tones made in code.
 - **Sounds (CC0):** [Kenney](https://kenney.nl) Casino Audio, Impact Sounds, Interface Sounds and
   Music Jingles.
 - **Fonts and icons:** Outfit (SIL OFL 1.1); Material Symbols (Apache 2.0).

@@ -10,19 +10,19 @@ adapt to every phone shape, foldables and tablets (portrait).
 
 | | File | What it does |
 |---|---|---|
-| Splash | `ui/screens/splash.tscn` | Halves: over the current chapter's print, two half tiles slide in and snap into the Halves mark with a burst, then the name rises in (about 2 s, tap to skip) |
-| Main menu | `ui/screens/main_menu.tscn` | Over the chapter print: the Halves mark, title, chapter name, big **Play** button (next unbeaten level), then Daily, Zen and Rush (locked until levels 10 and 15) and Levels, Ranks, Shop, three to a row with the icon above the label. Back asks before quitting |
-| Level select | `ui/screens/level_select.tscn` | One section per chapter: a header with a slice of its print, stars and Swift medals (tap to see the whole print), then a grid of levels with best stars, locks and ⚡; 4 columns on phones, up to 6 on tablets; the next level is scrolled into view |
-| Game | `ui/screens/game.tscn` | Halves in four modes over the chapter print: HUD (pause, title, chapter and clock, progress bar, stars), the board, hint/undo/shuffle boosters, the stuck card (undo or shuffle), tip cards, and the end flow (results, chapter reveal) |
+| Splash | `ui/screens/splash.tscn` | Halves: over the home screen's photo, two half tiles slide in and snap into the Halves mark with a burst, then the name rises in (about 2 s, tap to skip) |
+| Main menu | `ui/screens/main_menu.tscn` | Over its own photo (Mount Fuji) with a slow drift and a soft shade at top and bottom: coins and Ranks, Shop, Settings icons on top, the Halves mark and title high up, then the big **Play** button (next unbeaten level) with a square **Levels** button beside it, and Daily, Zen and Rush (locked until levels 10 and 15) in one row. Back asks before quitting |
+| Level select | `ui/screens/level_select.tscn` | One section per place of ten levels: a header card (thumbnail, name, stars and Swift medals; tap for the photo), then, once the place is reached, its ten tiles five to a row with best stars, locks and ⚡. Places not reached show only a compact locked card. The next level is scrolled into view; dev mode opens everything |
+| Game | `ui/screens/game.tscn` | Halves in four modes over the place's photo (dimmed so the tiles stand out): HUD (pause, title, chapter and clock, progress bar, stars), the board, hint/undo/shuffle boosters, the stuck card (undo or shuffle), tip cards, and the end flow (results, chapter reveal) |
 | Shop | `ui/screens/shop.tscn` | Remove-ads card, six coin packs, free coins for a rewarded video |
 | Credits | `ui/screens/credits.tscn` | Built from `ATTRIBUTION.md` (your game first, then what it is made with), followed automatically by the licence notices the shipped code requires. Links are plain text |
 | UI kit gallery | `ui/screens/ui_gallery.tscn` | Every component on one page with a live style switcher (Settings > Open the UI kit gallery, debug builds) |
 | Pause | `ui/popups/pause_popup.tscn` | Resume, restart, How to play (every tip card), settings, main menu, quick music/sound/vibration toggles. Pauses the game |
 | Tip | `ui/popups/tip_popup.tscn` | One rule with a tiny board drawn by the real tiles (`setup(id)`), or every rule paged (`setup_all()`) |
-| Chapter | `ui/popups/chapter_popup.tscn` | A chapter's full print with its title, artist and collection, chapter stars and medals; shown when a chapter is completed |
+| Chapter | `ui/popups/chapter_popup.tscn` | A place's photo (or drawn version) with its location and photo credit, its stars and medals; shown when its ten levels are completed |
 | Daily | `ui/popups/daily_popup.tscn` | Today's Daily Puzzle: number, weekday difficulty, a 7-day strip, streak, best time, Play, Copy result |
 | Results | `ui/popups/results_popup.tscn` | Win (`show_win(level, stars, coins, details)`): stars pop in with rising chimes, the time counts up against par and best, New best / Swift / Gold / Combo ribbons, coins count up, Next (rush shows its score; daily shows the streak and Copy result). Lose: "+5 moves (watch ad)", Retry, Home. Back does not dismiss it |
-| Settings | `ui/popups/settings_popup.tscn` | Music and sound volume, vibration, reduce motion, show timer, credits, privacy policy, restore purchases, reset progress, version; style picker in debug builds |
+| Settings | `ui/popups/settings_popup.tscn` | Three groups: Sound (music and sound volume, music style chips: Lo-fi, Calm, Rain, Nature, Focus), Look and feel (Photos or Drawn backgrounds, vibration, reduce motion with a one-line explanation, show timer) and More (credits, privacy policy, restore purchases, reset progress, version). Debug builds add Developer: dev mode, Show FPS and the style picker |
 | Daily reward | `ui/popups/daily_reward_popup.tscn` | Seven-day streak, day 7 is a gift; missing a day restarts it |
 | Confirm | `ui/popups/confirm_popup.tscn` | Yes/no question, `await UI.confirm(...)` |
 | Ranks | `ui/popups/ranks_popup.tscn` | The player's stars, levels and coins, and a star leaderboard with their row highlighted (sample players until Google Play Games is connected; then Google's own screen opens instead) |

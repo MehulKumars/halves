@@ -32,21 +32,21 @@ core/                  Template systems shared by every game (ours)
   save_store.gd        Versioned JSON save
   progress.gd          Stars, unlocks, best times, coins, purchases, daily streak, game sections (uses SaveStore)
   settings.gd          Volume, vibration, reduce motion, show timer
-  audio/sound.gd       Autoload Sound: pooled sound effects, button clicks, looping music with crossfades
+  audio/sound.gd       Autoload Sound: pooled sound effects, button clicks, music playlists with crossfades
   feel/                Juice (tweens), Haptics, hit_flash.gdshader
   ui/                  The UI kit: autoload UI, Screen, Modal, layout containers, widgets,
                        styles/ (5 UIStyle resources), themes/ (built), fonts/, icons/
   dev_tools.gd         Autoload DevTools: debug-only console commands
 ui/                    Screens (ui/screens/) and popups (ui/popups/) of the game. Yours to edit
 scenes/                Maaack's loading screen (for SceneLoader, heavy scenes only)
-assets/                Halves art and audio: chapters/ (baked prints), audio/sfx, audio/music, icon/ (app icons);
+assets/                Halves art and audio: backgrounds/ (baked photos), audio/sfx, audio/music, icon/ (app icons);
                        template_icon/ is the template's placeholder (no longer used by Halves)
 game/halves/           Halves: pure logic (faces, geometry, features, state, fill, solver, bots, run clock,
                        levels, pools), the board view and effects, chapters, records, tips. See HALVES.md
 data/levels/           Baked Halves levels and the daily, zen and rush pools (*_v2.json), made by tools/levelgen/
 tests/                 GUT unit tests (test_*.gd)
 tools/                 check.ps1, snapshots, build_theme.gd, scene_edit.gd, hooks/ (Claude Code auto-check),
-                       levelgen/ (levels and pools), art/ (prints, icon), audio/ (sound and music build)
+                       levelgen/ (levels and pools), art/ (photos, drawn-scene preview, icon), audio/ (sound and music build)
 addons/                Vendored plugins. Never edit.
 .claude/               Claude Code settings (hook) and project skills
 docs/                  These guides
@@ -184,8 +184,8 @@ scripts. Tests point `Progress.path` at a temporary file. Its re-read function i
 ### Sound (`core/audio/sound.gd`)
 `Sound.play(id, pitch := 1.0, volume_db := 0.0)` plays `assets/audio/sfx/<id>.wav` from a pool of 12
 players (±4% pitch, except steady tones such as stars); `play_step(id, semitones)` climbs a combo
-ladder; `play_music(path)` loops an Ogg through Maaack's `ProjectMusicController` (crossfades, keeps
-playing across scenes); `duck(seconds)` lowers the music under a fanfare. Every button press clicks
+ladder; `play_playlist(paths, loops, rotate_seconds)` plays songs in turn (or soundscape loops,
+rotating) through Maaack's `ProjectMusicController` (crossfades, keeps playing across scenes); `duck(seconds)` lowers the music under a fanfare. Every button press clicks
 (opt out with the meta `ui_sound = false`). Game code that must compile in tool scripts calls it
 through a run-time lookup (`HalvesSfx`) instead of naming the autoload.
 
@@ -208,9 +208,10 @@ Everything is in [UI_KIT.md](UI_KIT.md).
 The game: rules, data formats, the logic API and how to regenerate levels are in
 [HALVES.md](HALVES.md). `Progress.start_session()` (called by the splash once per launch) feeds
 `AdPolicy.start_session()` so the first session stays free of interstitials. The game screen
-plays four modes (`Screens.mode`: levels, daily, zen, rush); `HalvesChapters` gives each 20 levels a
-print, music and ambience (`ChapterBackground` puts the print behind any screen and hides its
-`StyledBackground`); `HalvesRecords` keeps best times, Swift medals, best-run move logs
+plays four modes (`Screens.mode`: levels, daily, zen, rush); `HalvesChapters` gives each 10 levels a
+place: a photo (or, by the Backgrounds setting, the place drawn in code by `HalvesScenery`) and an
+ambience (`ChapterBackground` puts it behind any screen and hides its `StyledBackground`); music
+is the player's choice (`HalvesMusic`); `HalvesRecords` keeps best times, Swift medals, best-run move logs
 (`user://halves_runs.json`), the daily streak, zen and rush records and seen tip cards.
 
 ### DevTools (`core/dev_tools.gd`)

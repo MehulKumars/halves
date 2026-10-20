@@ -5,7 +5,7 @@ half, and the two snap into one whole shape. Never match twins.** No lives and n
 board can always be finished, but wrong pairs and dead ends cost stars, and the clock measures speed.
 
 Design source: `Godot Mobile Studio Plan.html` (concept card "Halves") and the v1 polish plan
-(100 levels in five seasonal chapters, new mechanics, time records, three modes). This file is the
+(100 levels in ten places of ten levels, new mechanics, time records, three modes). This file is the
 contract for the code in `game/halves/` and the generator in `tools/levelgen/`; tests are written
 from it. Everything marked **(v2)** is new in contract version 2; the rest is unchanged from v1.
 
@@ -104,7 +104,7 @@ The level ends when the board is clear.
 ### Modes (v2)
 | Mode | Boards | Stars / time | Notes |
 |---|---|---|---|
-| Levels | the 100 baked levels, in 5 chapters of 20 | stars, time, par | The main journey. |
+| Levels | the 100 baked levels, in 10 places of 10 (one sawtooth pack each) | stars, time, par | The main journey. |
 | Daily | one board of the daily pool per calendar day (local date) | stars, time | Same board for everyone on that date. Finishing it extends the daily streak. No interstitials. |
 | Zen | the zen pool, endless, in a seeded order | none | No timer, no stars, no ads. Unlocks after level `ZEN_UNLOCK_LEVEL`. |
 | Rush | the rush pool, in a seeded order | score | `RUSH_SECONDS` on the clock; each cleared board adds `RUSH_BOARD_BONUS_S`, each mistake takes `RUSH_MISTAKE_PENALTY_S`; a stuck board shuffles itself. Score = pairs cleared + `RUSH_BOARD_POINTS` per cleared board. Unlocks after level `RUSH_UNLOCK_LEVEL`. |
@@ -447,8 +447,12 @@ Each pool file is loaded only when first asked for.
 `RUSH_SECONDS = 180`, `RUSH_BOARD_BONUS_S = 5`, `RUSH_MISTAKE_PENALTY_S = 3`,
 `RUSH_BOARD_POINTS = 10`, and the par constants of section 4.
 
-### Chapters and view (not part of the logic contract)
-`HalvesChapters` holds the five chapters (levels, print, music, ambient effect, accent).
+### Places, backgrounds, music and view (not part of the logic contract)
+`HalvesChapters` holds the ten places of ten levels (photo, credit, ambient effect, accent, win
+jingle) and the home screen's own (`MENU`). `ChapterBackground` shows a place's photo or, if the
+player chose "Drawn" in Settings, the same place drawn in code (`HalvesScenery`). `HalvesMusic`
+holds the music styles the player picks (lo-fi and calm playlists; rain, nature and focus loops).
+Dev mode (`Settings.dev_mode()`, debug builds only) opens every level and adds a Skip button.
 `HalvesBoardView` (Control) lays the tiles out to fit `%Board`, hit-tests taps top tile first, and
 plays the feedback; `HalvesTileView` (Node2D) draws one tile with its feature overlays;
 `HalvesSnapFx` and `HalvesShardPool` are the match effects; `HalvesPalette` holds the art colours.
@@ -542,14 +546,14 @@ Sunday), and seed parts `["halves", kind, i, k]`.
 - **Sawtooth in packs of 10:** a rest level brings each new idea (x1 or x6), x5 is hard and x0 is a
   finale. Core rules are all taught by level 10: layers (2), side blocking (3), decoys (4), the
   first trap (5), horizontal cuts (6), diamonds (7), dot marks (8), line marks (9); gold tiles arrive at 11. New
-  features open the later chapters: mist (21), locks (41), frost (61); chapter 5 (81-100) mixes all.
+  features open the later difficulty bands (20 levels each in the generator): mist (21), locks (41), frost (61); band 5 (81-100) mixes all.
 - **Role targets** (random / min WARY / min CAREFUL / trap rate):
 
   | Role | random | wary ≥ | careful ≥ | trap |
   |---|---|---|---|---|
   | intro | 1.0 | 1.0 | 1.0 | 0 |
   | rest | 0.75–0.9 | 0.97 | 0.8 | ≤ 0.1 |
-  | ramp | 0.6 falling to 0.4 by chapter 5 | 0.9 | 0.6 | 0.15–0.3 |
+  | ramp | 0.6 falling to 0.4 by band 5 | 0.9 | 0.6 | 0.15–0.3 |
   | hard | 0.15–0.3 | 0.75 | 0.4 | 0.3–0.5 |
   | finale | 0.05–0.15 | 0.6 | 0.3 | 0.4–0.6 |
 

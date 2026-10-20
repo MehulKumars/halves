@@ -46,17 +46,26 @@ Add one row per asset as you add them: file, author, licence, source URL.
 | Halves tiles, half shapes, snap card and shards | Drawn in code (`game/halves/halves_shapes.gd`, `halves_tile_view.gd`, `halves_snap_fx.gd`) from the concept's palette | Original work | - |
 | `data/levels/halves_v2.json`, `halves_daily_v2.json`, `halves_zen_v2.json`, `halves_rush_v2.json` | Generated offline from the masks and plans in `tools/levelgen/` | Original work | - |
 | Particle shapes (petal, rain streak, leaf, snowflake, glow), the Halves mark, feature overlays (mist, key, padlock, frost, gold) | Drawn in code (`game/halves/chapter_background.gd`, `halves_logo.gd`, `halves_tile_view.gd`) | Original work | - |
+| "Drawn" backgrounds (the eleven places as layered silhouettes) | Drawn in code (`game/halves/halves_scenery.gd`) | Original work | - |
+| `assets/audio/music/focus_tones.ogg` (binaural beat, soft chord, brown noise) | Synthesised by `tools/audio/build_music.sh` (ffmpeg) | Original work | - |
 
-### Chapter prints (`assets/chapters/`, baked by `tools/art/process_prints.gd` from the sources in `tools/art/prints.json`)
-All by Utagawa Hiroshige (1797-1858), from *One Hundred Famous Views of Edo* (1856-58): public domain
-worldwide (the artist died over 160 years ago); the scans were released by their collections without restrictions.
-| File | Print | Collection (scan) | Licence of the scan | Source |
+### Background photos (`assets/backgrounds/`, baked by `tools/art/process_photos.gd` from `tools/art/photos.json`)
+All from Wikimedia Commons. Changes made: cropped to portrait and resized (and dimmed on screen during
+play). CC BY-SA photos: the cropped versions in this repo are shared under the same licence.
+| File | Photo | Author | Licence | Source |
 |---|---|---|---|---|
-| `spring_bg.webp`, `spring_print.webp` | Plum Garden at Kameido (1857) | Rijksmuseum, Amsterdam, RP-P-1956-743 | Public domain | commons.wikimedia.org/wiki/File:De_pruimenboomgaard_te_Kameido-Rijksmuseum_RP-P-1956-743.jpeg |
-| `summer_bg.webp`, `summer_print.webp` | Sudden Shower over Shin-Ohashi Bridge and Atake (1857) | The Metropolitan Museum of Art, DP123602 | CC0 (Met Open Access) | Wikimedia Commons, "MET DP123602" |
-| `autumn_bg.webp`, `autumn_print.webp` | Maple Trees at Mama, Tekona Shrine and Tsugi Bridge (1857) | The Metropolitan Museum of Art, DP121529 | CC0 (Met Open Access) | Wikimedia Commons, "MET DP121529" |
-| `winter_bg.webp`, `winter_print.webp` | Kinryuzan Temple at Asakusa (1856) | The Metropolitan Museum of Art, DP122116 | CC0 (Met Open Access) | Wikimedia Commons, "MET DP122116" |
-| `moon_bg.webp`, `moon_print.webp` | Night View of Saruwaka-machi (1856) | Library of Congress, LCCN 2008660961 | Public domain (no known restrictions) | commons.wikimedia.org/wiki/File:Saruwaka-machi_yoru_no_kei_LCCN2008660961.jpg |
+| `fuji.webp` (home screen) | Mount Fuji at sunset, March 2025 | Romain Guy | CC0 1.0 | commons.wikimedia.org/wiki/File:Mount_Fuji_at_sunset,_March_2025.jpg |
+| `sakura.webp` | Rail tracks and cherry trees in Ashino Park | 掬茶 | CC BY-SA 4.0 | commons.wikimedia.org/wiki/File:Rail_tracks_and_cherry_trees_in_Ashino_Park.jpg |
+| `kyoto.webp` | Yasaka-dori early morning with street lanterns and the Tower of Yasaka (Hokan-ji Temple), Kyoto | Basile Morin | CC BY-SA 4.0 | commons.wikimedia.org/wiki/File:Yasaka-dori_early_morning_with_street_lanterns_and_the_Tower_of_Yasaka_(Hokan-ji_Temple),_Kyoto,_Japan.jpg |
+| `bamboo.webp` | Bamboo Grove, Arashiyama, Kyoto | Basile Morin | CC BY-SA 4.0 | commons.wikimedia.org/wiki/File:Bamboo_Grove,_Arashiyama,_Kyoto,_Japan.jpg |
+| `torii.webp` | Itsukushima-jinja torii at sunset, Miyajima | Jakub Hałun | CC BY 4.0 | commons.wikimedia.org/wiki/File:Itsukushima-jinja_torii_at_sunset,_Miyajima,_Japan,_20240816_1835_4171.jpg |
+| `tokyo.webp` | Tokyo Tower at night | kakidai | CC BY-SA 3.0 | commons.wikimedia.org/wiki/File:Tokyo_Tower_at_night_2.JPG |
+| `nara.webp` | Nara Park, November 2016 | Martin Falbisoner | CC BY-SA 4.0 | commons.wikimedia.org/wiki/File:Nara_Park,_November_2016.jpg |
+| `kiyomizu.webp` | Kiyomizu-dera, Kyoto, November 2016 | Martin Falbisoner | CC BY-SA 4.0 | commons.wikimedia.org/wiki/File:Kiyomizu-dera,_Kyoto,_November_2016_-07.jpg |
+| `kinkaku.webp` | Kinkakuji temple in snow | Takeshi Kuboki | CC BY 2.0 | commons.wikimedia.org/wiki/File:雪の金閣寺_Kinkakuji_temple_in_snow_(5360759256).jpg |
+| `ginzan.webp` | Evening twilight in Ginzan Onsen town, January 2022 | さかおり | CC BY-SA 4.0 | commons.wikimedia.org/wiki/File:Evening_twilight_in_Ginzan_Onsen_town_January_2022_A.jpg |
+| `inari.webp` | Fushimi Inari, Kyoto | Jakub Hałun | CC BY 4.0 | commons.wikimedia.org/wiki/File:Fushimi_Inari,_Kyoto,_20240818_1400_4476.jpg |
+Each `<id>_thumb.webp` is a 320 px square from the same photo.
 
 ### Sounds (`assets/audio/sfx/`, made by `tools/audio/build_audio.sh`: trimmed, levelled, some layered)
 | Files | Source pack | Author | Licence | Source |
@@ -66,12 +75,22 @@ worldwide (the artist died over 160 years ago); the scans were released by their
 | snap, snap_big, hint, unlock, gold, star, click, open, close, tick, swift (glass, pluck and interface tones) | Interface Sounds | Kenney | CC0 | kenney.nl/assets/interface-sounds |
 | best, win_spring, win_summer, win_autumn, win_winter, win_moon, chapter (pizzicato jingles) | Music Jingles | Kenney | CC0 | kenney.nl/assets/music-jingles |
 
-### Music (`assets/audio/music/`, at most 180 s, faded for looping and levelled by `tools/audio/build_audio.sh`)
+### Music and soundscapes (`assets/audio/music/`, from `tools/audio/music.tsv` by `tools/audio/build_music.sh`)
+Songs are levelled to -18 LUFS and play whole, one after another; soundscapes are cut to seamless loops
+(at most 120 s) at -24 LUFS. Changes made: levelled, faded in, looped, re-encoded. None is AI-generated
+(Free Music Archive pages say "AI generated? No"). The BY-SA files stay under CC BY-SA.
 | File | Track | Author | Licence | Source |
 |---|---|---|---|---|
-| `menu.ogg` | Oriental Somber (koto, shamisen, shakuhachi) | Tozan | CC0 | opengameart.org/content/oriental-somber |
-| `spring.ogg` | Hot Springs Town | Kistol | CC0 | opengameart.org/content/hot-springs-town |
-| `summer.ogg` | Another August | The Cynic Project (cynicmusic) | CC0 | opengameart.org/content/another-august |
-| `autumn.ogg` | Vaporware (Calm Piano 1) | The Cynic Project | CC0 | opengameart.org/content/calm-piano-1-vaporware |
-| `winter.ogg` | November Snow | The Cynic Project | CC0 | opengameart.org/content/november-snow |
-| `moon.ogg` | Lifewave 2k (Calm Ambient 3) | The Cynic Project | CC0 | opengameart.org/content/calm-ambient-3-lifewave-2k |
+| `roof_tops.ogg` (Lo-fi) | Roof Tops | HoliznaCC0 | CC0 1.0 | freemusicarchive.org/music/holiznacc0/summer-air-lo-fi/roof-tops/ |
+| `ocean_breeze.ogg` (Lo-fi) | Ocean Breeze | HoliznaCC0 | CC0 1.0 | freemusicarchive.org/music/holiznacc0/public-domain-lofi/ocean-breeze-lofi-ukulele-peaceful-mp3/ |
+| `bubbles.ogg` (Lo-fi) | Bubbles | HoliznaCC0 | CC0 1.0 | freemusicarchive.org/music/holiznacc0/public-domain-lofi/bubbles-lofi-bright-relaxed/ |
+| `cloud_watching.ogg` (Lo-fi) | Cloud Watching | Purrple Cat | CC BY-SA 4.0 | freemusicarchive.org/music/purrple-cat/indigo-dreams/cloud-watching/ |
+| `cafe_weather.ogg` (Lo-fi) | it's perfect weather for a trip to the café, don't you think? | AvapXia | CC BY 4.0 | freemusicarchive.org/music/avapxia/summer-lofi/its-perfect-weather-for-a-trip-to-the-cafe-dont-you-think/ |
+| `evening_glow.ogg` (Lo-fi) | Evening Glow | Lee Rosevere | CC BY 4.0 | freemusicarchive.org/music/lee-rosevere/music-for-podcasts-beats/evening-glow/ |
+| `up_in_the_sky.ogg` (Calm) | Up in the Sky | Memoraphile | CC0 1.0 | opengameart.org/content/up-in-the-sky |
+| `early_morning.ogg` (Calm) | Early Morning Song (Finch Duet) | Lee Rosevere | CC BY 4.0 | freemusicarchive.org/music/lee-rosevere/music-for-podcasts-ambient/early-morning-song-finch-duet/ |
+| `autumn_sunshine.ogg` (Calm) | Autumn Sunshine | Matthew C. Wright | CC BY 4.0 | freemusicarchive.org/music/matthew-c-wright/slow-royalty-free-piano-away-for-autumn/gentle-royalty-free-piano-autumn-sunshine/ |
+| `rain_leaves.ogg` (Rain) | Rain on leaves | Gravity Sound | CC BY 4.0 | commons.wikimedia.org/wiki/File:Rain_on_leaves_(Gravity_Sound).wav |
+| `waves.ogg` (Nature) | Sea of the Beach of Dellec #2 | Joseph Sardin (BigSoundBank) | CC0 1.0 | bigsoundbank.com/sea-of-the-beach-of-dellec-2-s2565.html |
+| `forest_stream.ogg` (Nature) | Forest and Stream #3 | Pierre Sibanarco (BigSoundBank) | CC0 1.0 | bigsoundbank.com/sound-2716-forest-and-stream-3.html |
+| `night_crickets.ogg` (Nature) | Campaign at Night #4 | Joseph Sardin (BigSoundBank) | CC0 1.0 | bigsoundbank.com/campaign-at-night-4-s1880.html |
