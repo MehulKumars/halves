@@ -1,7 +1,7 @@
 extends Modal
-## A chapter's print, full colour, with its title and credit: shown when a chapter is completed
-## (and from the level select). setup(chapter, completed) fills it; closes with "next" or null.
-## The print comes from tools/art (Hiroshige, public domain); stars and medals are summed here.
+## A place's picture, full size, with its name and the photo credit: shown when its ten levels are
+## completed (and from the level select). setup(chapter, completed) fills it; closes with "next" or
+## null. The photo (or its drawn version) follows the Backgrounds setting; stars and medals summed here.
 
 var _chapter: int = 0
 
@@ -19,23 +19,34 @@ func setup(chapter: int, completed: bool) -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.text = ("%s complete" if completed else "%s") % info.name
 	content.add_child(title)
-	var print_art := TextureRect.new()
-	print_art.texture = load(HalvesChapters.print_path(chapter)) as Texture2D
-	print_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	print_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	print_art.custom_minimum_size = Vector2(0, 600)
-	content.add_child(print_art)
+	var drawn := ChapterBackground.style() == "drawn" and HalvesScenery.has_scene(info.id)
+	var picture: Control
+	if drawn:
+		var scenery := HalvesScenery.new()
+		scenery.set_scene(info.id)
+		picture = scenery
+	else:
+		var photo := TextureRect.new()
+		photo.texture = load(HalvesChapters.photo_path(chapter)) as Texture2D
+		photo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		photo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		photo.clip_contents = true
+		picture = photo
+	picture.custom_minimum_size = Vector2(0, 600)
+	picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.add_child(picture)
 	var caption := Label.new()
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	caption.text = "%s, %s" % [info.title, info.year]
+	caption.text = info.place
 	content.add_child(caption)
-	var credit := Label.new()
-	credit.theme_type_variation = &"CaptionLabel"
-	credit.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	credit.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	credit.text = "%s · %s · %s" % [HalvesChapters.ARTIST, HalvesChapters.SERIES, info.collection]
-	content.add_child(credit)
+	if not drawn:
+		var credit := Label.new()
+		credit.theme_type_variation = &"CaptionLabel"
+		credit.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		credit.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		credit.text = HalvesChapters.credit_line(chapter)
+		content.add_child(credit)
 	var stats := Label.new()
 	stats.theme_type_variation = &"OnBgLabel"
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -53,12 +64,12 @@ func setup(chapter: int, completed: bool) -> void:
 		HalvesSfx.play(&"chapter")
 		HalvesSfx.duck(2.0)
 	if Juice.motion_scale > 0.0:
-		print_art.modulate.a = 0.0
-		print_art.pivot_offset_ratio = Vector2(0.5, 0.5)
-		print_art.scale = Vector2.ONE * 0.94
-		var tween := print_art.create_tween().set_parallel()
-		tween.tween_property(print_art, ^"modulate:a", 1.0, 0.6).set_delay(0.15)
-		tween.tween_property(print_art, ^"scale", Vector2.ONE, 0.9).set_delay(0.15) \
+		picture.modulate.a = 0.0
+		picture.pivot_offset_ratio = Vector2(0.5, 0.5)
+		picture.scale = Vector2.ONE * 0.94
+		var tween := picture.create_tween().set_parallel()
+		tween.tween_property(picture, ^"modulate:a", 1.0, 0.6).set_delay(0.15)
+		tween.tween_property(picture, ^"scale", Vector2.ONE, 0.9).set_delay(0.15) \
 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 

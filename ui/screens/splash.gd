@@ -1,5 +1,5 @@
 extends Screen
-## First screen after launch: over the current chapter's print, two half tiles slide in and snap
+## First screen after launch: over the home screen's photo, two half tiles slide in and snap
 ## into the Halves mark with a burst, the name rises in, then the main menu (tap to skip). Counts
 ## the launch for AdPolicy. A brand-new player goes straight into level 1 (Halves teaches by playing).
 
@@ -12,8 +12,7 @@ var _shards: HalvesShardPool
 
 func _ready() -> void:
 	Progress.start_session()
-	var chapter := HalvesChapters.index_for_level(Progress.next_level())
-	ChapterBackground.install(self, chapter, false)
+	ChapterBackground.install(self, ChapterBackground.MENU, false, 0.85, true)
 	%Title.text = ProjectSettings.get_setting("application/config/name", "Halves")
 	(%Logo.get_node(^"MadeWith") as Label).text = "a calm puzzle of mirror halves"
 	_mark = HalvesLogo.new()
