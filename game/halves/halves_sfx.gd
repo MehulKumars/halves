@@ -2,9 +2,7 @@ class_name HalvesSfx
 extends RefCounted
 ## Halves' way to the Sound autoload: looks it up at run time, so the board and game code still
 ## compile in tool scripts and tests where autoloads don't exist (they just stay silent there).
-## Also picks the music for a chapter or the menus.
-
-const MENU_MUSIC: String = "res://assets/audio/music/menu.ogg"
+## Also hands playlists to it (HalvesMusic picks the one the player chose).
 
 
 static func play(id: StringName, pitch: float = 1.0, volume_db: float = 0.0) -> void:
@@ -20,24 +18,18 @@ static func step(id: StringName, semitones: int, volume_db: float = 0.0) -> void
 		sound.call(&"play_step", id, semitones, volume_db)
 
 
-static func chapter_music(chapter: int) -> void:
-	_music(HalvesChapters.music_path(chapter))
-
-
-static func menu_music() -> void:
-	_music(MENU_MUSIC)
+## Plays `paths` in turn (or each looping, rotating every `rotate_seconds`); keeps playing, with no
+## restart, if that playlist already is. HalvesMusic.play() picks the player's chosen style.
+static func playlist(paths: PackedStringArray, loops: bool, rotate_seconds: float) -> void:
+	var sound := _sound()
+	if sound != null:
+		sound.call(&"play_playlist", paths, loops, rotate_seconds)
 
 
 static func duck(seconds: float = 1.4) -> void:
 	var sound := _sound()
 	if sound != null:
 		sound.call(&"duck", seconds)
-
-
-static func _music(path: String) -> void:
-	var sound := _sound()
-	if sound != null:
-		sound.call(&"play_music", path)
 
 
 static func _sound() -> Node:

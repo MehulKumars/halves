@@ -1,7 +1,8 @@
 extends Node
 ## Autoload Sound: named one-shot effects from a pool of players (pitch variation, semitone steps
-## for combos), a click on every button press, and looping music handed to ProjectMusicController
-## so it crossfades between tracks and keeps playing across scenes. Volumes are the Settings buses.
+## for combos), a click on every button press, and music playlists handed to ProjectMusicController
+## so it crossfades between tracks and keeps playing across scenes (songs in turn, or rotating
+## loops). Volumes are the Settings buses.
 
 const SFX_PATH: String = "res://assets/audio/sfx/%s.wav"
 const POOL_SIZE: int = 12
@@ -12,7 +13,11 @@ const STEADY: Array[StringName] = [&"star", &"best", &"swift", &"chapter", &"tic
 var _players: Array[AudioStreamPlayer] = []
 var _next: int = 0
 var _streams: Dictionary[StringName, AudioStream] = {}
-var _music_path: String = ""
+var _playlist := PackedStringArray()
+var _loops: bool = false
+var _rotate_seconds: float = 0.0
+var _track: int = 0
+var _rotate := Timer.new()
 var _rng := RandomNumberGenerator.new()
 
 
@@ -22,6 +27,9 @@ func _init() -> void:
 		player.bus = &"SFX"
 		add_child(player)
 		_players.append(player)
+	_rotate.one_shot = true
+	_rotate.timeout.connect(_next_track)
+	add_child(_rotate)
 
 
 func _ready() -> void:
@@ -59,24 +67,48 @@ func play_step(id: StringName, semitones: int, volume_db: float = 0.0) -> void:
 	player.play()
 
 
-## Loops the Ogg at `path`, crossfading from whatever plays now. Same path: keeps playing.
-func play_music(path: String) -> void:
-	if path == _music_path or not ResourceLoader.exists(path):
+## Plays `paths` in turn, crossfading from whatever plays now. With `loops`, each file loops and
+## the next takes over after `rotate_seconds` (soundscapes). The same list keeps playing.
+func play_playlist(paths: PackedStringArray, loops: bool = false, rotate_seconds: float = 0.0) -> void:
+	if paths.is_empty() or paths == _playlist:
 		return
-	var stream := load(path) as AudioStreamOggVorbis
-	var music := _music_controller()
-	if stream == null or music == null:
-		return
-	stream.loop = true
-	_music_path = path
-	music.call(&"play_stream", stream)
+	_playlist = paths
+	_loops = loops
+	_rotate_seconds = rotate_seconds
+	_track = _rng.randi_range(0, paths.size() - 1)
+	_play_track()
 
 
 func stop_music() -> void:
 	var music := _music_controller()
-	_music_path = ""
+	_playlist = PackedStringArray()
+	_rotate.stop()
 	if music != null:
 		music.call(&"fade_out", MUSIC_FADE)
+
+
+func _play_track() -> void:
+	_rotate.stop()
+	var music := _music_controller()
+	var path := _playlist[_track]
+	var stream := load(path) as AudioStreamOggVorbis if ResourceLoader.exists(path) else null
+	if stream == null or music == null:
+		return
+	stream.loop = _loops
+	var player := music.call(&"play_stream", stream) as AudioStreamPlayer
+	if _loops:
+		if _playlist.size() > 1 and _rotate_seconds > 0.0:
+			_rotate.start(_rotate_seconds)
+	elif player != null:
+		player.finished.connect(_next_track.bind(_playlist), CONNECT_ONE_SHOT)
+
+
+## The next song (or soundscape), unless the player picked another list meanwhile.
+func _next_track(list: PackedStringArray = PackedStringArray()) -> void:
+	if _playlist.is_empty() or (not list.is_empty() and list != _playlist):
+		return
+	_track = (_track + 1) % _playlist.size()
+	_play_track()
 
 
 ## Lowers the music for a moment so a fanfare reads clearly, then brings it back.

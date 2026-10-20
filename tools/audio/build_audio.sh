@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
-# Builds the game's sounds (assets/audio/sfx/*.wav) and music (assets/audio/music/*.ogg) from the
-# CC0 sources listed in ASSETS_LICENSES.md, with ffmpeg: trim, level, mono WAV, layering, loops.
-# Usage: tools/audio/build_audio.sh <dir with the unzipped Kenney packs> <dir with the music files>
+# Builds the game's sounds (assets/audio/sfx/*.wav) from the CC0 Kenney packs listed in
+# ASSETS_LICENSES.md, with ffmpeg: trim, level, mono WAV, layering. Music: build_music.sh.
+# Usage: tools/audio/build_audio.sh <dir with the unzipped Kenney packs>
 set -euo pipefail
 
 KENNEY="${1:?Kenney packs dir (kenney_casino-audio/, kenney_impact-sounds/, ...)}"
-MUSIC="${2:?music dir (menu.ogg spring.ogg summer.mp3 autumn.mp3 winter.mp3 moon.mp3)}"
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SFX_OUT="$ROOT/assets/audio/sfx"
-MUSIC_OUT="$ROOT/assets/audio/music"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
-mkdir -p "$SFX_OUT" "$MUSIC_OUT"
+mkdir -p "$SFX_OUT"
 
 src() { find "$KENNEY" -type f -name "$1" | head -1; }
 
@@ -66,14 +64,3 @@ one win_winter jingles_PIZZI12.ogg      -5
 one win_moon   jingles_PIZZI14.ogg      -5
 two chapter   impactBell_heavy_001.ogg jingles_PIZZI10.ogg 0 350 -4
 
-echo "== music"
-# Calm loops: at most 180 s, faded in and out so the loop seam is soft, levelled to -18 LUFS.
-for f in "$MUSIC"/*; do
-	name="$(basename "${f%.*}")"
-	length=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$f")
-	cut=$(awk -v l="$length" 'BEGIN { printf "%.2f", (l < 180 ? l : 180) }')
-	fade=$(awk -v c="$cut" 'BEGIN { printf "%.2f", c - 4 }')
-	ffmpeg -loglevel error -y -i "$f" -af "atrim=0:$cut,afade=t=in:d=2,afade=t=out:st=$fade:d=4,loudnorm=I=-18:TP=-1.5:LRA=11" \
-		-ar 44100 -c:a libvorbis -q:a 1 "$MUSIC_OUT/$name.ogg"
-	echo "  music $name ($cut s)"
-done
