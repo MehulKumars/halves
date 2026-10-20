@@ -148,3 +148,13 @@ func _cmd_display_info() -> void:
 func _cmd_safe_area(left: int, top: int, right: int, bottom: int) -> void:
 	SafeAreaMargin.set_simulated_insets(get_tree(), Vector4i(left, top, right, bottom))
 	LimboConsole.info("Simulated insets: %s" % SafeAreaMargin.simulated_insets)
+
+
+## The FPS overlay for a settings switch (the same as the `fps` console command).
+func set_fps_visible(visible: bool) -> void:
+	if fps_visible() != visible:
+		_cmd_fps()
+
+
+func fps_visible() -> bool:
+	return _fps_layer != null and _fps_layer.visible

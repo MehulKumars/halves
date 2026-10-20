@@ -30,7 +30,7 @@ const FACE_H: float = 1.11
 const ROW_PITCH: float = 1.24
 const SIDE_DEPTH: float = 0.09
 const LAYER_RISE: float = 0.1
-const LIFT: float = 0.25
+const LIFT: float = 0.125
 ## Small boards would get huge tiles; cap the pitch so level 1 still looks like a game.
 const MAX_UNIT: float = 150.0
 ## The combo ladder stops climbing after this many semitones.

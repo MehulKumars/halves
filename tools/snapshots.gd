@@ -17,7 +17,7 @@ const SCREENS: PackedStringArray = [
 	"splash", "main_menu", "level_select", "game", "pause", "results_win", "results_lose", "settings",
 	"shop", "daily_reward", "ranks", "confirm", "credits", "gallery",
 	"game_l1", "game_selected", "game_l21", "game_l41", "game_l61", "game_l100", "game_stuck", "booster",
-	"results_best", "results_rush", "chapter", "daily", "tip", "zen", "rush",
+	"results_best", "results_rush", "chapter", "daily", "tip", "zen", "rush", "menu_drawn", "game_drawn",
 ]
 
 var _sizes: Array[Vector2i] = []
@@ -26,6 +26,7 @@ var _insets: Vector4i = Vector4i.ZERO
 var _only: PackedStringArray = []
 var _out_dir: String = "build/snapshots"
 var _ui: Node
+var _style_before: String = ""
 
 
 func _initialize() -> void:
@@ -134,6 +135,9 @@ func _resize(size: Vector2i) -> void:
 
 func _reset() -> void:
 	paused = false
+	if not _style_before.is_empty():
+		_backgrounds().call(&"set_style", _style_before)
+		_style_before = ""
 	_ui.call(&"close_all")
 	var console := root.get_node_or_null(^"LimboConsole")
 	if console != null and console.call(&"is_open"):
@@ -368,3 +372,26 @@ func _contact_sheet(shots: Array[Image]) -> Image:
 		var at := Vector2i(GAP + (i % COLUMNS) * (cell.x + GAP), GAP + (i / COLUMNS) * (cell.y + GAP))
 		sheet.blit_rect(small, Rect2i(Vector2i.ZERO, cell), at)
 	return sheet
+
+
+## The "Drawn" backgrounds (Settings): the home screen and a level in the code-drawn style
+## (_reset puts back the style the player had).
+func _show_menu_drawn() -> bool:
+	return await _drawn(_show_main_menu)
+
+
+func _show_game_drawn() -> bool:
+	return await _drawn(_show_game_level.bind(41))
+
+
+func _drawn(show: Callable) -> bool:
+	if _style_before.is_empty():
+		_style_before = str(_backgrounds().call(&"style"))
+	_backgrounds().call(&"set_style", "drawn")
+	return await show.call()
+
+
+## ChapterBackground, loaded at run time: naming it would compile Settings before the autoloads it
+## uses exist (a -s script compiles first), which breaks Settings for the whole run.
+static func _backgrounds() -> GDScript:
+	return load("res://game/halves/chapter_background.gd") as GDScript

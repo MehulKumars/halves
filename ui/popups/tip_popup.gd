@@ -79,7 +79,7 @@ func _show(page: int) -> void:
 	for tile: int in rings:
 		match str(rings[tile]):
 			"selected":
-				_board.tile_view(tile).set_lifted(true, _board.face_width() * 0.2)
+				_board.tile_view(tile).set_lifted(true, _board.face_width() * 0.1)
 				_board.tile_view(tile).ring = HalvesTileView.Ring.SELECTED
 			"mistake":
 				_board.tile_view(tile).ring = HalvesTileView.Ring.MISTAKE

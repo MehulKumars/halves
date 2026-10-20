@@ -34,16 +34,35 @@ func test_every_page_fits_every_size() -> void:
 			assert_eq(problems, [] as Array[String], "%s at %dx%d" % [path.get_file(), size.x, size.y])
 
 
-func test_level_select_shows_every_level() -> void:
+## Places not reached yet show only their header, so the first place's ten levels are the tiles.
+func test_level_select_shows_the_reached_places_levels() -> void:
+	var was_dev := Settings.dev_mode()
+	Settings.set_dev_mode(false)
+	var viewport := _viewport(Vector2i(720, 1280))
+	var page := (load(Screens.LEVEL_SELECT) as PackedScene).instantiate()
+	viewport.add_child(page)
+	await _settle()
+	var tiles := page.find_children("*", "LevelTile", true, false)
+	assert_eq(tiles.size(), HalvesChapters.LEVELS_PER_CHAPTER, "one place reached")
+	var unlocked := tiles.filter(func(tile: Node) -> bool: return not (tile as LevelTile).locked)
+	assert_eq(unlocked.size(), 6, "five won levels plus the next one")
+	viewport.free()
+	Settings.set_dev_mode(was_dev)
+
+
+func test_dev_mode_opens_every_level() -> void:
+	var was_dev := Settings.dev_mode()
+	Settings.set_dev_mode(true)
 	var viewport := _viewport(Vector2i(720, 1280))
 	var page := (load(Screens.LEVEL_SELECT) as PackedScene).instantiate()
 	viewport.add_child(page)
 	await _settle()
 	var tiles := page.find_children("*", "LevelTile", true, false)
 	assert_eq(tiles.size(), Progress.LEVEL_COUNT_DEFAULT)
-	var unlocked := tiles.filter(func(tile: Node) -> bool: return not (tile as LevelTile).locked)
-	assert_eq(unlocked.size(), 6, "five won levels plus the next one")
+	var locked := tiles.filter(func(tile: Node) -> bool: return (tile as LevelTile).locked)
+	assert_eq(locked.size(), 0, "dev mode opens every level (debug builds only)")
 	viewport.free()
+	Settings.set_dev_mode(was_dev)
 
 
 func _layout_problems(path: String, size: Vector2i) -> Array[String]:

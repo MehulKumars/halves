@@ -2,11 +2,13 @@ class_name Settings
 extends RefCounted
 ## The player's settings in one place, for the settings and pause popups and for game code.
 ## Volumes go through Maaack's AppSettings (bus volume, saved per bus in user://player_config.cfg);
-## vibration, reduce motion and the game clock use GameSettings keys (AppLifecycle applies the first two).
+## vibration, reduce motion, the game clock, game choices (music, backgrounds) and dev mode use
+## GameSettings keys (AppLifecycle applies the first two).
 
 const MUSIC_BUS: StringName = &"Music"
 const SFX_BUS: StringName = &"SFX"
 const KEY_SHOW_TIMER: String = "ShowTimer"
+const KEY_DEV_MODE: String = "DevMode"
 
 
 ## Linear volume 0..1 of an audio bus ("Music", "SFX", "Master").
@@ -51,6 +53,25 @@ static func show_timer() -> bool:
 
 static func set_show_timer(enabled: bool) -> void:
 	PlayerConfig.set_config(AppLifecycle.SECTION, KEY_SHOW_TIMER, enabled)
+
+
+## A named choice the game defines (music style, background style); `fallback` when never set.
+static func choice(key: String, fallback: String) -> String:
+	return str(PlayerConfig.get_config(AppLifecycle.SECTION, key, fallback))
+
+
+static func set_choice(key: String, value: String) -> void:
+	PlayerConfig.set_config(AppLifecycle.SECTION, key, value)
+
+
+## Developer shortcuts (skip levels, everything unlocked). Debug builds only: always off in a
+## release export, whatever was saved.
+static func dev_mode() -> bool:
+	return OS.is_debug_build() and bool(PlayerConfig.get_config(AppLifecycle.SECTION, KEY_DEV_MODE, false))
+
+
+static func set_dev_mode(enabled: bool) -> void:
+	PlayerConfig.set_config(AppLifecycle.SECTION, KEY_DEV_MODE, enabled)
 
 
 static func _apply() -> void:

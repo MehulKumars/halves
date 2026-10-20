@@ -7,6 +7,8 @@ const BOOSTERS: Array[String] = ["hint", "undo", "shuffle"]
 const SHUFFLE_ICON: Texture2D = preload("res://game/halves/icons/shuffle.svg")
 ## Explain a blocked tap this many times per reason (locks and frost always explain the first time).
 const BLOCK_HELP_LEVELS: int = 6
+## How bright the place behind the board is (the tiles must stand out on any photo).
+const BACKGROUND_DIM: float = 0.52
 
 ## Shared across levels so ad pacing (first session free, gaps, caps) works for the whole run.
 static var ad_policy := AdPolicy.new()
@@ -55,6 +57,7 @@ func _ready() -> void:
 		_booster_button(kind).pressed.connect(_use_booster.bind(kind))
 		_booster_button(kind).set_meta(&"ui_sound", false)
 	Events.debug_command.connect(_on_debug_command)
+	_add_dev_skip()
 	_board.changed.connect(_refresh_hud)
 	_board.mistake_made.connect(_on_mistake)
 	_board.mismatched.connect(_on_mismatched)
@@ -69,9 +72,9 @@ func _ready() -> void:
 	if data == null:
 		push_error("Halves: no board for mode %d (level %d)" % [_mode, _level])
 		return
-	_background = ChapterBackground.install(self, _chapter)
-	HalvesSfx.chapter_music(_chapter)
-	if _mode == Screens.Mode.LEVELS and _level % HalvesChapters.LEVELS_PER_CHAPTER >= 17:
+	_background = ChapterBackground.install(self, _chapter, true, BACKGROUND_DIM)
+	HalvesMusic.play()
+	if _mode == Screens.Mode.LEVELS and _level % HalvesChapters.LEVELS_PER_CHAPTER >= HalvesChapters.LEVELS_PER_CHAPTER - 2:
 		ChapterBackground.preload_chapter(_chapter + 1)
 	_start_board(data)
 	Events.level_started.emit(_board_id())
@@ -345,7 +348,7 @@ func _on_cleared() -> void:
 func _celebrate() -> void:
 	Haptics.big()
 	HalvesSfx.duck(1.6)
-	HalvesSfx.play(StringName("win_%s" % HalvesChapters.get_chapter(_chapter).id))
+	HalvesSfx.play(StringName(HalvesChapters.get_chapter(_chapter).win))
 	var burst := HalvesWinBurst.new()
 	add_child(burst)
 	burst.play(_board.get_global_rect(), HalvesChapters.get_chapter(_chapter))
@@ -363,7 +366,6 @@ func _zen_cleared() -> void:
 	if chapter != _chapter:
 		_chapter = chapter
 		_background.set_chapter(_chapter)
-		HalvesSfx.chapter_music(_chapter)
 	_start_board(_pool_board(HalvesPools.Kind.ZEN, _zen_position))
 
 
@@ -546,6 +548,39 @@ func _build_hud() -> void:
 			var chapter := HalvesChapters.get_chapter(HalvesChapters.index_for_level(level))
 			_caption.text = chapter.name
 			_clock.visible = show_time
+
+
+## Dev mode (Settings, debug builds only): a Skip button by the boosters that wins the board with
+## three stars and moves on, without recording a time.
+func _add_dev_skip() -> void:
+	if not Settings.dev_mode():
+		return
+	var skip := Button.new()
+	skip.text = "Skip"
+	skip.icon = Icons.ARROW_FORWARD
+	skip.tooltip_text = "Dev mode: win this board"
+	skip.theme_type_variation = %HintButton.theme_type_variation
+	skip.size_flags_horizontal = %HintButton.size_flags_horizontal
+	skip.modulate = Color(1.0, 0.85, 0.6)
+	skip.pressed.connect(_dev_skip)
+	%HintButton.get_parent().add_child(skip)
+
+
+func _dev_skip() -> void:
+	if _finished or _state == null:
+		return
+	match _mode:
+		Screens.Mode.LEVELS:
+			_finished = true
+			Progress.record_win(_level, 3)
+			await _go_next()
+		Screens.Mode.ZEN:
+			_zen_position += 1
+			_start_board(_pool_board(HalvesPools.Kind.ZEN, _zen_position))
+		Screens.Mode.RUSH:
+			_finish_rush()
+		_:
+			finish(true, 3)
 
 
 func _on_debug_command(command: StringName, _args: Array) -> void:
