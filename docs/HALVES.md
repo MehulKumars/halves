@@ -28,6 +28,23 @@ A **pair type** (pair key) is the first three parts (`"circle:v:-"`).
 - **Decoy:** same shape but not a match: a twin (identical face) or a near-twin (other cut, other
   mark, or same side). Decoys are what "never match twins" is about.
 
+### Pairs, crests and look-alike groups (v3)
+v3 adds **crests**: Japanese family-crest motifs (blossoms, leaves, waves, ...) drawn in code. The
+rule players read: *tap a half, then the other half of the same crest; never two of the same half.*
+- A face is `pair << 1 | side`: `pair_key = face >> 1` and `mate = face ^ 1`, as in v2.
+- **Pair ids 0-31 are the v2 shapes**, numbered exactly as before (`shape << 3 | cut << 2 | mark`,
+  valid where v2 says so), so v2 levels, seeds, shuffles and saved runs are unchanged.
+- **Pair ids from 32 are crests:** `pair = 32 + motif * 2 + cut`, where `motif` indexes
+  `HalvesCrests.MOTIFS` and `cut` is 0 (vertical: left/right halves) or 1 (horizontal: top/bottom).
+  A motif lists the cuts it allows; a pair with a cut its motif does not allow is invalid.
+- Every pair has a **family** (its ink colour, sound and Crest Book page; v2 shapes are family
+  `shapes`) and a **look-alike group** (v2 shapes: the shape name; crests: from the catalogue).
+- **Match:** same pair, opposite sides (unchanged).
+- **Decoy (v3):** same look-alike group, not a match (twins included). For v2 shapes this is exactly
+  the v2 rule. Two crests of different groups only move the selection (SWITCH), never a mistake.
+- Text: v2 faces keep `"circle:v:dot:a"`; a crest face is `"<motif>:<cut>:<side>"` (e.g.
+  `"sakura:v:a"`), its pair `"sakura:v"`.
+
 ### Free tiles
 Positions are `(x, y, z)` in **half-tile units**: a tile covers the area `[x, x+2) × [y, y+2)` on
 layer `z` (0 = bottom). Upper layers may sit half a tile offset.
@@ -74,9 +91,19 @@ The level ends when the board is clear.
 - A **slip** is a mistake or a **stuck shuffle**: a shuffle applied while the board is stuck (tiles
   left, no free pair), whether it is the free shuffle of the stuck card or the Shuffle booster.
   Backing out of a dead end with Undo is not a slip.
-- Stars: **3** with no slips ("flawless"), **2** with 1 to `STAR2_MAX_MISTAKES` (2) slips,
-  **1** otherwise. Boosters never cost stars by themselves: a shuffle applied while stuck is a slip
-  because of the dead end, whichever button applied it.
+- Stars (v2, replaced by v3 below): **3** with no slips ("flawless"), **2** with 1 to
+  `STAR2_MAX_MISTAKES` (2) slips, **1** otherwise. Boosters never cost stars by themselves: a
+  shuffle applied while stuck is a slip because of the dead end, whichever button applied it.
+- **Stars (v3): a slip allowance.** No researched mahjong game takes a star for one wrong tap.
+  - The **allowance** `A` comes from `HalvesConfig.star_allowance(mode, level, pairs)`:
+    unlimited (`-1`) in the LEVELS mode on levels `1..STAR_FREE_LEVELS` (10), otherwise
+    `max(1, pairs / STAR_ALLOWANCE_PAIRS)` with integer division (`STAR_ALLOWANCE_PAIRS` = 15).
+    `pairs` is the board's tile count / 2. Rush and zen have no stars (the allowance is unused).
+  - `stars(A)`: **3** if `A < 0` or `slips <= A`; **2** if `slips <= A + STAR2_EXTRA_SLIPS` (3);
+    else **1**. Clearing the board always gives at least 1.
+  - Undoing a mistake still takes it back (as v2). Boosters still never cost stars by themselves.
+  - The results screen says "Flawless" for 0 slips, otherwise "N slips (A free)" ("N slips" when
+    the allowance is unlimited).
 
 ### Time, par and the Swift medal (v2)
 - The clock starts at the player's **first tap** on the board (the game calls `HalvesRun.start()` on it, even
@@ -112,11 +139,51 @@ The level ends when the board is clear.
 ## 2. Code (`game/halves/`, shipped)
 All logic is pure (static functions or `RefCounted`), statically typed and deterministic: random
 choices use a seeded `RandomNumberGenerator` passed in, never `randi()`, `Array.shuffle()` or
-`pick_random()`. Tile ids are indices into the level's tile list, which is sorted by `(z, y, x)`;
-a set of tiles is an `int` bitmask (bit i = tile i, at most 64 tiles; bit 63 makes the int
-negative, so test bits with `!= 0`).
+`pick_random()`. Tile ids are indices into the level's tile list, which is sorted by `(z, y, x)`.
+v2: a set of tiles was an `int` bitmask (at most 64 tiles). **(v3) A set of tiles is a
+`HalvesBits` set** (below, at most 128 tiles): every parameter, field and return value that this
+section calls a mask is such a set, with the same name and meaning.
+
+### `HalvesBits` (`halves_bits.gd`, static) (v3)
+A set of tile ids `0..127`: a `PackedInt64Array` of exactly two words; tile `i` is bit `i & 63` of
+word `i >> 6` (test bits with `!= 0`, bit 63 makes a word negative). Packed arrays are passed by
+reference in GDScript, so **every function returns a new array and never changes its arguments**,
+except `set_bit` and `clear_bit`, which change `s` in place for hot loops.
+```
+const WORDS := 2
+const MAX := 128
+static func empty() -> PackedInt64Array
+static func full(count: int) -> PackedInt64Array            # tiles 0..count-1 (0 <= count <= 128)
+static func of(ids: Array) -> PackedInt64Array              # ints (or whole floats from JSON)
+static func has(s: PackedInt64Array, i: int) -> bool
+static func added(s: PackedInt64Array, i: int) -> PackedInt64Array
+static func removed(s: PackedInt64Array, i: int) -> PackedInt64Array
+static func set_bit(s: PackedInt64Array, i: int) -> void    # in place
+static func clear_bit(s: PackedInt64Array, i: int) -> void  # in place
+static func union(a: PackedInt64Array, b: PackedInt64Array) -> PackedInt64Array
+static func intersection(a: PackedInt64Array, b: PackedInt64Array) -> PackedInt64Array
+static func minus(a: PackedInt64Array, b: PackedInt64Array) -> PackedInt64Array   # a and not b
+static func is_empty(s: PackedInt64Array) -> bool
+static func intersects(a: PackedInt64Array, b: PackedInt64Array) -> bool
+static func is_subset(a: PackedInt64Array, b: PackedInt64Array) -> bool          # every tile of a is in b
+static func equal(a: PackedInt64Array, b: PackedInt64Array) -> bool
+static func count(s: PackedInt64Array) -> int
+static func ids(s: PackedInt64Array) -> PackedInt32Array    # ascending
+static func first(s: PackedInt64Array) -> int               # lowest id, -1 if empty
+```
+A set is a valid `Dictionary` key (packed arrays compare by content), so solver memos key on it
+directly. `HalvesGeometry.popcount` becomes `HalvesBits.count`; `HalvesGeometry.MAX_TILES` is 128.
 
 ### `HalvesFace` (`halves_face.gd`, static; a face is an `int`)
+(v3) A face is `pair << 1 | side` (section 1, Pairs). The v2 functions below keep their meaning
+for pairs 0-31; `shape` and `mark` return -1 for crest pairs, and `cut` works for both (v2: bit 3
+of the face; crests: bit 1). `is_valid`, `is_decoy`, `to_text`, `from_text`, `pair_to_text` and
+`pair_from_text` (v3) accept crest faces as well, through `HalvesCrests`. New in v3:
+```
+static func is_crest(face: int) -> bool             # pair_key(face) >= HalvesCrests.FIRST_PAIR
+static func family(face: int) -> StringName          # &"shapes" for v2 pairs
+static func group(face: int) -> StringName           # look-alike group (v2: the shape name)
+```
 ```
 enum Shape { CIRCLE, TRIANGLE, SQUARE, DIAMOND }    # text: circle, tri, square, diamond
 enum Cut { VERTICAL, HORIZONTAL }                   # text: v, h
@@ -137,6 +204,51 @@ static func from_text(text: String) -> int          # -1 if invalid
 static func pair_to_text(key: int) -> String        # "circle:v:-"
 static func pair_from_text(text: String) -> int     # -1 if invalid
 ```
+
+### `HalvesCrests` (`halves_crests.gd`, static) (v3): the crest catalogue
+```
+const FIRST_PAIR := 32
+const FAMILIES: Array[Dictionary]   # {"id": &"blossoms", "name": "Blossoms"}; order = Crest Book order
+const MOTIFS: Array[Dictionary]     # {"id": &"sakura", "name": "Cherry blossom", "family": &"blossoms",
+                                     #  "group": &"blossom5", "cuts": [0, 1], "spec": {...}}
+static func motif_count() -> int
+static func motif_index(id: StringName) -> int       # -1 if unknown
+static func pair_of(motif: int, cut: int) -> int     # FIRST_PAIR + motif * 2 + cut
+static func motif_of(pair: int) -> int               # -1 for v2 pairs and unknown ids
+static func cut_of(pair: int) -> int                 # works for v2 pairs too
+static func is_valid_pair(pair: int) -> bool         # v2 rule below FIRST_PAIR; else known motif + allowed cut
+static func family_of(pair: int) -> StringName       # &"shapes" for v2 pairs; &"" if invalid
+static func group_of(pair: int) -> StringName        # v2: &"circle" / &"tri" / &"square" / &"diamond"
+static func pairs_in_family(family: StringName) -> PackedInt32Array   # every valid pair, ascending
+static func similarity(pair_a: int, pair_b: int) -> float  # 0..1, 1 only for the same pair (see below)
+```
+- Motif ids are unique; every motif's family is in `FAMILIES`; every motif allows at least one
+  cut. Appending motifs never renumbers existing pairs (baked levels store face text, not ints).
+- `similarity`: 1.0 for the same pair; 0.0 for different groups; within a group
+  `0.5 + 0.4 * shared / total` where `shared` counts the equal top-level `spec` entries and `total`
+  the distinct top-level keys of both specs, minus 0.1 if the cuts differ; v2 pairs within a shape:
+  0.8 for the same mark and other cut, 0.6 for another mark. Used to rate how easy a decoy is to
+  mistake (generator and the perceptive bot).
+- Never in the catalogue: the 16-petal imperial chrysanthemum, the government paulownia, the
+  Tokugawa hollyhock, three diamonds in a triangle (corporate mark).
+
+### `HalvesCrest` (`halves_crest.gd`, static) (v3): crests drawn in code
+A motif's `spec` describes layers of compass-and-ruler primitives in unit space (the crest fits in
+the circle of radius 1 around the origin; y points down). Each layer is `ink` (family colour) or
+`paper` (the tile face colour, painted over ink to cut holes), drawn in order.
+```
+static func layers(motif: int) -> Array[Dictionary]                 # [{"ink": bool, "polygons": Array[PackedVector2Array]}]
+static func half_layers(motif: int, cut: int, side: int) -> Array[Dictionary]  # clipped to the half-plane
+static func draw(canvas: CanvasItem, pair: int, side: int, center: Vector2, extent: float,
+		ink: Color, paper: Color, offset: Vector2 = Vector2.ZERO) -> void   # side -1 = whole crest
+```
+- A half is the crest clipped to `x <= 0` (side a, vertical), `x >= 0` (side b, vertical),
+  `y <= 0` (side a, horizontal) or `y >= 0` (side b, horizontal), so drawing both halves at the same
+  centre draws the whole crest, with the cut on the centre line (as v2 shapes).
+- Polygons are cached per motif (whole) and per (motif, cut, side) (halves); `extent` only scales.
+- `HalvesShapes.draw_half / draw_whole` keep their signatures and call `HalvesCrest.draw` for crest
+  faces (ink: `HalvesPalette.family_color(family)`), so tile views, the snap effect and the logo
+  draw crests without changes.
 
 ### `HalvesGeometry` (`halves_geometry.gd`, RefCounted)
 ```
@@ -231,7 +343,7 @@ func is_cleared() -> bool
 func is_stuck() -> bool           # tiles left and no free pair
 func tiles_left() -> int
 func slips() -> int               # (v2) mistakes + stuck_shuffles
-func stars() -> int
+func stars(allowance: int = 0) -> int  # (v3) the slip allowance, section 1; -1 = unlimited
 func apply_deal(remaining: int, faces: PackedInt32Array, stuck: bool = false) -> void
 ```
 `try_pair(a, b)`, in this order:
@@ -247,8 +359,9 @@ func apply_deal(remaining: int, faces: PackedInt32Array, stuck: bool = false) ->
 `mistakes -= 1`. `apply_deal` keeps `mistakes`, replaces `remaining` and `faces`, clears the
 history, and (v2) adds 1 to `stuck_shuffles` when `stuck` is true. The game screen (not
 `new_state()`) sets `free_mistakes = 1` on tutorial levels and `strict` from
-`HalvesConfig.STRICT_MISTAKES`. `stars()` (v2): 3 if `slips() == 0`, 2 if
-`slips() <= HalvesConfig.STAR2_MAX_MISTAKES`, else 1.
+`HalvesConfig.STRICT_MISTAKES`. `stars(allowance)` (v3): 3 if `allowance < 0` or
+`slips() <= allowance`, 2 if `slips() <= allowance + HalvesConfig.STAR2_EXTRA_SLIPS`, else 1
+(`stars(0)` is not the v2 rule: v2 gave 2 stars up to 2 slips, v3 up to 3).
 
 (v2) Mist and gold: `_init` sets `gold` and `veiled` from `geometry.features` (`mist` and `gold`
 lists; 0 without features), then reveals. **Reveal** means `veiled &= ~geometry.free_mask(remaining)`
@@ -445,7 +558,11 @@ Each pool file is loaded only when first asked for.
 `GOLD_COINS = 5` (per gold tile), `SWIFT_COINS = 10`, `COMBO_WINDOW = 2.5` s,
 `COMBO_COINS_AT = 5` and `COMBO_COINS = 5`, `ZEN_UNLOCK_LEVEL = 10`, `RUSH_UNLOCK_LEVEL = 15`,
 `RUSH_SECONDS = 180`, `RUSH_BOARD_BONUS_S = 5`, `RUSH_MISTAKE_PENALTY_S = 3`,
-`RUSH_BOARD_POINTS = 10`, and the par constants of section 4.
+`RUSH_BOARD_POINTS = 10`, and the par constants of section 4. (v3): `STAR_FREE_LEVELS = 10`,
+`STAR_ALLOWANCE_PAIRS = 15`, `STAR2_EXTRA_SLIPS = 3` (`STAR2_MAX_MISTAKES` is no longer used), and
+```
+static func star_allowance(mode: int, level: int, pairs: int) -> int   # section 1, Stars (v3); mode is Screens.Mode as int
+```
 
 ### Places, backgrounds, music and view (not part of the logic contract)
 `HalvesChapters` holds the ten places of ten levels (photo, credit, ambient effect, accent, win
