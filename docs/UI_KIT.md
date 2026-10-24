@@ -11,10 +11,9 @@ adapt to every phone shape, foldables and tablets (portrait).
 | | File | What it does |
 |---|---|---|
 | Splash | `ui/screens/splash.tscn` | Halves: over the home screen's photo, two half tiles slide in and snap into the Halves mark with a burst, then the name rises in (about 2 s, tap to skip) |
-| Main menu | `ui/screens/main_menu.tscn` | Over its own photo (Mount Fuji) with a slow drift and a soft shade at top and bottom: coins and Ranks, Shop, Settings icons on top, the Halves mark and title high up, then the big **Play** button (next unbeaten level) with a square **Levels** button beside it, and Daily, Zen and Rush (locked until levels 10 and 15) in one row. Back asks before quitting |
+| Main menu | `ui/screens/main_menu.tscn` | Over its own photo (Mount Fuji) with a slow drift and a soft shade at top and bottom: coins, Records and Settings on top, the Halves mark and title high up, then the big **Play** button (next unbeaten level) with a square **Levels** button beside it, and Daily, Zen and Rush (locked until levels 10 and 15) in one row. Back asks before quitting |
 | Level select | `ui/screens/level_select.tscn` | One section per place of ten levels: a header card (thumbnail, name, stars and Swift medals; tap for the photo), then, once the place is reached, its ten tiles five to a row with best stars, locks and ⚡. Places not reached show only a compact locked card. The next level is scrolled into view; dev mode opens everything |
 | Game | `ui/screens/game.tscn` | Halves in four modes over the place's photo (dimmed so the tiles stand out): HUD (pause, title, chapter and clock, progress bar, stars), the board, hint/undo/shuffle boosters, the stuck card (undo or shuffle), tip cards, and the end flow (results, chapter reveal) |
-| Shop | `ui/screens/shop.tscn` | Remove-ads card, six coin packs, free coins for a rewarded video |
 | Credits | `ui/screens/credits.tscn` | Built from `ATTRIBUTION.md` (your game first, then what it is made with), followed automatically by the licence notices the shipped code requires. Links are plain text |
 | UI kit gallery | `ui/screens/ui_gallery.tscn` | Every component on one page with a live style switcher (Settings > Open the UI kit gallery, debug builds) |
 | Pause | `ui/popups/pause_popup.tscn` | Resume, restart, How to play (every tip card), settings, main menu, quick music/sound/vibration toggles. Pauses the game |
@@ -22,10 +21,9 @@ adapt to every phone shape, foldables and tablets (portrait).
 | Chapter | `ui/popups/chapter_popup.tscn` | A place's photo (or drawn version) with its location and photo credit, its stars and medals; shown when its ten levels are completed |
 | Daily | `ui/popups/daily_popup.tscn` | Today's Daily Puzzle: number, weekday difficulty, a 7-day strip, streak, best time, Play, Copy result |
 | Results | `ui/popups/results_popup.tscn` | Win (`show_win(level, stars, coins, details)`): stars pop in with rising chimes, the time counts up against par and best, New best / Swift / Gold / Combo ribbons, coins count up, Next (rush shows its score; daily shows the streak and Copy result). Lose: "+5 moves (watch ad)", Retry, Home. Back does not dismiss it |
-| Settings | `ui/popups/settings_popup.tscn` | Three groups: Sound (music and sound volume, music style chips: Lo-fi, Calm, Rain, Nature, Focus), Look and feel (Photos or Drawn backgrounds, vibration, reduce motion with a one-line explanation, show timer) and More (credits, privacy policy, restore purchases, reset progress, version). Debug builds add Developer: dev mode, Show FPS and the style picker |
-| Daily reward | `ui/popups/daily_reward_popup.tscn` | Seven-day streak, day 7 is a gift; missing a day restarts it |
+| Settings | `ui/popups/settings_popup.tscn` | Three groups: Sound (music and sound volume, music style chips: Lo-fi, Calm, Rain, Nature, Focus), Look and feel (Photos or Drawn backgrounds, vibration, reduce motion with a one-line explanation, show timer) and More (credits, privacy policy, reset progress, version). Debug builds add Developer: dev mode, Show FPS and the style picker |
 | Confirm | `ui/popups/confirm_popup.tscn` | Yes/no question, `await UI.confirm(...)` |
-| Ranks | `ui/popups/ranks_popup.tscn` | The player's stars, levels and coins, and a star leaderboard with their row highlighted (sample players until Google Play Games is connected; then Google's own screen opens instead) |
+| Records | `ui/popups/ranks_popup.tscn` | The player's own stats and bests: stars, levels, coins, Swift medals, rush best and daily streak (Halves v1 has no online leaderboard) |
 
 The flow: Android launch screen (app icon) → splash → main menu → (level select) → game → results → next / retry / home.
 All paths are in `ui/screens.gd` (`Screens.MAIN_MENU`, `Screens.PAUSE`, ...).
@@ -112,7 +110,7 @@ Font sizes: `small`, `body`, `header`, `title`. Fonts: `display`, `body`.
 
 ## Adding a screen
 
-1. Duplicate `ui/screens/shop.tscn` (and its script) as a starting point. The layout every screen
+1. Duplicate `ui/screens/credits.tscn` (and its script) as a starting point. The layout every screen
    uses:
    ```
    YourScreen (Control, full rect, script extends Screen)
@@ -154,7 +152,7 @@ Font sizes: `small`, `body`, `header`, `title`. Fonts: `display`, `body`.
 Android Back arrives as the `ui_cancel` action (the Back key is mapped in Project Settings > Input
 Map, next to Escape and the gamepad button). Order of handling:
 1. The top popup closes if it is `dismissible` (the results popup is not; the player must choose).
-2. Otherwise the current `Screen.on_back()` runs: level select, shop, credits and gallery go to the
+2. Otherwise the current `Screen.on_back()` runs: level select, credits and gallery go to the
    main menu, the game opens pause, the main menu asks before quitting.
 
 `Events.back_requested` is still emitted for analytics or custom code.
@@ -184,5 +182,5 @@ Snapshots use a separate demo save, so your PC progress is untouched.
 - Text is not set up for translation (strings are in the scenes and scripts).
 - The pixel font is drawn smoothed: a canvas scaled to the phone's resolution cannot line up with a
   pixel grid, and unsmoothed it turned "3" and "5" into "8" and "S".
-- Prices in the shop are placeholders; real ones come from Google Play Billing in the player's
-  currency (see [SERVICES.md](SERVICES.md)).
+- Halves v1 is free with no shop, ads or purchases; the services stay as mocks (see
+  [SERVICES.md](SERVICES.md)) until a later version adds them.

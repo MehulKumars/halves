@@ -22,7 +22,6 @@ The drawn backgrounds are made in code
 
 ## Music
 Lo-fi: "Roof Tops", "Ocean Breeze" and "Bubbles" by HoliznaCC0 (CC0)  
-"Cloud Watching" by Purrple Cat (CC BY-SA 4.0)  
 "it's perfect weather for a trip to the café, don't you think?" by AvapXia (CC BY 4.0)  
 "Evening Glow" and "Early Morning Song (Finch Duet)" by Lee Rosevere (CC BY 4.0)  
 Calm: "Up in the Sky" by Memoraphile (CC0)  

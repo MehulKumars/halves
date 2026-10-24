@@ -1,7 +1,7 @@
 extends Modal
 ## End-of-board popup. show_win(level, stars, coins, details) plays the reveal: stars with rising
 ## chimes, the time against par and best, "New best" / "Swift" ribbons, then coins; rush shows its
-## score. Closes with "next", "retry", "home" or "continue" (lose only, after a chosen rewarded ad).
+## score. Closes with "next", "retry" or "home".
 
 var _stats: VBoxContainer
 var _time: Label
@@ -16,7 +16,6 @@ func _ready() -> void:
 	%NextButton.pressed.connect(close.bind("next"))
 	%RetryButton.pressed.connect(close.bind("retry"))
 	%HomeButton.pressed.connect(close.bind("home"))
-	%ContinueButton.pressed.connect(_on_continue)
 	_build_stats()
 
 
@@ -24,7 +23,6 @@ func show_win(level: int, stars: int, coins: int, details: Dictionary = {}) -> v
 	var rush := bool(details.get("rush", false))
 	%Headline.text = str(details.get("title", "Time's up!" if rush else "Level %d complete!" % level))
 	%Message.text = _message(stars, details)
-	%ContinueButton.hide()
 	%NextButton.show()
 	%NextButton.text = str(details.get("next_text", "Play again" if rush else "Next level"))
 	%Stars.visible = not rush
@@ -54,17 +52,6 @@ func show_win(level: int, stars: int, coins: int, details: Dictionary = {}) -> v
 		%Reward.set_value(coins)
 		if coins > 0:
 			HalvesSfx.play(&"coin")
-
-
-func show_lose(level: int) -> void:
-	%Headline.text = "Out of moves"
-	%Message.text = "Level %d. Watch a short video for 5 more moves, or try again." % level
-	%Stars.hide()
-	%RewardRow.hide()
-	%NextButton.hide()
-	_stats.hide()
-	%ContinueButton.visible = Services.ads.is_rewarded_ready("continue")
-	%RetryButton.theme_type_variation = &"AccentButton"
 
 
 func _message(stars: int, details: Dictionary) -> String:
@@ -180,15 +167,3 @@ func _build_stats() -> void:
 		UI.toast("Result copied: paste it to your friends"))
 	content.add_child(_share_button)
 	content.move_child(_share_button, %NextButton.get_index() + 1)
-
-
-## Rewarded ads are always the player's choice and say what they give (Play policy).
-func _on_continue() -> void:
-	%ContinueButton.disabled = true
-	Services.ads.show_rewarded("continue")
-	var result: Array = await Services.ads.rewarded_finished
-	if result[1]:
-		close("continue")
-	else:
-		%ContinueButton.disabled = false
-		UI.toast("No reward this time")

@@ -1,10 +1,14 @@
-# Mobile Game Template: rules for Claude Code
+# Halves: rules for Claude Code
+
+Halves started from our mobile game template and is now its own game (decided 2026-10-25): `core/`, the
+skills and these rules may change where Halves needs it. v3 plan: crests drawn in code, 300 levels in 15
+places, a star allowance, free v1 with no shop (contract in `docs/HALVES.md`).
 
 Godot **4.7.2** (pinned) · GDScript only · 2D portrait, 720 px wide canvas · Android first · Compatibility renderer.
 The human owns fun, feel, art, balance, the store page and release decisions. Claude builds code with a checkable answer.
 
 ## Project map
-- `core/` shared template systems. Change only on purpose and ask first.
+- `core/` shared systems from the template. Halves may change them; keep `docs/ARCHITECTURE.md` in sync.
   - `events.gd` autoload **Events**: global signal bus (incl. `app_paused`, `app_resumed`, `back_requested`).
   - `services/` autoload **Services**: `ads`, `iap`, `analytics`, `leaderboard`, `review` as interfaces with mocks.
   - `app_lifecycle.gd` autoload **AppLifecycle**: Android pause/resume/Back -> Events; applies Reduce Motion and Haptics.
@@ -46,8 +50,8 @@ The human owns fun, feel, art, balance, the store page and release decisions. Cl
 - Show an interstitial anywhere except when a results screen opens, and only if `AdPolicy.can_show_interstitial()` is true.
   Never on Next / Retry / Play again, at level start, during play, after a fail with a continue offer, or in daily/zen modes.
 - Generate shipped levels at runtime. Generate offline, rate with a bot, bake to `data/` with a `gen_version`.
-- Hand-write `uid://` values or restructure existing `.tscn` files as text. Change properties with `tools/scene_edit.gd`;
-  structural scene work happens in the editor (or a new scene, which Godot re-saves).
+- Hand-write `uid://` values or restructure existing `.tscn` files as text. Change properties or remove nodes with
+  `tools/scene_edit.gd` (Godot writes the file); adding or moving nodes happens in the editor, in code, or in a new scene.
 - Edit anything in `addons/`, or the generated `core/ui/themes/*.tres` (edit `core/ui/styles/` and run the builder).
 - Hard-code colours, fonts or sizes in screens. Use theme type variations and `Tokens` (see `docs/UI_KIT.md`).
 - Name a static function `reload`, `free` or another built-in Object/Script method: `Class.reload()` calls the built-in.
@@ -79,7 +83,7 @@ The human owns fun, feel, art, balance, the store page and release decisions. Cl
 - Work in small steps: plan first, one feature at a time, run the done check, then commit.
 
 ## Ask the human first
-- A new autoload or addon, any change in `core/`, project settings, export presets, signing, package names.
+- A new autoload or addon, signing, package names, anything that costs money or publishes outside this repo.
 
 ## Automatic check (hook)
 After every Edit/Write of a `.gd` file, `.claude/settings.json` runs `tools/hooks/gd_check.ps1`, which compiles the
@@ -100,7 +104,9 @@ Test cases for generators and solvers are written by the human or a separate ses
 - Screenshots of the UI: `powershell -ExecutionPolicy Bypass -File tools/snapshots.ps1 [-Styles all] [-Sizes 720x1600] [-Only main_menu,pause] [-Inset 0,64,0,32]`
   -> `build/snapshots/<style>_<w>x<h>_<screen>.png` and `..._contact.png`
 - Rebuild themes after editing a style: `godot --headless --path . -s tools/build_theme.gd`
-- Set scene properties: `godot --headless --path . -s tools/scene_edit.gd -- res://ui/screens/shop.tscn Safe extra_margin 24`
+- Set scene properties: `godot --headless --path . -s tools/scene_edit.gd -- res://ui/screens/credits.tscn Safe extra_margin 24`
+- Remove scene nodes: `godot --headless --path . -s tools/scene_edit.gd -- --remove res://ui/popups/x.tscn Path/To/Node`
+  (from PowerShell 5.1, pass string values as `'\"Text\"'`)
 - Debug APK: `godot --headless --path . --export-debug "Android Debug APK" build/game-debug.apk`
 - Phone: `adb install -r build/game-debug.apk`, `adb exec-out screencap -p > shot.png`, Back = `adb shell input keyevent 4`,
   console = `adb shell input keyevent 68` then `adb shell input text fps` + `adb shell input keyevent 66`, logs `adb logcat -s godot`.

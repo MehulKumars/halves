@@ -12,7 +12,7 @@ const ROTATE_SECONDS: float = 240.0
 ## In Settings order. loop: each file loops (soundscapes); otherwise songs play once, in turn.
 const STYLES: Dictionary = {
 	"lofi": {"label": "Lo-fi", "loop": false,
-		"tracks": ["roof_tops", "ocean_breeze", "cloud_watching", "cafe_weather", "bubbles", "evening_glow"]},
+		"tracks": ["roof_tops", "ocean_breeze", "cafe_weather", "bubbles", "evening_glow"]},
 	"calm": {"label": "Calm", "loop": false, "tracks": ["up_in_the_sky", "early_morning", "autumn_sunshine"]},
 	"rain": {"label": "Rain", "loop": true, "tracks": ["rain_leaves"]},
 	"nature": {"label": "Nature", "loop": true, "tracks": ["waves", "forest_stream", "night_crickets"]},

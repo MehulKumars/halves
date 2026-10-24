@@ -236,7 +236,7 @@ func _use_booster(kind: String) -> void:
 	_refresh_hud()
 
 
-## Zen is free; otherwise the board's free use first, then coins or a rewarded video.
+## Zen is free; otherwise the board's free use first, then coins.
 func _pay_for(kind: String) -> bool:
 	if _mode == Screens.Mode.ZEN:
 		return true
@@ -246,12 +246,8 @@ func _pay_for(kind: String) -> bool:
 	var popup := UI.open(load(Screens.BOOSTER) as PackedScene)
 	popup.call(&"setup", kind, _booster_title(kind), _booster_icon(kind), _booster_price(kind), Progress.coins())
 	var choice: Variant = await popup.closed
-	match choice:
-		"coins":
-			return Progress.spend_coins(_booster_price(kind))
-		"video":
-			ad_policy.record_rewarded_shown(_now())
-			return true
+	if choice == "coins":
+		return Progress.spend_coins(_booster_price(kind))
 	return false
 
 

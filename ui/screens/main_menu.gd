@@ -1,6 +1,6 @@
 extends Screen
-## Home screen over its own photo (Mount Fuji; or drawn, see Settings): coins and Ranks, Shop and
-## Settings icons on top, the Halves mark, the big Play button with Levels beside it, then Daily,
+## Home screen over its own photo (Mount Fuji; or drawn, see Settings): coins, Records and
+## Settings on top, the Halves mark, the big Play button with Levels beside it, then Daily,
 ## Zen and Rush (unlocked by level). Play starts the next level not yet won. Back asks before quitting.
 
 @onready var _coins: CurrencyPill = %Coins
@@ -24,9 +24,8 @@ func _ready() -> void:
 	_play.pressed.connect(_on_play)
 	%SettingsButton.pressed.connect(_on_settings)
 	%LevelsButton.pressed.connect(UI.goto.bind(Screens.LEVEL_SELECT))
-	%ShopButton.pressed.connect(UI.goto.bind(Screens.SHOP))
 	%DailyButton.pressed.connect(_on_daily)
-	%RanksButton.pressed.connect(_on_ranks)
+	%RanksButton.pressed.connect(UI.open.bind(load(Screens.RANKS) as PackedScene))
 	_build_mark()
 	_build_top_bar()
 	_build_modes()
@@ -48,14 +47,6 @@ func _on_play() -> void:
 func _on_settings() -> void:
 	await UI.open(load(Screens.SETTINGS) as PackedScene).closed
 	_coins.value = Progress.coins()
-
-
-## Google Play Games shows its own leaderboard screen; until it is connected, show ours.
-func _on_ranks() -> void:
-	if Services.leaderboard.has_native_ui():
-		Services.leaderboard.show_board("stars")
-	else:
-		UI.open(load(Screens.RANKS) as PackedScene)
 
 
 func _on_daily() -> void:
@@ -82,10 +73,10 @@ func _refresh_daily_dot() -> void:
 	_daily_dot.visible = not bool(HalvesRecords.daily_state().done)
 
 
-## Ranks and Shop become icons next to Settings, so the bottom keeps one row of big buttons.
+## Records becomes an icon next to Settings, so the bottom keeps one row of big buttons.
 func _build_top_bar() -> void:
 	var bar: Container = %SettingsButton.get_parent()
-	for button: Button in [%RanksButton, %ShopButton]:
+	for button: Button in [%RanksButton]:
 		button.reparent(bar)
 		bar.move_child(button, %SettingsButton.get_index())
 		button.tooltip_text = button.text

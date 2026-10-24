@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" path="res://ui/popups/ranks_popup.gd" id="1_script"]
 [ext_resource type="Script" path="res://core/ui/safe_area_margin.gd" id="2_safe"]
-[ext_resource type="Script" path="res://core/ui/touch_scroll_container.gd" id="3_scroll"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/close.svg" id="4_close"]
 
 [node name="RanksPopup" type="Control" unique_id=834750372]
@@ -47,7 +46,7 @@ theme_override_constants/separation = 16
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"HeaderLabel"
-text = "Ranks"
+text = "Records"
 vertical_alignment = 1
 
 [node name="CloseButton" type="Button" parent="Safe/Center/Sheet/Content/Header" unique_id=741273006]
@@ -125,22 +124,3 @@ layout_mode = 2
 theme_type_variation = &"CaptionLabel"
 text = "Coins"
 horizontal_alignment = 1
-
-[node name="SampleNote" type="Label" parent="Safe/Center/Sheet/Content" unique_id=775441482]
-layout_mode = 2
-theme_type_variation = &"CaptionLabel"
-text = "Sample players. Connect Google Play Games to rank against real ones."
-horizontal_alignment = 1
-autowrap_mode = 2
-
-[node name="Scroll" type="ScrollContainer" parent="Safe/Center/Sheet/Content" unique_id=957914217]
-unique_name_in_owner = true
-layout_mode = 2
-horizontal_scroll_mode = 0
-script = ExtResource("3_scroll")
-
-[node name="Board" type="VBoxContainer" parent="Safe/Center/Sheet/Content/Scroll" unique_id=1256071599]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 10

@@ -1,8 +1,12 @@
 # Assets and code licences
 
 Every third-party file in a shipped game must be listed here with its author, licence and source.
-Allowed: CC0, MIT, Apache 2.0, CC-BY (with credit in the Credits screen), SIL OFL for fonts.
-Never: CC-BY-NC (bars ad-supported games), CC-BY-ND, GPL or CC-BY-SA in closed-source games, AI-generated assets.
+Allowed: CC0 and public domain, MIT, Apache 2.0, CC BY (with credit in the Credits screen), SIL OFL for
+fonts, Unsplash and Pexels licence photos (credited anyway; never Unsplash+), and our own work drawn or
+synthesised in code.
+Never: CC BY-NC, CC BY-ND, CC BY-SA (Halves is closed source), GPL, Pixabay (its "standalone" clause
+covers edited wallpapers), AI-generated assets. No feature may let players save or export a photo.
+The CC BY-SA photos listed below are being replaced in Halves v3 (milestone M5); do not add more.
 
 ## Code (addons)
 | Item | Version | Author | Licence | Ships in release? |
@@ -84,7 +88,6 @@ Songs are levelled to -18 LUFS and play whole, one after another; soundscapes ar
 | `roof_tops.ogg` (Lo-fi) | Roof Tops | HoliznaCC0 | CC0 1.0 | freemusicarchive.org/music/holiznacc0/summer-air-lo-fi/roof-tops/ |
 | `ocean_breeze.ogg` (Lo-fi) | Ocean Breeze | HoliznaCC0 | CC0 1.0 | freemusicarchive.org/music/holiznacc0/public-domain-lofi/ocean-breeze-lofi-ukulele-peaceful-mp3/ |
 | `bubbles.ogg` (Lo-fi) | Bubbles | HoliznaCC0 | CC0 1.0 | freemusicarchive.org/music/holiznacc0/public-domain-lofi/bubbles-lofi-bright-relaxed/ |
-| `cloud_watching.ogg` (Lo-fi) | Cloud Watching | Purrple Cat | CC BY-SA 4.0 | freemusicarchive.org/music/purrple-cat/indigo-dreams/cloud-watching/ |
 | `cafe_weather.ogg` (Lo-fi) | it's perfect weather for a trip to the café, don't you think? | AvapXia | CC BY 4.0 | freemusicarchive.org/music/avapxia/summer-lofi/its-perfect-weather-for-a-trip-to-the-cafe-dont-you-think/ |
 | `evening_glow.ogg` (Lo-fi) | Evening Glow | Lee Rosevere | CC BY 4.0 | freemusicarchive.org/music/lee-rosevere/music-for-podcasts-beats/evening-glow/ |
 | `up_in_the_sky.ogg` (Calm) | Up in the Sky | Memoraphile | CC0 1.0 | opengameart.org/content/up-in-the-sky |

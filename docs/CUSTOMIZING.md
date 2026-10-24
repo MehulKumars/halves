@@ -33,16 +33,14 @@ What to change for every game, what you can change if the game needs it, and wha
 - Back opens the pause popup. Save on `Events.app_paused` if your game holds state that
   `Progress` does not.
 
-## Rewards, shop and daily reward
+## Rewards
 
 | What | Where |
 |---|---|
-| Coins per star | `ui/screens/game.gd` > `COINS_PER_STAR` |
-| Daily reward amounts | `core/progress.gd` > `DAILY_REWARDS` (7 days) |
-| Shop products and prices | `ui/screens/shop.gd` > `PACKS`, `NO_ADS_ID`, `FREE_COINS`. Prices are placeholders; real ones come from Play Billing |
-| Remove-ads purchase | `Progress.owns("remove_ads")`; skip interstitials when it is true |
+| Coins per star | `game/halves/halves_config.gd` > `COINS_PER_STAR` |
+| Daily puzzle streak coins | `core/progress.gd` > `DAILY_REWARDS` (7 days, paid by `HalvesRecords` when the daily is cleared) |
 
-Remove screens you do not need (for example the shop) by deleting the scene, its button and its
+Remove screens you do not need by deleting the scene, its button and its
 entry in `ui/screens.gd`, `tests/test_screens.gd` and `tools/snapshots.gd`.
 
 ## Look and feel
@@ -59,7 +57,7 @@ entry in `ui/screens.gd`, `tests/test_screens.gd` and `tools/snapshots.gd`.
 ## Settings
 
 `ui/popups/settings_popup.tscn` has Music and Sound volume, Vibration, Reduce motion, Credits,
-Privacy, Restore purchases, Reset progress and the version. To add a setting, add a row (icon,
+Privacy, Reset progress and the version. To add a setting, add a row (icon,
 label, control) and read/write it with `PlayerConfig.get_config("GameSettings", "YourKey", default)` /
 `PlayerConfig.set_config(...)`, the way `core/settings.gd` does. Set `show_style_picker` to let
 players choose the style.

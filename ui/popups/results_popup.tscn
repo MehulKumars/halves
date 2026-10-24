@@ -4,7 +4,6 @@
 [ext_resource type="Script" path="res://core/ui/safe_area_margin.gd" id="2_safe"]
 [ext_resource type="Script" path="res://core/ui/widgets/star_rating.gd" id="3_stars"]
 [ext_resource type="Script" path="res://core/ui/widgets/currency_pill.gd" id="4_pill"]
-[ext_resource type="Texture2D" path="res://core/ui/icons/smart_display.svg" id="5_video"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/arrow_forward.svg" id="6_next"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/replay.svg" id="7_replay"]
 [ext_resource type="Texture2D" path="res://core/ui/icons/home.svg" id="8_home"]
@@ -85,14 +84,6 @@ script = ExtResource("4_pill")
 custom_minimum_size = Vector2(0, 4)
 layout_mode = 2
 mouse_filter = 2
-
-[node name="ContinueButton" type="Button" parent="Safe/Center/Sheet/Content" unique_id=777780483]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"AccentButton"
-text = "+5 moves  (watch ad)"
-icon = ExtResource("5_video")
 
 [node name="NextButton" type="Button" parent="Safe/Center/Sheet/Content" unique_id=1420013879]
 unique_name_in_owner = true

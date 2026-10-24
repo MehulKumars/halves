@@ -1,20 +1,18 @@
 class_name Screens
 extends RefCounted
 ## Paths of every screen and popup in the UI kit, so code never repeats them.
-## Screens change with UI.goto(Screens.SHOP); popups open with UI.open(load(Screens.PAUSE)).
+## Screens change with UI.goto(Screens.LEVEL_SELECT); popups open with UI.open(load(Screens.PAUSE)).
 
 const SPLASH: String = "res://ui/screens/splash.tscn"
 const MAIN_MENU: String = "res://ui/screens/main_menu.tscn"
 const LEVEL_SELECT: String = "res://ui/screens/level_select.tscn"
 const GAME: String = "res://ui/screens/game.tscn"
-const SHOP: String = "res://ui/screens/shop.tscn"
 const CREDITS: String = "res://ui/screens/credits.tscn"
 const GALLERY: String = "res://ui/screens/ui_gallery.tscn"
 
 const PAUSE: String = "res://ui/popups/pause_popup.tscn"
 const RESULTS: String = "res://ui/popups/results_popup.tscn"
 const SETTINGS: String = "res://ui/popups/settings_popup.tscn"
-const DAILY_REWARD: String = "res://ui/popups/daily_reward_popup.tscn"
 const CONFIRM: String = "res://ui/popups/confirm_popup.tscn"
 const RANKS: String = "res://ui/popups/ranks_popup.tscn"
 const BOOSTER: String = "res://ui/popups/booster_popup.tscn"

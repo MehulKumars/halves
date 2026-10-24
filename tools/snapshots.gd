@@ -14,8 +14,7 @@ extends SceneTree
 const SETTLE_FRAMES: int = 40
 const SIZE_PRESETS: Array[Vector2i] = [Vector2i(720, 1280), Vector2i(720, 1600), Vector2i(960, 1280), Vector2i(1080, 1280)]
 const SCREENS: PackedStringArray = [
-	"splash", "main_menu", "level_select", "game", "pause", "results_win", "results_lose", "settings",
-	"shop", "daily_reward", "ranks", "confirm", "credits", "gallery",
+	"splash", "main_menu", "level_select", "game", "pause", "results_win", "settings", "ranks", "confirm", "credits", "gallery",
 	"game_l1", "game_selected", "game_l21", "game_l41", "game_l61", "game_l100", "game_stuck", "booster",
 	"results_best", "results_rush", "chapter", "daily", "tip", "zen", "rush", "menu_drawn", "game_drawn",
 ]
@@ -195,26 +194,8 @@ func _show_results_win() -> bool:
 	return true
 
 
-func _show_results_lose() -> bool:
-	if not await _show_game():
-		return false
-	var popup := _popup(Screens.RESULTS)
-	if popup == null:
-		return false
-	popup.call(&"show_lose", 3)
-	return true
-
-
 func _show_settings() -> bool:
 	return await _show_main_menu() and _popup(Screens.SETTINGS) != null
-
-
-func _show_shop() -> bool:
-	return await _open(Screens.SHOP)
-
-
-func _show_daily_reward() -> bool:
-	return await _show_main_menu() and _popup(Screens.DAILY_REWARD) != null
 
 
 func _show_ranks() -> bool:

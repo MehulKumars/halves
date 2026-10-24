@@ -26,7 +26,7 @@ Tests live in `tests/`, named `test_*.gd`. The template ships 67 tests (491 chec
 | `test_ui.gd` | Style switching, Back closes only the top popup (and not the results popup), confirm answers, button squash and its Reduce Motion and opt-out, focus rings after touch vs keys, Back key mapped to `ui_cancel` |
 | `test_progress.gd` | Best stars, unlocks, coins, purchases, reload, daily streak (same day, next day, missed day, 7-day cycle, month ends) |
 | `test_responsive.gd` | Grid columns per width, the max-width column, simulated safe-area insets |
-| `test_services.gd` | Ads and purchase results arrive after the call (screens call, then await), and buying a coin pack in the shop adds the coins |
+| `test_services.gd` | Ads and purchase results arrive after the call (screens call, then await) |
 | `test_touch_scroll.gd` | A drag that starts on a button scrolls the list and does not press it; a tap still presses it (fails on Godot's plain ScrollContainer) |
 | `test_ad_policy.gd` | Every interstitial rule (first session, level, wins, gaps, caps, rewarded cooldown, daily/zen) |
 | `test_seed_service.gd` | A known SHA-256 vector, reproducibility, JSON round-trips |
@@ -73,7 +73,7 @@ these PNGs to check its own UI work.
 Change scene properties without opening the editor (Godot writes the file, then the tool reloads it
 and checks every change):
 ```powershell
-godot --headless --path . -s tools/scene_edit.gd -- res://ui/screens/shop.tscn Safe extra_margin 24
+godot --headless --path . -s tools/scene_edit.gd -- res://ui/screens/credits.tscn Safe extra_margin 24
 ```
 
 ## The debug console

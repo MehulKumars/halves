@@ -46,17 +46,3 @@ func test_base_interfaces_answer_after_the_call() -> void:
 	assert_signal_emitted(ads, "rewarded_finished")
 	assert_signal_emitted(ads, "interstitial_closed")
 
-
-func test_buying_a_coin_pack_in_the_shop_adds_the_coins() -> void:
-	Progress.path = "user://test_services_progress.json"
-	Progress.reset()
-	var shop := (load(Screens.SHOP) as PackedScene).instantiate()
-	add_child_autofree(shop)
-	await wait_process_frames(2)
-	var pack: Dictionary = shop.get(&"PACKS")[0]
-	await shop.call(&"_buy_pack", pack)
-	assert_eq(Progress.coins(), int(pack.coins))
-	UI.close_all()
-	Progress.reset()
-	Progress.path = SaveStore.DEFAULT_PATH
-	Progress.load_from_disk()

@@ -11,7 +11,7 @@ This skill is how to work with them and how to check the result.
 ## 1. Pick the right base
 | Need | Use |
 |---|---|
-| A full page (menu, shop, map, leaderboard) | New scene in `ui/screens/`, script `extends Screen`; copy `shop.tscn`'s layout |
+| A full page (menu, map, collection, records) | New scene in `ui/screens/`, script `extends Screen`; copy `credits.tscn`'s layout |
 | Something over the current page (dialog, reward, pause, tutorial step) | New scene in `ui/popups/`, script `extends Modal`; copy `confirm_popup.tscn` |
 | A short message | `UI.toast("text", Icons.COIN)` |
 | A yes/no question | `if await UI.confirm(title, message, "Delete", true):` |

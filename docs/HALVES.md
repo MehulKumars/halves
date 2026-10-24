@@ -94,7 +94,7 @@ The level ends when the board is clear.
   returns). Shuffles clear the undo history.
 - **Shuffle** re-deals the remaining tiles into a solvable board.
 - Each booster is free `FREE_USES` (1) time per level; after that the player pays coins
-  (`PRICE_*`) or watches a rewarded video for one more use.
+  (`PRICE_*`) for one more use (v1 has no rewarded videos).
 - **Stuck** (tiles left, no free pair): within a second a card offers Undo (as the booster) or a
   free shuffle that counts as a slip.
 - A shuffle first re-deals faces on the same positions. If no removal order exists for those
