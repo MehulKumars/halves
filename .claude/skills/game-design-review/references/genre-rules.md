@@ -29,6 +29,14 @@ studio's choice. Benchmarks are GameAnalytics 2025 data, iOS and Android combine
 - Log the funnel: `tutorial_step_1`, `first_win`, `level_3_start`; fix the biggest drop first.
 
 ## Difficulty notes
+- Stars in calm tile games: no researched mahjong or tile-match game (Microsoft Mahjong, Vita,
+  Tile Busters, Zen Match) takes a star for a single wrong tap. Give an allowance that scales with
+  the board (Halves: none lost on levels 1-10, then about one free slip per 15 pairs) and let undo
+  take a slip back. Losing a star on the first slip read as harsh in Halves' playtests.
+- Fully hidden pieces (face-down tiles) feel like blind guessing (Deconstructor of Fun on Zen
+  Match): keep them rare and reveal them when they become playable.
+- "New tile" variety must change what the player reads or decides, not add a dot: Halves v1's
+  dot/line marks read as filler; families of look-alike motifs (5- vs 6-petal flowers) did not.
 - Sawtooth evidence: ELIMINATION (nearly 1,000 players) raised difficulty over five levels and
   dropped it on the sixth; Where's My Water? uses the same pack shape.
 - Introduce each new mechanic in a low-stakes level, never on a peak.

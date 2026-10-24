@@ -38,6 +38,12 @@ give up cleanly.
   the first chapter), or solvable only by one narrow line early on.
 - If a greedy bot wins almost every mid-game level, the mechanic is not creating real decisions:
   that is a design problem (see the game-design-review skill), not a tuning problem.
+- **Bots that never misread measure nothing a careful human feels.** Halves v1 rated with random,
+  careful and wary bots; the wary bot won 90-96% of all 100 levels, so the curve looked flat to
+  players after level 20. Add a human-like bot that sometimes misreads look-alikes (probability
+  from a similarity score between pieces), and rate the share of runs that earn the top score
+  (`p3` in Halves) per level. Target that share by role, and reject "hard" levels that the careful
+  bots still win every time.
 
 ## 4. Bake, don't regenerate
 - Generate offline in a headless batch, rate, then hand-order levels into the difficulty curve
