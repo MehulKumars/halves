@@ -1,7 +1,7 @@
 class_name HalvesBoardView
 extends Control
 ## The Halves board: lays the tiles out to fit this Control, turns taps into HalvesState moves and
-## plays the feedback (lift, snap, combo, mistake shake, shuffle flip, mist/lock/frost/gold).
+## plays the feedback (lift, snap, combo, mistake shake, shuffle flip, mist/lock/frost/gold, mend, lucky).
 ## The game screen calls setup(), show_hint(), undo() and shuffle(); the board signals what happened.
 
 signal matched(a: int, b: int)
@@ -23,6 +23,12 @@ signal blocked_tap(tile: int, reason: int)
 signal shuffled(count: int, was_stuck: bool)
 ## Gold tiles cleared by a snap, at the snap point (board coordinates).
 signal gold_collected(tiles: int, at: Vector2)
+## (v3) A mend removed `a` and its mate `b` (for the run log).
+signal mended(a: int, b: int)
+## (v3) Clearing the gold pair earned a mend, at the snap point.
+signal mend_earned(at: Vector2)
+## (v3) Lucky tiles cleared in time by a snap or mend.
+signal lucky_won(count: int, at: Vector2)
 
 ## Layout in units of the column pitch u: face size, row pitch, side depth, layer rise, lift.
 const FACE_W: float = 0.96
@@ -40,6 +46,8 @@ var level_data: HalvesLevelData
 var state: HalvesState
 ## Pulse the free mates of a picked tile (tutorial levels).
 var show_mates: bool = false
+## (v3) The next tap on a free tile mends it (set by the game screen's Mend button).
+var mend_mode: bool = false
 var shuffles: int = 0
 ## The current chain of quick snaps (1 after a lone snap).
 var combo_count: int = 0
@@ -160,6 +168,9 @@ func tap(i: int) -> void:
 	if not state.geometry.is_free(i, state.remaining):
 		_nudge(i)
 		return
+	if mend_mode:
+		_mend(i)
+		return
 	if _selected < 0:
 		_select(i)
 		return
@@ -180,6 +191,19 @@ func tap(i: int) -> void:
 			_select(i)
 		_:
 			_nudge(i)
+
+
+## Mend mode: the free tile `i` and one of its mates, wherever it lies, snap together. The
+## snap effect flies each half from its own place, so the mate visibly lifts out of the stack.
+func _mend(i: int) -> void:
+	_deselect()
+	var before := _snapshot()
+	if state.try_mend(i) != HalvesState.Result.MATCH:
+		_nudge(i)
+		return
+	mend_mode = false
+	var entry := state.last_action()
+	_on_match(int(entry.a), int(entry.b), before, true)
 
 
 ## Highlights a pair until the next tap (Hint booster, tutorial).
@@ -211,7 +235,7 @@ func undo() -> bool:
 	combo_count = 0
 	_refresh()
 	HalvesSfx.play(&"undo")
-	if last.kind == "pair":
+	if last.kind == "pair" or last.kind == "mend":
 		for i: int in [int(last.a), int(last.b)]:
 			var tile := _tiles[i]
 			if Juice.motion_scale > 0.0:
@@ -280,7 +304,7 @@ func _deselect() -> void:
 	_selected = -1
 
 
-func _on_match(a: int, b: int, before: Dictionary) -> void:
+func _on_match(a: int, b: int, before: Dictionary, mend: bool = false) -> void:
 	var start_a := _tiles[a].position + Vector2(0, -_tiles[a].lift)
 	var start_b := _tiles[b].position + Vector2(0, -_tiles[b].lift)
 	var at := (start_a + start_b) * 0.5
@@ -305,7 +329,10 @@ func _on_match(a: int, b: int, before: Dictionary) -> void:
 	if combo_count >= 2:
 		_float(at + Vector2(0, -_unit * 0.6), "×%d" % combo_count, HalvesPalette.SAND, 0.42)
 	combo.emit(combo_count, at)
-	matched.emit(a, b)
+	if mend:
+		mended.emit(a, b)
+	else:
+		matched.emit(a, b)
 	changed.emit()
 	if state.is_cleared():
 		_busy = true
@@ -347,6 +374,15 @@ func _feature_feedback(before: Dictionary, at: Vector2, a: int, b: int) -> void:
 		HalvesSfx.play(&"gold")
 		_float(at + Vector2(0, _unit * 0.2), "+%d" % (gold * HalvesConfig.GOLD_COINS), HalvesPalette.GOLD, 0.36)
 		gold_collected.emit(gold, at)
+	if state.mends > int(before.mends):
+		HalvesSfx.play(&"gold")
+		_float(at + Vector2(0, -_unit * 0.25), "+1 Mend", HalvesPalette.GOLD, 0.36)
+		mend_earned.emit(at)
+	var won := state.lucky_won - int(before.lucky_won)
+	if won > 0:
+		HalvesSfx.play(&"coin")
+		_float(at + Vector2(0, _unit * 0.2), "+%d" % (won * HalvesConfig.LUCKY_COINS), HalvesPalette.GOLD, 0.36)
+		lucky_won.emit(won, at)
 
 
 func _on_mistake(a: int, b: int, forgiven: bool) -> void:
@@ -440,7 +476,16 @@ func _snapshot() -> Dictionary:
 				HalvesBits.set_bit(locked, i)
 			if not HalvesBits.is_empty(g.frost_need[i]) and HalvesBits.is_subset(g.frost_need[i], state.remaining):
 				HalvesBits.set_bit(frosted, i)
-	return {"free": g.free_mask(state.remaining), "veiled": state.veiled, "locked": locked, "frosted": frosted}
+	return {"free": g.free_mask(state.remaining), "veiled": state.veiled, "locked": locked, "frosted": frosted,
+			"mends": state.mends, "lucky_won": state.lucky_won}
+
+
+## Pairs left on a lucky tile's clock (section 1): -1 when it is not lucky, not free yet or over.
+func _lucky_dots(i: int) -> int:
+	if not HalvesBits.has(state.lucky, i) or not state.lucky_start.has(i):
+		return -1
+	var left := HalvesConfig.LUCKY_SNAPS - (state.pairs_done - state.lucky_start[i])
+	return left if left > 0 else -1
 
 
 func _refresh() -> void:
@@ -462,3 +507,4 @@ func _refresh() -> void:
 			tile.frost = 1.0 if HalvesBits.has(now.frosted, i) else 0.0
 			tile.gold = HalvesBits.has(state.gold, i)
 			tile.turned = HalvesBits.has(turned, i)
+			tile.lucky_dots = _lucky_dots(i)

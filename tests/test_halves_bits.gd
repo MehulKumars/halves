@@ -490,7 +490,7 @@ func _grid_board() -> Dictionary:
 	var keys: Array[int] = [
 		HalvesFace.pair_from_text("circle:v:-"), HalvesFace.pair_from_text("tri:v:dot"),
 		HalvesFace.pair_from_text("square:h:line"), HalvesCrests.pair_of(0, 0), HalvesCrests.pair_of(0, 1),
-		HalvesCrests.pair_of(1, 0), HalvesCrests.pair_of(HalvesCrests.motif_count() - 1, 1),
+		HalvesCrests.pair_of(1, 0), _late_crest_with_cut(1),
 	]
 	var faces := PackedInt32Array()
 	faces.resize(100)
@@ -604,3 +604,11 @@ func test_a_state_on_the_100_tile_stack() -> void:
 	assert_eq(H.order_error(s.geometry, s.geometry.full_mask(), order), "", "test setup: a valid removal order")
 	assert_eq(H.replay_error(s, order), "")
 	assert_true(s.is_cleared())
+
+
+## The pair of the last catalogue motif that allows `cut` (the last motif, gold, is vertical only).
+func _late_crest_with_cut(cut: int) -> int:
+	for motif in range(HalvesCrests.motif_count() - 1, -1, -1):
+		if (HalvesCrests.MOTIFS[motif].cuts as Array).has(cut):
+			return HalvesCrests.pair_of(motif, cut)
+	return -1

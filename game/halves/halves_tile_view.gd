@@ -69,6 +69,11 @@ var turned: bool = false:
 	set(value):
 		turned = value
 		queue_redraw()
+## (v3) A lucky tile's clock: pairs left to clear it for coins (1-3), or -1 for no glow.
+var lucky_dots: int = -1:
+	set(value):
+		lucky_dots = value
+		queue_redraw()
 ## Where layout put the tile; shakes and nudges return here.
 var rest_position: Vector2 = Vector2.ZERO
 
@@ -83,6 +88,7 @@ static var _face_box: StyleBoxFlat = _make_box(HalvesPalette.IVORY)
 ## (v3) The gold pair's tiles have a gold face.
 static var _gold_box: StyleBoxFlat = _make_box(HalvesPalette.GOLD_FACE)
 static var _ring_box: StyleBoxFlat = _make_ring_box()
+static var _glow_box: StyleBoxFlat = _make_ring_box()
 static var _frost_box: StyleBoxFlat = _make_box(HalvesPalette.ICE)
 
 
@@ -178,6 +184,8 @@ func _draw() -> void:
 		_draw_key(Vector2(-w * 0.5 + w * 0.15, top + w * 0.15), w * 0.11)
 	if lock_amount > 0.0:
 		_draw_padlock(Vector2(0.0, top + h - w * 0.17), w * 0.13, lock_amount)
+	if lucky_dots > 0:
+		_draw_lucky(Rect2(-w * 0.5, top, w, h), radius)
 	if ring != Ring.NONE:
 		var colour := HalvesPalette.TERRACOTTA if ring == Ring.MISTAKE else HalvesPalette.SAND
 		colour.a = ring_alpha
@@ -325,3 +333,24 @@ static func _make_ring_box() -> StyleBoxFlat:
 	box.draw_center = false
 	box.anti_aliasing = true
 	return box
+
+
+## A lucky tile: a soft gold halo and rim, and dots along the top for the pairs left on its clock.
+func _draw_lucky(face_rect: Rect2, radius: int) -> void:
+	var w := face_rect.size.x
+	var glow := HalvesPalette.GOLD
+	glow.a = 0.35
+	_glow_box.border_color = glow
+	_glow_box.set_border_width_all(maxi(6, int(round(w * 0.11))))
+	_glow_box.set_corner_radius_all(radius + int(w * 0.05))
+	draw_style_box(_glow_box, face_rect.grow(w * 0.05))
+	glow.a = 0.95
+	_glow_box.border_color = glow
+	_glow_box.set_border_width_all(maxi(3, int(round(w * 0.035))))
+	_glow_box.set_corner_radius_all(radius)
+	draw_style_box(_glow_box, face_rect)
+	var r := w * 0.04
+	for k in HalvesConfig.LUCKY_SNAPS:
+		var at := Vector2(face_rect.get_center().x + (k - 1) * w * 0.13, face_rect.position.y + w * 0.11)
+		draw_circle(at, r * 1.3, HalvesPalette.GOLD_DARK, true, -1.0, true)
+		draw_circle(at, r, HalvesPalette.GOLD if k < lucky_dots else HalvesPalette.IVORY, true, -1.0, true)

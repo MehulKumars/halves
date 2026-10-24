@@ -19,7 +19,8 @@ const SCREENS: PackedStringArray = [
 	"results_best", "results_rush", "chapter", "daily", "tip", "zen", "rush", "menu_drawn", "game_drawn",
 ]
 ## Taken only when named in -Only: development sheets, not screens of the game.
-const ON_REQUEST: PackedStringArray = ["crests_v0", "crests_v1", "crests_v2", "crests_v3", "crests_h0", "crests_h1", "crests_h2", "crests_h3"]
+const ON_REQUEST: PackedStringArray = ["crests_v0", "crests_v1", "crests_v2", "crests_v3", "crests_h0", "crests_h1", "crests_h2", "crests_h3",
+		"tip_lookalike", "tip_gold_pair", "tip_mend", "tip_turned", "tip_lucky"]
 
 var _sizes: Array[Vector2i] = []
 var _styles: Array[StringName] = []
@@ -423,3 +424,34 @@ func _show_crests_v3() -> bool:
 
 func _show_crests_h3() -> bool:
 	return await _show_crests(1, 3)
+
+
+## A tip card by id, over level 3 (v3 mechanics have no v3 level to show them on yet).
+func _show_tip_card(id: String) -> bool:
+	if not await _show_game_level(3):
+		return false
+	var popup := _popup(Screens.TIP)
+	if popup == null:
+		return false
+	popup.call(&"setup", id)
+	return true
+
+
+func _show_tip_lookalike() -> bool:
+	return await _show_tip_card("lookalike")
+
+
+func _show_tip_gold_pair() -> bool:
+	return await _show_tip_card("gold_pair")
+
+
+func _show_tip_mend() -> bool:
+	return await _show_tip_card("mend")
+
+
+func _show_tip_turned() -> bool:
+	return await _show_tip_card("turned")
+
+
+func _show_tip_lucky() -> bool:
+	return await _show_tip_card("lucky")

@@ -41,6 +41,10 @@ var _caption: Label
 var _clock: Label
 var _progress: ProgressBar
 var _stuck_undo: Button
+## (v3) Mend: a booster-bar button shown while the board has mends, and its twin on the stuck card.
+var _stuck_mend: Button
+var _mend_button: Button
+var _mend_badge: Label
 
 @onready var _board: HalvesBoardView = %HalvesBoard
 @onready var _stars: StarRating = %Stars
@@ -68,6 +72,8 @@ func _ready() -> void:
 	_board.shuffled.connect(_on_shuffled)
 	_board.stuck.connect(_on_stuck)
 	_board.cleared.connect(_on_cleared)
+	_board.mended.connect(_on_mended)
+	_board.mend_earned.connect(_on_mend_earned)
 	var data := _first_board()
 	if data == null:
 		push_error("Halves: no board for mode %d (level %d)" % [_mode, _level])
@@ -284,6 +290,46 @@ func _on_shuffled(count: int, was_stuck: bool) -> void:
 	_run.record(HalvesRun.Event.SHUFFLE, count, 1 if was_stuck else 0)
 
 
+## The Mend button sits with the boosters (same look) and only shows once the gold pair is cleared.
+func _build_mend_button() -> void:
+	_mend_button = Button.new()
+	_mend_button.icon = Icons.DIAMOND
+	_mend_button.tooltip_text = "Mend: a free tile meets its other half, wherever it is"
+	_mend_button.theme_type_variation = %HintButton.theme_type_variation
+	_mend_button.size_flags_horizontal = %HintButton.size_flags_horizontal
+	_mend_button.custom_minimum_size = %HintButton.custom_minimum_size
+	_mend_button.visible = false
+	_mend_button.set_meta(&"ui_sound", false)
+	_mend_button.pressed.connect(_start_mend)
+	%HintButton.get_parent().add_child(_mend_button)
+	_mend_badge = _add_badge(_mend_button)
+
+
+## Mend mode on (or off again): the next tap on a free tile mends it.
+func _start_mend() -> void:
+	if _finished or _state == null or _state.mends <= 0 or _board.is_busy():
+		return
+	%StuckCenter.hide()
+	_board.mend_mode = not _board.mend_mode
+	if _board.mend_mode:
+		HalvesSfx.play(&"hint")
+		UI.toast("Tap a free tile: its other half comes to it", Icons.DIAMOND)
+	_refresh_hud()
+
+
+func _on_mended(a: int, _b: int) -> void:
+	_run.record(HalvesRun.Event.MEND, a)
+	_refresh_hud()
+
+
+func _on_mend_earned(_at: Vector2) -> void:
+	_refresh_hud()
+	_mend_button.pivot_offset_ratio = Vector2(0.5, 0.5)
+	Juice.pop(_mend_button, 1.2, 0.3)
+	if not HalvesRecords.tip_seen("mend"):
+		_show_tip("mend")
+
+
 ## The first taps on a blocked tile say why (locks and frost always explain once per board).
 func _on_blocked_tap(_tile: int, reason: int) -> void:
 	if _explained.has(reason):
@@ -312,6 +358,7 @@ func _on_stuck() -> void:
 		return
 	%StuckCenter.show()
 	_stuck_undo.visible = not _state.history.is_empty()
+	_stuck_mend.visible = _state.mends > 0
 	var card: Control = %StuckCenter.get_child(0)
 	card.pivot_offset_ratio = Vector2(0.5, 0.5)
 	Juice.pop(card, 1.06, 0.2)
@@ -408,12 +455,13 @@ func _record_clear(stars: int) -> Dictionary:
 	var board := _board_id()
 	var record := HalvesRecords.record_clear(board, _run, stars, _state.slips(), _data.par_ms(), _boosters_used > 0)
 	var gold_coins := _state.gold_earned * HalvesConfig.GOLD_COINS
-	var coins := stars * HalvesConfig.COINS_PER_STAR + gold_coins + _combo_coins
+	var lucky_coins := _state.lucky_won * HalvesConfig.LUCKY_COINS
+	var coins := stars * HalvesConfig.COINS_PER_STAR + gold_coins + lucky_coins + _combo_coins
 	if bool(record.swift_new):
 		coins += HalvesConfig.SWIFT_COINS
 	var details := {"time_ms": _run.active_ms, "par_ms": _data.par_ms(), "best_ms": record.best_ms,
 			"new_best": record.new_best, "swift": record.swift, "swift_new": record.swift_new, "chapter": _chapter,
-			"gold_coins": gold_coins, "combo_coins": _combo_coins, "slips": _state.slips(), "allowance": _allowance()}
+			"gold_coins": gold_coins, "lucky_coins": lucky_coins, "combo_coins": _combo_coins, "slips": _state.slips(), "allowance": _allowance()}
 	if _mode == Screens.Mode.DAILY:
 		var daily := HalvesRecords.record_daily(_daily_date, _run.active_ms, stars)
 		details.title = "Daily #%d complete!" % HalvesPools.daily_number(_daily_date)
@@ -467,6 +515,9 @@ func _refresh_hud() -> void:
 	var total := _state.geometry.size()
 	_progress.value = 100.0 * float(total - _state.tiles_left()) / maxf(1.0, float(total))
 	%UndoButton.disabled = _state.history.is_empty()
+	_mend_button.visible = _state.mends > 0 and _mode != Screens.Mode.RUSH
+	_mend_badge.text = str(_state.mends)
+	_mend_button.modulate = Color(1.0, 0.9, 0.55) if _board.mend_mode else Color.WHITE
 	for kind in BOOSTERS:
 		var free: int = _free_left.get(kind, 0)
 		_badges[kind].get_parent().visible = _mode != Screens.Mode.ZEN
@@ -520,6 +571,7 @@ func _build_hud() -> void:
 	_progress.custom_minimum_size = Vector2(0, 8)
 	_progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	title_box.add_child(_progress)
+	_build_mend_button()
 	_stuck_undo = Button.new()
 	_stuck_undo.text = "Undo"
 	_stuck_undo.icon = Icons.UNDO
@@ -527,8 +579,14 @@ func _build_hud() -> void:
 	var stuck_box: Node = %StuckButton.get_parent()
 	stuck_box.add_child(_stuck_undo)
 	stuck_box.move_child(_stuck_undo, %StuckButton.get_index())
-	stuck_box.get_node(^"StuckText").text = "Undo your last pairs, or shuffle the board. A shuffle out of a dead end costs a star."
-	%StuckButton.text = "Shuffle · costs a star"
+	stuck_box.get_node(^"StuckText").text = "Undo your last pairs, mend, or shuffle the board. A shuffle out of a dead end is a slip."
+	%StuckButton.text = "Shuffle · a slip"
+	_stuck_mend = Button.new()
+	_stuck_mend.text = "Mend"
+	_stuck_mend.icon = Icons.DIAMOND
+	_stuck_mend.pressed.connect(_start_mend)
+	stuck_box.add_child(_stuck_mend)
+	stuck_box.move_child(_stuck_mend, %StuckButton.get_index())
 	var show_time := Settings.show_timer()
 	match _mode:
 		Screens.Mode.DAILY:
