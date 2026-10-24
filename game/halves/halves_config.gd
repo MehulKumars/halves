@@ -43,6 +43,9 @@ const SWIFT_COINS: int = 10
 const COMBO_WINDOW: float = 2.5
 const COMBO_COINS_AT: int = 5
 const COMBO_COINS: int = 5
+## Lucky tiles (v3): removed within LUCKY_SNAPS pairs of first being free, each wins LUCKY_COINS.
+const LUCKY_SNAPS: int = 3
+const LUCKY_COINS: int = 5
 
 ## Modes: unlock levels and the Rush clock (seconds).
 const ZEN_UNLOCK_LEVEL: int = 10

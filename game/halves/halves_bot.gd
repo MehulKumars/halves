@@ -3,11 +3,12 @@ extends RefCounted
 ## Headless players that rate a Halves board: RANDOM takes any free pair, CAREFUL the pair that
 ## frees the most tiles, WARY any pair that is not an obvious trap. The generator uses rate() to put
 ## levels on the sawtooth curve. Bots never mistap; "decoy" measures tempting near-twins.
+## (v3) Every policy spends a mend it earned (gold pair) when stuck, then carries on.
 
 enum Policy { RANDOM, CAREFUL, WARY }
 
 
-## One game from a full board until clear or stuck:
+## One game from a full board until clear or stuck (with no mend left):
 ## {"cleared": bool, "steps": int, "free_pairs": float, "decoy": float} (means over every state seen).
 static func play(geometry: HalvesGeometry, faces: PackedInt32Array, rng: RandomNumberGenerator,
 		policy: Policy) -> Dictionary:
@@ -16,6 +17,7 @@ static func play(geometry: HalvesGeometry, faces: PackedInt32Array, rng: RandomN
 	var looks := 0
 	var pair_sum := 0.0
 	var decoy_sum := 0.0
+	var mends := 0
 	while not HalvesBits.is_empty(remaining):
 		var free := geometry.free_tiles(remaining)
 		var pairs: Array[Vector2i] = []
@@ -31,16 +33,23 @@ static func play(geometry: HalvesGeometry, faces: PackedInt32Array, rng: RandomN
 		looks += 1
 		pair_sum += pairs.size()
 		decoy_sum += float(decoys) / maxi(1, pairs.size())
-		if pairs.is_empty():
-			break
 		var pick: Vector2i
-		match policy:
-			Policy.CAREFUL:
-				pick = _careful_pick(geometry, remaining, pairs, rng)
-			Policy.WARY:
-				pick = _wary_pick(geometry, faces, remaining, pairs, rng)
-			_:
-				pick = pairs[rng.randi_range(0, pairs.size() - 1)]
+		if pairs.is_empty():
+			pick = _mend_pick(geometry, faces, remaining) if mends > 0 else Vector2i(-1, -1)
+			if pick.x < 0:
+				break
+			mends -= 1
+		else:
+			match policy:
+				Policy.CAREFUL:
+					pick = _careful_pick(geometry, remaining, pairs, rng)
+				Policy.WARY:
+					pick = _wary_pick(geometry, faces, remaining, pairs, rng)
+				_:
+					pick = pairs[rng.randi_range(0, pairs.size() - 1)]
+		# A match or a mend takes two faces of one pair; crests only, so v2 boards skip the lookup.
+		if HalvesFace.is_crest(faces[pick.x]) and HalvesState.is_gold(faces[pick.x]):
+			mends += 1
 		HalvesBits.clear_bit(remaining, pick.x)
 		HalvesBits.clear_bit(remaining, pick.y)
 		steps += 1
@@ -87,6 +96,26 @@ static func rate(geometry: HalvesGeometry, faces: PackedInt32Array, seed_parts: 
 static func difficulty(random_win: float, decoy_exposure: float, avg_free_pairs: float) -> float:
 	return 100.0 * (0.6 * (1.0 - random_win) + 0.25 * minf(decoy_exposure / 1.5, 1.0)
 			+ 0.15 * (1.0 - minf(avg_free_pairs, 6.0) / 6.0))
+
+
+## (v3) The mend a bot makes when stuck: Vector2i(a, b) with `a` the free tile whose remaining mate
+## `b` (the lowest-id remaining tile with the mate face) has the most remaining tiles on top of it
+## (ties: lowest a); (-1, -1) if no free tile has a remaining mate.
+static func _mend_pick(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: PackedInt64Array) -> Vector2i:
+	var best := Vector2i(-1, -1)
+	var best_cover := -1
+	var tiles := HalvesBits.ids(remaining)
+	for a in geometry.free_tiles(remaining):
+		var want := HalvesFace.mate(faces[a])
+		for b in tiles:
+			if faces[b] != want:
+				continue
+			var on_b := HalvesBits.count(HalvesBits.intersection(geometry.cover[b], remaining))
+			if on_b > best_cover:
+				best_cover = on_b
+				best = Vector2i(a, b)
+			break
+	return best
 
 
 static func _careful_pick(geometry: HalvesGeometry, remaining: PackedInt64Array, pairs: Array[Vector2i],

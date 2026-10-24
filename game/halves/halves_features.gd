@@ -1,10 +1,10 @@
 class_name HalvesFeatures
 extends RefCounted
-## Level features (lock groups, frost, mist, gold): the format, checks, and placing them on a dealt
-## board after its removal order is known so the order stays a solution. Used by the generator,
-## HalvesGeometry.with_features and the level data. All features are positional (tile ids).
+## Level features (lock groups, frost, mist, gold; v3 turned, lucky): the format, checks, and placing
+## them on a dealt board after its removal order is known so the order stays a solution. Used by the
+## generator, HalvesGeometry.with_features and the level data. All features are positional (tile ids).
 
-const LISTS: Array[String] = ["frost", "mist", "gold"]
+const LISTS: Array[String] = ["frost", "mist", "gold", "turned", "lucky"]
 
 
 ## Ints everywhere, every list sorted and without duplicates, empty lists and groups dropped.
@@ -77,7 +77,8 @@ static func validate(geometry: HalvesGeometry, features: Dictionary,
 
 
 ## Adds features to a dealt board without breaking `order` as a solution (see docs/HALVES.md).
-## spec: {"key_pairs", "locked", "frost", "mist", "gold"} (ints, default 0).
+## spec: {"key_pairs", "locked", "frost", "mist", "gold", "turned", "lucky"} (ints, default 0).
+## The rng is only used by the steps whose count is above 0, in the order of the spec keys.
 static func place(geometry: HalvesGeometry, order: Array[Vector2i], faces: PackedInt32Array,
 		spec: Dictionary, rng: RandomNumberGenerator) -> Dictionary:
 	var n := order.size()
@@ -186,6 +187,38 @@ static func place(geometry: HalvesGeometry, order: Array[Vector2i], faces: Packe
 		var gold := _take(upper, lower, gold_wanted, rng)
 		if not gold.is_empty():
 			result["gold"] = gold
+
+	var misted := mask(result.get("mist", []))
+	var turned_wanted := int(spec.get("turned", 0))
+	if turned_wanted > 0:
+		var alike := _look_alike_tiles(faces, step)
+		var tricky := PackedInt32Array()
+		var others := PackedInt32Array()
+		for tile in count:
+			if step[tile] < 0 or HalvesBits.has(misted, tile):
+				continue
+			if HalvesBits.has(alike, tile):
+				tricky.append(tile)
+			else:
+				others.append(tile)
+		var turned := _take(tricky, others, turned_wanted, rng)
+		if not turned.is_empty():
+			result["turned"] = turned
+
+	var lucky_wanted := int(spec.get("lucky", 0))
+	if lucky_wanted > 0:
+		var middle := PackedInt32Array()
+		var others := PackedInt32Array()
+		for tile in count:
+			if step[tile] < 0 or HalvesBits.has(start_free, tile) or HalvesBits.has(misted, tile):
+				continue
+			if step[tile] >= n / 3 and step[tile] < (2 * n) / 3:
+				middle.append(tile)
+			else:
+				others.append(tile)
+		var lucky := _take(middle, others, lucky_wanted, rng)
+		if not lucky.is_empty():
+			result["lucky"] = lucky
 	return normalize(result)
 
 
@@ -201,6 +234,29 @@ static func tile_count(features: Dictionary) -> int:
 ## The set of tile `ids` (JSON floats are cast).
 static func mask(ids: Array) -> PackedInt64Array:
 	return HalvesBits.of(ids)
+
+
+## Tiles of the deal (step >= 0) whose face has a look-alike elsewhere on the board: a face of the
+## same look-alike group but another pair.
+static func _look_alike_tiles(faces: PackedInt32Array, step: PackedInt32Array) -> PackedInt64Array:
+	var pairs_by_group: Dictionary[StringName, Dictionary] = {}
+	for tile in step.size():
+		if step[tile] < 0:
+			continue
+		var group := HalvesFace.group(faces[tile])
+		if group == &"":
+			continue
+		if not pairs_by_group.has(group):
+			pairs_by_group[group] = {}
+		pairs_by_group[group][HalvesFace.pair_key(faces[tile])] = true
+	var alike := HalvesBits.empty()
+	for tile in step.size():
+		if step[tile] < 0:
+			continue
+		var group := HalvesFace.group(faces[tile])
+		if group != &"" and pairs_by_group[group].size() > 1:
+			HalvesBits.set_bit(alike, tile)
+	return alike
 
 
 ## The first `count` of `preferred` then `rest`, each group in a random order (both always shuffled).

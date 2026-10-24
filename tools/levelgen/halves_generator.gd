@@ -68,6 +68,34 @@ static func accept(stats: Dictionary, spec: Dictionary, first_level: bool, free_
 	return first_level or free_pairs_at_start >= 2
 
 
+## The HalvesFeatures.place spec of a slot or recipe: its "features", plus (v3) the slot-level
+## "turned" and "lucky" counts when present and above 0 (they win over the same keys in "features").
+static func feature_spec(spec: Dictionary) -> Dictionary:
+	var out: Dictionary = (spec.get("features", {}) as Dictionary).duplicate()
+	for key: String in ["turned", "lucky"]:
+		if int(spec.get(key, 0)) > 0:
+			out[key] = int(spec[key])
+	return out
+
+
+## One candidate deal: HalvesFill.deal_v2, or with (v3) `gold_pair` the same steps with
+## HalvesFill.with_gold_pair between the faces and the features (one rng, in that order).
+static func deal(geometry: HalvesGeometry, keys: PackedInt32Array, rng: RandomNumberGenerator, rate: float,
+		features_spec: Dictionary, gold_pair: bool) -> Dictionary:
+	if not gold_pair:
+		return HalvesFill.deal_v2(geometry, keys, rng, rate, features_spec)
+	if keys.size() * 2 != geometry.size():
+		return {}
+	var plain := geometry.with_features({}) if geometry.has_features() else geometry
+	var order := HalvesFill.removal_order(plain, plain.full_mask(), rng)
+	if order.is_empty():
+		return {}
+	var faces := HalvesFill.assign_faces_trapped(plain, order, keys, rng, plain.size(), rate)
+	faces = HalvesFill.with_gold_pair(plain, order, faces, rng)
+	var features := HalvesFeatures.place(plain, order, faces, features_spec, rng)
+	return {"faces": faces, "solution": order, "features": features, "traps": HalvesFill.live_traps(plain, order, faces)}
+
+
 ## docs/HALVES.md section 4.
 static func par_ms(geometry: HalvesGeometry, faces: PackedInt32Array, features: Dictionary, difficulty: float) -> int:
 	var keys: Dictionary[int, bool] = {}
@@ -100,7 +128,8 @@ static func build_level(slot: Dictionary, layers: Array, log: PackedStringArray,
 
 
 ## The candidate search shared by levels and pool boards. `spec` has types, target_win,
-## target_decoy and the optional trap / features / min_careful / min_wary. With `relax_if_needed`
+## target_decoy and the optional trap / features / min_careful / min_wary and (v3) gold_pair (0/1),
+## turned and lucky (counts). With `relax_if_needed`
 ## the floors are halved when no candidate passes, then dropped (pools must never come up short).
 static func build_board(spec: Dictionary, layers: Array, seed_prefix: Array, first_level: bool,
 		candidates: int, log: PackedStringArray, relax_if_needed: bool) -> HalvesLevelData:
@@ -113,12 +142,13 @@ static func build_board(spec: Dictionary, layers: Array, seed_prefix: Array, fir
 	var keys := pair_keys_for(spec.types, positions.size() / 2)
 	var target_win := float(spec.target_win)
 	var target_decoy := float(spec.target_decoy)
-	var features_spec: Dictionary = spec.get("features", {})
+	var features_spec := feature_spec(spec)
+	var gold_pair := int(spec.get("gold_pair", 0)) > 0
 	var dealt_all: Array[Dictionary] = []
 	for k in candidates:
 		var rng := SeedService.make_rng(seed_prefix + [k], HalvesConfig.GEN_VERSION)
 		var rate := trap_rate(spec, k)
-		var dealt := HalvesFill.deal_v2(geometry, keys, rng, rate, features_spec)
+		var dealt := deal(geometry, keys, rng, rate, features_spec, gold_pair)
 		if dealt.is_empty():
 			continue
 		var rules := geometry.with_features(dealt.features)
