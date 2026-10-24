@@ -1,6 +1,6 @@
 class_name HalvesPools
 extends RefCounted
-## The baked board pools of the Daily, Zen and Rush modes (data/levels/halves_<kind>_v2.json),
+## The baked board pools of the Daily, Zen and Rush modes (data/levels/halves_<kind>_v3.json),
 ## loaded the first time each is asked for. Daily picks a board by date; Zen and Rush walk a
 ## seeded order of their pool. Board ids are 10000 + i (daily), 20000 + i (zen), 30000 + i (rush).
 
@@ -8,9 +8,9 @@ enum Kind { DAILY, ZEN, RUSH }
 
 const DAILY_EPOCH: String = "2026-10-01"
 const PATHS: Array[String] = [
-	"res://data/levels/halves_daily_v2.json",
-	"res://data/levels/halves_zen_v2.json",
-	"res://data/levels/halves_rush_v2.json",
+	"res://data/levels/halves_daily_v3.json",
+	"res://data/levels/halves_zen_v3.json",
+	"res://data/levels/halves_rush_v3.json",
 ]
 const NAMES: Array[String] = ["daily", "zen", "rush"]
 

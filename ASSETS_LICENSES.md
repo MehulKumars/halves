@@ -48,7 +48,7 @@ Add one row per asset as you add them: file, author, licence, source URL.
 |---|---|---|---|
 | `game/halves/icons/shuffle.svg` (Material Symbols Rounded "shuffle", filled; recoloured white, 48 px) | Google | Apache 2.0 (`core/ui/icons/LICENSE_material_symbols.txt`) | github.com/google/material-design-icons, `symbols/web/shuffle/materialsymbolsrounded/shuffle_fill1_24px.svg` |
 | Halves tiles, half shapes, snap card and shards | Drawn in code (`game/halves/halves_shapes.gd`, `halves_tile_view.gd`, `halves_snap_fx.gd`) from the concept's palette | Original work | - |
-| `data/levels/halves_v2.json`, `halves_daily_v2.json`, `halves_zen_v2.json`, `halves_rush_v2.json` | Generated offline from the masks and plans in `tools/levelgen/` | Original work | - |
+| `data/levels/halves_v3.json`, `halves_daily_v3.json`, `halves_zen_v3.json`, `halves_rush_v3.json` (and the v2 files) | Generated offline from the masks and plans in `tools/levelgen/` | Original work | - |
 | Particle shapes (petal, rain streak, leaf, snowflake, glow), the Halves mark, feature overlays (mist, key, padlock, frost, gold) | Drawn in code (`game/halves/chapter_background.gd`, `halves_logo.gd`, `halves_tile_view.gd`) | Original work | - |
 | "Drawn" backgrounds (the eleven places as layered silhouettes) | Drawn in code (`game/halves/halves_scenery.gd`) | Original work | - |
 | `assets/audio/music/focus_tones.ogg` (binaural beat, soft chord, brown noise) | Synthesised by `tools/audio/build_music.sh` (ffmpeg) | Original work | - |

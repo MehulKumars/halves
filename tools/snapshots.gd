@@ -6,7 +6,7 @@ extends SceneTree
 ## Args after `--`:
 ##   --sizes 720x1280,720x1600   canvas sizes (default: phones 16:9 and 20:9, a tablet, a foldable)
 ##   --styles all                style ids from core/ui/themes/, or "all" (default: the project's)
-##   --only main_menu,pause      render only these screens (names in SCREENS)
+##   --only main_menu,pause      render only these screens (names in SCREENS; any "game_l<N>" shows level N)
 ##   --inset 0,64,0,32           fake notch and gesture bar in canvas px: left,top,right,bottom
 ##   --out build/snapshots       output folder, relative to the project
 ## Output: <style>_<w>x<h>_<screen>.png plus one <style>_<w>x<h>_contact.png sheet per size.
@@ -46,11 +46,16 @@ func _initialize() -> void:
 		for size in _sizes:
 			await _resize(size)
 			var shots: Array[Image] = []
-			for screen in SCREENS + ON_REQUEST:
+			for screen in SCREENS + ON_REQUEST + _any_levels():
 				if (not _only.is_empty() or ON_REQUEST.has(screen)) and not _only.has(screen):
 					continue
 				await _reset()
-				if not await call("_show_" + screen):
+				var shown: bool
+				if has_method("_show_" + screen):
+					shown = await call("_show_" + screen)
+				else:
+					shown = await _show_game_level(int(screen.substr(6)))
+				if not shown:
 					push_warning("snapshot %s: screen could not be opened" % screen)
 					continue
 				await _frames(SETTLE_FRAMES)
@@ -221,6 +226,15 @@ func _show_credits() -> bool:
 
 func _show_gallery() -> bool:
 	return await _open(Screens.GALLERY)
+
+
+## Any level asked for by name in -Only ("game_l140") that has no screen of its own.
+func _any_levels() -> PackedStringArray:
+	var out := PackedStringArray()
+	for screen in _only:
+		if screen.begins_with("game_l") and screen.substr(6).is_valid_int() and not SCREENS.has(screen):
+			out.append(screen)
+	return out
 
 
 ## Halves boards: a level as the player first sees it (tutorial pulse on level 1).

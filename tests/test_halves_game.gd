@@ -1,6 +1,7 @@
 extends GutTest
-## The Halves game screen end to end: faces stay 96 px or more on every level and size, a level
-## played through the board reaches the results, mistakes, undo, boosters, shuffle and the stuck card work.
+## The Halves game screen end to end: faces stay 96 px or more on every level and size ((v3) 84 px
+## on a notched 720 x 1280 screen), a level played through the board reaches the results, mistakes,
+## undo, boosters, shuffle and the stuck card work.
 ## Uses its own save file; popups open on the UI autoload, so each test closes them again.
 ## (v2) Levels are picked by what their data holds ("the first level with a free decoy ...") instead
 ## of fixed numbers; TUTORIAL_FORGIVE_LEVELS is 4; a stuck shuffle counts as a slip; coins add Swift and gold.
@@ -10,6 +11,8 @@ const H := preload("res://tests/halves_helpers.gd")
 const SIZES: Array[Vector2i] = [Vector2i(720, 1280), Vector2i(720, 1600), Vector2i(960, 1280)]
 const NOTCH: Vector4i = Vector4i(0, 64, 0, 32)
 const TOUCH: float = 96.0
+## (v3, docs/HALVES.md 4b) Old 16:9 phones: a 720 x 1280 screen with the 64/32 px notch may show 84 px faces.
+const TOUCH_NOTCHED_16_9: float = 84.0
 
 
 func before_all() -> void:
@@ -56,7 +59,7 @@ func test_level_counts_agree() -> void:
 func test_faces_are_touch_sized_on_every_level_and_size() -> void:
 	for size in SIZES:
 		await _check_every_level(size, Vector4i.ZERO)
-	await _check_every_level(Vector2i(720, 1280), NOTCH)
+	await _check_every_level(Vector2i(720, 1280), NOTCH, TOUCH_NOTCHED_16_9)
 
 
 func test_level_one_played_through_reaches_the_results() -> void:
@@ -230,7 +233,7 @@ func test_the_stuck_card_offers_a_free_shuffle_that_is_a_slip() -> void:
 	_close(game)
 
 
-func _check_every_level(size: Vector2i, insets: Vector4i) -> void:
+func _check_every_level(size: Vector2i, insets: Vector4i, min_face: float = TOUCH) -> void:
 	SafeAreaMargin.set_simulated_insets(get_tree(), insets)
 	var game := await _open_game(1, size)
 	var area := _board(game).size
@@ -238,7 +241,7 @@ func _check_every_level(size: Vector2i, insets: Vector4i) -> void:
 		var geometry := HalvesLevels.get_level(level).geometry()
 		var unit := HalvesBoardView.unit_for(area, geometry.bounds(), geometry.max_z())
 		var face := unit * HalvesBoardView.FACE_W
-		assert_gte(face, TOUCH, "level %d at %s (insets %s): faces %.0f px" % [level, size, insets, face])
+		assert_gte(face, min_face, "level %d at %s (insets %s): faces %.0f px" % [level, size, insets, face])
 		var used := HalvesBoardView.board_size(unit, geometry.bounds(), geometry.max_z())
 		assert_true(used.x <= area.x + 0.5 and used.y <= area.y + 0.5, "level %d fits the board area at %s" % [level, size])
 	_close(game)

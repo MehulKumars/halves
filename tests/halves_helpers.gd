@@ -4,7 +4,12 @@ extends RefCounted
 ## Not a test file (no test_ prefix, so GUT skips it); preload it. Written without reading game/halves/.
 
 const MASKS_PATH := "res://tools/levelgen/halves_masks.json"
+## The v2 plan: its boards stay fixtures for the logic tests (plan_geometry, plan_keys).
 const PLAN_PATH := "res://tools/levelgen/halves_plan.json"
+## (v3) The plan the shipped levels come from (docs/HALVES.md 4b).
+const PLAN_V3_PATH := "res://tools/levelgen/halves_plan_v3.json"
+
+static var _v3_slots: Array = []
 
 
 ## Untyped list of Vector3i -> the typed array the Halves API takes.
@@ -91,6 +96,21 @@ static func plan_slots() -> Array:
 
 static func plan_slot(level: int) -> Dictionary:
 	for slot: Dictionary in plan_slots():
+		if int(slot.get("level", 0)) == level:
+			return slot
+	return {}
+
+
+## (v3) The slots of the plan the baked levels follow (read once).
+static func level_plan_slots() -> Array:
+	if _v3_slots.is_empty():
+		var data := load_json(PLAN_V3_PATH)
+		_v3_slots = data.get("slots", [])
+	return _v3_slots
+
+
+static func level_plan_slot(level: int) -> Dictionary:
+	for slot: Dictionary in level_plan_slots():
 		if int(slot.get("level", 0)) == level:
 			return slot
 	return {}

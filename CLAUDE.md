@@ -24,7 +24,7 @@ The human owns fun, feel, art, balance, the store page and release decisions. Cl
   `ui/screens/game.gd` hosts the gameplay: replace its %Board and call `finish(won, stars)`.
 - `scenes/loading_screens/`: Maaack's loading screen, for SceneLoader (heavy scenes only). `assets/template_icon/`: placeholder app icon.
 - `game/` gameplay scenes and scripts (create per game). `data/` baked levels and configs (create per game).
-  This repo is **Halves**: `game/halves/`, `data/levels/halves_v2.json` (+ daily/zen/rush pools), `tools/levelgen/`,
+  This repo is **Halves**: `game/halves/`, `data/levels/halves_v3.json` (+ daily/zen/rush pools), `tools/levelgen/`,
   `tools/art/` (background photos, drawn-scene preview, icon), `tools/audio/` (sound and music build),
   autoload **Sound** (`core/audio/sound.gd`);
   rules and API in `docs/HALVES.md`.
@@ -72,7 +72,8 @@ The human owns fun, feel, art, balance, the store page and release decisions. Cl
   Every screen: StyledBackground + SafeAreaMargin + MaxWidthContainer. One primary (accent) action per screen.
   Scrolling lists use `TouchScrollContainer`, never a plain ScrollContainer (on phones it would not scroll
   when the drag starts on a button or text).
-- Touch targets at least 96 px on the 720-px canvas (48 dp). Primary actions in the bottom third.
+- Touch targets at least 96 px on the 720-px canvas (48 dp); Halves board tiles may go down to 84 px on old 16:9
+  phones (720 x 1280 with a notch), never below. Primary actions in the bottom third.
 - After any UI change: run `tools/snapshots.ps1` for the affected screens and **look at the PNGs** before saying it works.
 - Every important event has a visual. Sound and haptics are extras, never the only signal.
 - Juice goes on player success. Calm games stay calm. Respect `Juice.motion_scale` and `Haptics.enabled`.

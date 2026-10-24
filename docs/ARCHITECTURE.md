@@ -43,7 +43,7 @@ assets/                Halves art and audio: backgrounds/ (baked photos), audio/
                        template_icon/ is the template's placeholder (no longer used by Halves)
 game/halves/           Halves: pure logic (faces, geometry, features, state, fill, solver, bots, run clock,
                        levels, pools), the board view and effects, chapters, records, tips. See HALVES.md
-data/levels/           Baked Halves levels and the daily, zen and rush pools (*_v2.json), made by tools/levelgen/
+data/levels/           Baked Halves levels and the daily, zen and rush pools (*_v3.json; v2 files kept), made by tools/levelgen/
 tests/                 GUT unit tests (test_*.gd)
 tools/                 check.ps1, snapshots, build_theme.gd, scene_edit.gd, hooks/ (Claude Code auto-check),
                        levelgen/ (levels and pools), art/ (photos, drawn-scene preview, icon), audio/ (sound and music build)
@@ -172,9 +172,13 @@ levels to data files** and only generate disposable content at runtime (see the
 corrupts it. Every save carries a `version`; bump `CURRENT_VERSION` and add a step to `_migrate()`
 when the layout changes. A corrupt file loads as a fresh save with a warning. Version 2 added the
 `best` section (best times); stars stay keyed by level number, so unlocks survive a bigger level set.
+Version 3 (Halves' 300 new levels) starts the journey fresh once: level stars, level best times,
+level Swift medals and level best-run logs go, coins, purchases and daily records stay, and
+`journey_reset` is set when a journey was in progress.
 
 **Progress** (`core/progress.gd`) is the template's player progress on top of SaveStore: best stars
 per level, unlocks, coins, owned items and the daily reward streak, saved on every change.
+`journey_reset_pending()` tells the UI about a version-3 reset until it calls `clear_journey_reset()`.
 Best times per board: `best_time(board)`, `best_record(board)`, `record_time(board, ms, extra)` (lowest
 wins). Games keep their own data in `section(name)` and call `save()` after changing it. It
 replaces Maaack's `GameState` (removed), which saved Resource files that can carry injected
@@ -208,7 +212,7 @@ Everything is in [UI_KIT.md](UI_KIT.md).
 The game: rules, data formats, the logic API and how to regenerate levels are in
 [HALVES.md](HALVES.md). `Progress.start_session()` (called by the splash once per launch) feeds
 `AdPolicy.start_session()` so the first session stays free of interstitials. The game screen
-plays four modes (`Screens.mode`: levels, daily, zen, rush); `HalvesChapters` gives each 10 levels a
+plays four modes (`Screens.mode`: levels, daily, zen, rush); `HalvesChapters` gives each 20 levels a
 place: a photo (or, by the Backgrounds setting, the place drawn in code by `HalvesScenery`) and an
 ambience (`ChapterBackground` puts it behind any screen and hides its `StyledBackground`); music
 is the player's choice (`HalvesMusic`); `HalvesRecords` keeps best times, Swift medals, best-run move logs

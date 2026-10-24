@@ -1,15 +1,19 @@
 extends GutTest
-## The baked levels in data/levels/halves_v2.json, through HalvesLevels: count and version, every
+## The baked levels in data/levels/halves_v3.json, through HalvesLevels: count and version, every
 ## level's tiles, faces, solution, features, tip, stats and par, the plan slot it came from, and a
 ## "same seed, same level" rebuild. Written from docs/HALVES.md alone; counts come from the plan file.
 ## (v2) Contract changes from v1: 100 levels from the plan instead of 30, the careful_win >= 0.5 pin is
 ## now the slot's min_careful / min_wary floors, and levels are rebuilt with HalvesFill.deal_v2.
+## (v3) 300 levels in 15 places of 20 from halves_plan_v3.json; roles add breather; levels carry
+## their place and the PERCEPTIVE stats; features add turned and lucky; a slot's gold_pair turns one
+## pair gold; levels are rebuilt through HalvesGenerator.deal with HalvesGenerator.feature_spec
+## (the generator's class in tools/levelgen/, which the rebuild is about).
 
 const H := preload("res://tests/halves_helpers.gd")
 const RATE_KEYS: Array[String] = ["runs", "random_win", "careful_win", "wary_win", "avg_free_pairs", "decoy_exposure",
-		"difficulty", "start_free_pairs", "traps", "trap_rate", "par_ms"]
-const ROLES: Array[String] = ["intro", "ramp", "hard", "rest", "finale"]
-const FEATURE_KEYS: Array[String] = ["locks", "frost", "mist", "gold"]
+		"difficulty", "start_free_pairs", "traps", "trap_rate", "par_ms", "perceptive_win", "perceptive_slips", "p3"]
+const ROLES: Array[String] = ["intro", "ramp", "hard", "rest", "breather", "finale"]
+const FEATURE_KEYS: Array[String] = ["locks", "frost", "mist", "gold", "turned", "lucky"]
 
 
 func _level(n: int) -> HalvesLevelData:
@@ -29,12 +33,22 @@ func _all_levels() -> Array[HalvesLevelData]:
 
 
 func test_file_has_every_plan_level_of_this_gen_version() -> void:
-	assert_eq(HalvesLevels.PATH, "res://data/levels/halves_v2.json")
+	assert_eq(HalvesLevels.PATH, "res://data/levels/halves_v3.json")
 	assert_true(FileAccess.file_exists(HalvesLevels.PATH), "%s exists" % HalvesLevels.PATH)
-	assert_eq(HalvesLevels.COUNT, 100)
+	assert_eq(HalvesLevels.COUNT, 300)
 	assert_eq(HalvesLevels.count(), HalvesLevels.COUNT)
-	assert_eq(H.plan_slots().size(), HalvesLevels.COUNT, "one plan slot per level")
+	assert_eq(H.level_plan_slots().size(), HalvesLevels.COUNT, "one plan slot per level")
 	assert_eq(HalvesLevels.gen_version(), HalvesConfig.GEN_VERSION)
+	assert_eq(HalvesConfig.GEN_VERSION, 3)
+
+
+## (v3) 15 places of HalvesChapters.LEVELS_PER_CHAPTER (20) levels; each level knows its place.
+func test_every_level_is_in_its_place() -> void:
+	assert_eq(HalvesChapters.LEVELS_PER_CHAPTER, 20)
+	for data: HalvesLevelData in _all_levels():
+		var want := int((data.level - 1) / float(HalvesChapters.LEVELS_PER_CHAPTER)) + 1
+		assert_eq(data.place, want, "level %d place" % data.level)
+		assert_eq(int(H.level_plan_slot(data.level).get("place", 0)), want, "level %d: the plan's place" % data.level)
 
 
 func test_levels_outside_the_range_are_null() -> void:
@@ -47,7 +61,7 @@ func test_every_level_follows_its_plan_slot() -> void:
 	var all_masks := H.masks()
 	for data: HalvesLevelData in _all_levels():
 		var n := data.level
-		var slot := H.plan_slot(n)
+		var slot := H.level_plan_slot(n)
 		assert_false(slot.is_empty(), "level %d has a plan slot" % n)
 		assert_has(ROLES, data.role, "level %d role" % n)
 		assert_eq(data.role, String(slot.get("role", "")), "level %d role" % n)
@@ -56,9 +70,23 @@ func test_every_level_follows_its_plan_slot() -> void:
 		var mask: Dictionary = all_masks.get(data.mask, {})
 		var layers: Array = mask.get("layers", [])
 		assert_eq(data.positions, HalvesMask.parse(layers), "level %d positions are its mask" % n)
-		# Pair keys: the plan's types round-robin over tiles / 2 pairs, one side A each.
-		var keys := H.round_robin(slot.get("types", []), int(data.positions.size() / 2.0))
-		assert_eq(H.side_a_keys(HalvesBits.full(HalvesBits.MAX), data.faces), H.sorted_ints(keys), "level %d pair types" % n)
+		# Pair keys: the plan's types round-robin over tiles / 2 pairs, one side A each; (v3) with the
+		# slot's gold_pair, one of those pairs became the gold pair.
+		var keys := H.sorted_ints(H.round_robin(slot.get("types", []), int(data.positions.size() / 2.0)))
+		var got := H.side_a_keys(HalvesBits.full(HalvesBits.MAX), data.faces)
+		if int(slot.get("gold_pair", 0)) > 0:
+			var gold := got.filter(func(k: int) -> bool: return HalvesCrests.family_of(k) == &"gold")
+			assert_eq(gold.size(), 1, "level %d has one gold pair" % n)
+			var rest := got.filter(func(k: int) -> bool: return HalvesCrests.family_of(k) != &"gold")
+			var missing := keys.duplicate()
+			for k: int in rest:
+				var at := missing.find(k)
+				assert_ne(at, -1, "level %d: pair type %s is in the plan" % [n, HalvesFace.pair_to_text(k)])
+				if at != -1:
+					missing.remove_at(at)
+			assert_eq(missing.size(), 1, "level %d: the gold pair took the place of one planned pair" % n)
+		else:
+			assert_eq(got, keys, "level %d pair types" % n)
 
 
 func test_levels_are_numbered_in_order() -> void:
@@ -139,7 +167,7 @@ func test_every_level_has_its_seed_parts_and_stats() -> void:
 		assert_eq(typeof(data.seed_parts[2]), TYPE_INT)
 		for k: String in RATE_KEYS:
 			assert_true(data.stats.has(k), "level %d stats have '%s'" % [n, k])
-		var slot := H.plan_slot(n)
+		var slot := H.level_plan_slot(n)
 		var careful := float(data.stats.get("careful_win", -1.0))
 		var wary := float(data.stats.get("wary_win", -1.0))
 		assert_between(wary, 0.0, 1.0, "level %d wary_win" % n)
@@ -193,45 +221,53 @@ func test_after_level_1_there_are_at_least_two_free_pairs_at_the_start() -> void
 
 func test_tile_counts_follow_the_plan_masks() -> void:
 	var biggest_mask := 0
-	for slot: Dictionary in H.plan_slots():
+	for slot: Dictionary in H.level_plan_slots():
 		biggest_mask = maxi(biggest_mask, H.mask_positions(String(slot.get("mask", ""))).size())
 	var biggest_level := 0
 	for data: HalvesLevelData in _all_levels():
-		var slot := H.plan_slot(data.level)
+		var slot := H.level_plan_slot(data.level)
 		assert_eq(data.positions.size(), H.mask_positions(String(slot.get("mask", ""))).size(), "level %d" % data.level)
 		biggest_level = maxi(biggest_level, data.positions.size())
 	assert_eq(biggest_level, biggest_mask, "the biggest level is the plan's biggest mask")
 
 
-## Level 1, the first level whose slot asks for features and the first with a trap range.
+## Level 1, the first level whose slot asks for features, the first with a trap range and (v3) the
+## first with a gold pair, turned tiles and lucky tiles, and the last level (the biggest place).
 func _rebuild_levels() -> Array[int]:
 	var out: Array[int] = [1]
-	for want: String in ["features", "trap"]:
-		for slot: Dictionary in H.plan_slots():
+	for want: String in ["features", "trap", "gold_pair", "turned", "lucky"]:
+		for slot: Dictionary in H.level_plan_slots():
 			var n := int(slot.get("level", 0))
 			var has_it := false
 			if want == "features":
 				has_it = not (slot.get("features", {}) as Dictionary).is_empty()
-			else:
+			elif want == "trap":
 				has_it = float((slot.get("trap", [0.0, 0.0]) as Array)[1]) > 0.0
+			else:
+				has_it = int(slot.get(want, 0)) > 0
 			if has_it:
 				if not out.has(n):
 					out.append(n)
 				break
+	if not out.has(HalvesLevels.COUNT):
+		out.append(HalvesLevels.COUNT)
 	return out
 
 
+## (v3) Rebuilt through HalvesGenerator.deal (HalvesFill.deal_v2, or with the slot's gold_pair the
+## same steps with HalvesFill.with_gold_pair) and the slot's HalvesGenerator.feature_spec.
 func test_same_seed_same_level() -> void:
 	for n: int in _rebuild_levels():
 		var data := _level(n)
 		if data == null:
 			continue
-		var slot := H.plan_slot(n)
+		var slot := H.level_plan_slot(n)
 		var g := HalvesGeometry.from_positions(H.mask_positions(String(slot.get("mask", ""))))
 		var keys := H.round_robin(slot.get("types", []), int(g.size() / 2.0))
 		var k := int(data.seed_parts[2])
 		var rng := SeedService.make_rng(data.seed_parts, HalvesLevels.gen_version())
-		var dealt := HalvesFill.deal_v2(g, keys, rng, H.slot_trap_rate(slot, k), H.slot_feature_spec(slot))
+		var dealt := HalvesGenerator.deal(g, keys, rng, H.slot_trap_rate(slot, k), HalvesGenerator.feature_spec(slot),
+				int(slot.get("gold_pair", 0)) > 0)
 		assert_false(dealt.is_empty(), "level %d deals again" % n)
 		assert_eq(dealt.get("faces"), data.faces, "level %d faces" % n)
 		assert_eq(dealt.get("solution"), data.solution, "level %d solution" % n)
