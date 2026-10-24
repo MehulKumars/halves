@@ -5,8 +5,8 @@ extends RefCounted
 ## tools/levelgen/halves_masks.json. One character = one half-unit, so "X.X." is two touching tiles.
 
 const MAX_WIDTH: int = 13
-const MAX_HEIGHT: int = 14
-const MAX_LAYERS: int = 4
+const MAX_HEIGHT: int = 16
+const MAX_LAYERS: int = 5
 
 
 ## `layers[z]` is an Array of row strings; returns positions sorted by (z, y, x).

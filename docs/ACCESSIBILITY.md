@@ -7,7 +7,7 @@ most of this audience. Puzzle players skew 35+, so readable text and generous to
 
 | Feature | Where | Detail |
 |---|---|---|
-| Large touch targets | every theme (`tools/build_theme.gd`) | Every button, switch, slider and tile is at least 96 px on the 720 px canvas (= Android's 48 dp minimum, which also meets Apple's 44 pt and WCAG 2.2's 24 px). Checked for every style by `tests/test_theme.gd` and on every screen at three sizes by `tests/test_screens.gd` |
+| Large touch targets | every theme (`tools/build_theme.gd`) | Every button, switch, slider and tile is at least 96 px on the 720 px canvas (= Android's 48 dp minimum, which also meets Apple's 44 pt and WCAG 2.2's 24 px). Checked for every style by `tests/test_theme.gd` and on every screen at three sizes by `tests/test_screens.gd`. Halves board tiles keep 96 px too, except on old 16:9 phones (720 × 1280 with a notch), where the biggest boards go down to 84 px (`tests/test_halves_game.gd`) |
 | Text contrast | every theme | WCAG AA: 4.5:1 for normal text, 3:1 for large text, in all five styles (`tests/test_theme.gd`). Outlined text is measured against its outline |
 | Readable text | every theme | 32 px body text (16 dp on a 360 dp phone), 26 px minimum for captions |
 | State not by colour alone | switches, level tiles, daily reward | Switches change knob size and position; locked levels show a lock; claimed days show a tick |

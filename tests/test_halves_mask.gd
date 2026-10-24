@@ -3,6 +3,7 @@ extends GutTest
 ## tools/levelgen/ (every mask validates, every plan slot points at a mask and uses valid pair types).
 ## Written from docs/HALVES.md alone; each invalid board breaks exactly one rule and is otherwise valid.
 ## (v2) The plan's slot count comes from HalvesLevels.COUNT, and its optional v2 fields are checked.
+## (v3) The plan checks read the v3 level plan; the mask limits are 16 tall and 5 layers.
 
 const H := preload("res://tests/halves_helpers.gd")
 
@@ -91,17 +92,20 @@ func test_width_limit() -> void:
 	_assert_valid([Vector3i(0, 0, 0), Vector3i(11, 0, 0)], "width 13")
 
 
+## (v3: 16 half-units tall, was 14.)
 func test_height_limit() -> void:
-	assert_eq(HalvesMask.MAX_HEIGHT, 14)
-	_assert_invalid([Vector3i(0, 0, 0), Vector3i(0, 13, 0)], "height 15")
-	_assert_valid([Vector3i(0, 0, 0), Vector3i(0, 12, 0)], "height 14")
+	assert_eq(HalvesMask.MAX_HEIGHT, 16)
+	_assert_invalid([Vector3i(0, 0, 0), Vector3i(0, 15, 0)], "height 17")
+	_assert_valid([Vector3i(0, 0, 0), Vector3i(0, 14, 0)], "height 16")
 
 
+## (v3: 5 layers, was 4.)
 func test_layer_limit() -> void:
-	assert_eq(HalvesMask.MAX_LAYERS, 4)
-	_assert_valid([Vector3i(0, 0, 0), Vector3i(0, 0, 1), Vector3i(0, 0, 2), Vector3i(0, 0, 3)], "4 layers")
-	_assert_invalid([Vector3i(0, 0, 0), Vector3i(2, 0, 0), Vector3i(0, 0, 1), Vector3i(0, 0, 2),
+	assert_eq(HalvesMask.MAX_LAYERS, 5)
+	_assert_valid([Vector3i(0, 0, 0), Vector3i(2, 0, 0), Vector3i(0, 0, 1), Vector3i(0, 0, 2),
 			Vector3i(0, 0, 3), Vector3i(0, 0, 4)], "5 layers")
+	_assert_invalid([Vector3i(0, 0, 0), Vector3i(0, 0, 1), Vector3i(0, 0, 2), Vector3i(0, 0, 3),
+			Vector3i(0, 0, 4), Vector3i(0, 0, 5)], "6 layers")
 
 
 ## Layer 0: a full 6 x 7 grid (42 tiles, width 12, height 14). Then `upper` tiles stacked
@@ -135,19 +139,21 @@ func test_every_mask_in_the_data_parses_and_validates() -> void:
 		assert_true(errors.is_empty(), "%s: %s" % [mask_name, ", ".join(errors)])
 
 
-## (v2) The plan has HalvesLevels.COUNT (100) slots; v1 pinned 30.
+## (v2) The plan has HalvesLevels.COUNT (100) slots; v1 pinned 30. (v3) The level plan is
+## halves_plan_v3.json with HalvesLevels.COUNT (300) slots, and roles add breather.
 func test_plan_has_levels_1_to_count_in_order() -> void:
-	var slots := H.plan_slots()
+	var slots := H.level_plan_slots()
 	assert_eq(slots.size(), HalvesLevels.COUNT)
 	for i: int in slots.size():
 		var slot: Dictionary = slots[i]
 		assert_eq(int(slot.get("level", 0)), i + 1, "slot %d" % i)
-		assert_has(["intro", "ramp", "hard", "rest", "finale"], String(slot.get("role", "")), "role of level %d" % (i + 1))
+		assert_has(["intro", "ramp", "hard", "rest", "breather", "finale"], String(slot.get("role", "")), "role of level %d" % (i + 1))
 
 
+## (v3) Targets are target_p3 and target_win (v2's target_decoy is gone), both shares in [0, 1].
 func test_plan_masks_exist_and_types_are_valid() -> void:
 	var all := H.masks()
-	for slot: Dictionary in H.plan_slots():
+	for slot: Dictionary in H.level_plan_slots():
 		var level := int(slot.get("level", 0))
 		var mask_name := String(slot.get("mask", ""))
 		assert_true(all.has(mask_name), "level %d uses missing mask '%s'" % [level, mask_name])
@@ -157,17 +163,22 @@ func test_plan_masks_exist_and_types_are_valid() -> void:
 			assert_ne(HalvesFace.pair_from_text(t), -1, "level %d: '%s' is not a pair type" % [level, t])
 		var target_win := float(slot.get("target_win", -1.0))
 		assert_between(target_win, 0.0, 1.0, "level %d target_win" % level)
-		assert_true(float(slot.get("target_decoy", -1.0)) >= 0.0, "level %d target_decoy" % level)
+		assert_between(float(slot.get("target_p3", -1.0)), 0.0, 1.0, "level %d target_p3" % level)
 
 
 func _is_whole_number(v: Variant) -> bool:
 	return (v is int) or (v is float and is_equal_approx(v, roundf(v)))
 
 
-## docs/HALVES.md section 3 (v2): the optional slot fields trap, features, min_careful, min_wary, tip.
+## docs/HALVES.md section 3 (v2): the optional slot fields trap, features, min_careful, min_wary, tip;
+## (v3) checked on the v3 level plan, whose slot-level turned, lucky and gold_pair are whole numbers.
 func test_plan_v2_fields_are_valid() -> void:
 	const FEATURE_SPEC_KEYS: Array[String] = ["key_pairs", "locked", "frost", "mist", "gold"]
-	for slot: Dictionary in H.plan_slots():
+	for slot: Dictionary in H.level_plan_slots():
+		for key: String in ["turned", "lucky", "gold_pair"]:
+			if slot.has(key):
+				assert_true(_is_whole_number(slot[key]) and float(slot[key]) >= 0.0,
+						"level %d: %s is a non-negative int" % [int(slot.get("level", 0)), key])
 		var level := int(slot.get("level", 0))
 		if slot.has("trap"):
 			var trap: Variant = slot["trap"]

@@ -1,14 +1,22 @@
 extends SceneTree
 ## Drafts candidate stack masks from classic mahjong families (half-offset pyramids, bricks, rhombi,
-## rings, towers, twin peaks), keeps only valid ones and writes build/levelgen/mask_catalogue.json
-## plus a text preview. A human picks from it: chosen masks are copied into halves_masks.json.
+## rings, towers, twin peaks, (v3) staggered walls and tall 4-5 layer stacks up to ~110 tiles), keeps
+## only valid ones and writes build/levelgen/mask_catalogue.json plus a text preview. A human (or
+## build_plan.gd) picks from it: chosen masks are copied into halves_masks.json.
 ## Usage: godot --headless --path . -s tools/levelgen/mask_catalogue.gd [-- --pick id=name ...]
 
 const OUT_DIR: String = "res://build/levelgen"
 const MASKS_PATH: String = "res://tools/levelgen/halves_masks.json"
-## Kept a little inside HalvesMask's limits so every board keeps 96 px faces with room to spare.
-const WIDTH: int = 12
-const HEIGHT: int = 14
+## (v3) HalvesMask's width and nearly its height; the plan builder's face-size filter decides which
+## boards keep 96 px faces (84 px on a notched 720 x 1280 screen).
+const WIDTH: int = 13
+const HEIGHT: int = 15
+## Layer plans on top of each base: h = half a tile in, f = one tile in from every edge, c = a core
+## tower, (v3) w = one tile in from the left and right, t = one tile in from the top and bottom.
+const PLANS: Array[String] = ["", "h", "hh", "hhh", "f", "ff", "hf", "fh", "c", "cc", "ccc", "hc", "fc",
+	"hhhh", "hhhf", "hhhc", "hhff", "hfhf", "fhfh", "hhfh", "hhcc", "hfhc",
+	"w", "t", "wh", "th", "hw", "ht", "wt", "tw", "whh", "thh", "hwh", "hth", "whhh", "thhh", "wthh", "hhwh",
+	"hhth", "hhhw", "hhht", "whwh", "thth", "wwh", "tth", "wwhh", "tthh", "wtwh"]
 
 
 func _initialize() -> void:
@@ -84,14 +92,29 @@ func _build() -> Dictionary:
 		for h in range(3, 8):
 			bases["ring%dx%d" % [w, h]] = _ring(w, h)
 			bases["twin%dx%d" % [w, h]] = _twin(w, h)
+	# (v3) Staggered walls: every other row half a tile to the right (13 half-units wide at 6 tiles).
+	for w in range(4, 7):
+		for h in range(4, 8):
+			bases["stagger%dx%d" % [w, h]] = _stagger(w, h)
 	for base_id: String in bases:
 		var base: Dictionary = bases[base_id]
-		for plan: String in ["", "h", "hh", "hhh", "f", "ff", "hf", "fh", "c", "cc", "ccc", "hc", "fc"]:
+		for plan: String in PLANS:
 			var layers: Array[Dictionary] = [base]
 			var ok := true
 			for step in plan:
 				var top: Dictionary = layers[layers.size() - 1]
-				var next := _half(top) if step == "h" else (_full(top) if step == "f" else _core(top))
+				var next: Dictionary
+				match step:
+					"h":
+						next = _half(top)
+					"f":
+						next = _full(top)
+					"w":
+						next = _inset(top, Vector2i(2, 0))
+					"t":
+						next = _inset(top, Vector2i(0, 2))
+					_:
+						next = _core(top)
 				if next.is_empty():
 					ok = false
 					break
@@ -160,12 +183,38 @@ func _twin(w: int, h: int) -> Dictionary:
 	return tiles
 
 
-## The next layer half a tile in: a tile wherever four tiles below meet.
+## (v3) Rows of w tiles, every other row half a tile to the right.
+func _stagger(w: int, h: int) -> Dictionary:
+	var tiles: Dictionary = {}
+	for row in h:
+		for col in w:
+			tiles[Vector2i(2 * col + row % 2, 2 * row)] = true
+	return tiles
+
+
+## The next layer half a tile in: a tile half a tile right and down of a tile below, wherever all
+## four of its quarters rest on tiles below (on a grid: where four tiles meet; (v3) on a staggered
+## wall: on three).
 func _half(below: Dictionary) -> Dictionary:
+	var cells: Dictionary = {}
+	for p: Vector2i in below:
+		for dy in 2:
+			for dx in 2:
+				cells[p + Vector2i(dx, dy)] = true
 	var tiles: Dictionary = {}
 	for p: Vector2i in below:
-		if below.has(p + Vector2i(2, 0)) and below.has(p + Vector2i(0, 2)) and below.has(p + Vector2i(2, 2)):
-			tiles[p + Vector2i(1, 1)] = true
+		var q := p + Vector2i(1, 1)
+		if cells.has(q) and cells.has(q + Vector2i(1, 0)) and cells.has(q + Vector2i(0, 1)) and cells.has(q + Vector2i(1, 1)):
+			tiles[q] = true
+	return tiles
+
+
+## (v3) The next layer straight up, one tile in on both sides along `step` (2, 0) or (0, 2).
+func _inset(below: Dictionary, step: Vector2i) -> Dictionary:
+	var tiles: Dictionary = {}
+	for p: Vector2i in below:
+		if below.has(p + step) and below.has(p - step):
+			tiles[p] = true
 	return tiles
 
 

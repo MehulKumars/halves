@@ -88,7 +88,7 @@ for testing. Release exports never show it (it checks `OS.is_debug_build()`).
 | Game screen, modes, clock and records | `ui/screens/game.gd`, `game/halves/halves_records.gd` |
 | Places, photos, drawn scenes and ambience | `game/halves/halves_chapters.gd`, `chapter_background.gd`, `halves_scenery.gd`, `tools/art/` |
 | Sound and music | `core/audio/sound.gd` (autoload `Sound`), `game/halves/halves_music.gd`, `tools/audio/` |
-| Levels and daily, zen and rush boards | `tools/levelgen/` → `data/levels/*_v2.json` |
+| Levels and daily, zen and rush boards | `tools/levelgen/` → `data/levels/*_v3.json` (v2 files kept readable) |
 
 **Levels are generated offline and baked; nothing is made up at run time.**
 1. Hand-drawn stack masks plus a plan give each level its role (rest, ramp, hard, finale), its pair

@@ -1,6 +1,7 @@
 extends GutTest
-## Core record keeping added for v2: Progress best times and game sections, the SaveStore v1 -> v2
-## migration (stars kept by level number), and lower-is-better time boards in the mock leaderboard.
+## Core record keeping added for v2: Progress best times and game sections, the SaveStore migrations
+## (v2 kept stars by level number; (v3) the move to 300 levels resets the journey once), and
+## lower-is-better time boards in the mock leaderboard.
 ## Uses its own save files so the real save is never touched.
 
 const PROGRESS_PATH := "user://test_records_progress.json"
@@ -50,17 +51,56 @@ func test_sections_are_saved_by_save() -> void:
 	assert_eq(Progress.section("tips").get("mist"), true)
 
 
-func test_a_v1_save_migrates_to_v2_and_keeps_stars() -> void:
+## (v3) An old save now migrates on to version 3, which starts the journey fresh once
+## (docs/HALVES.md 4b, Progress): v1 kept stars by level number, v3 drops them with the move to 300 levels.
+func test_a_v1_save_migrates_to_v3_and_resets_the_journey() -> void:
 	var v1 := {"version": 1, "coins": 300, "levels": {"1": 3, "2": 2, "30": 1}, "daily": {"last": "2026-10-19", "streak": 2}}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	file.store_string(JSON.stringify(v1))
 	file.close()
 	var loaded := SaveStore.load_data(SAVE_PATH)
-	assert_eq(int(loaded["version"]), 2)
-	assert_eq(SaveStore.CURRENT_VERSION, 2)
-	assert_eq(int(loaded["levels"]["30"]), 1, "stars are kept by level number")
-	assert_eq(int(loaded["coins"]), 300)
+	assert_eq(int(loaded["version"]), 3)
+	assert_eq(SaveStore.CURRENT_VERSION, 3)
+	assert_eq(loaded["levels"], {}, "v3: stars and unlocks start fresh")
+	assert_eq(int(loaded["coins"]), 300, "coins stay")
+	assert_eq(int(loaded["daily"]["streak"]), 2, "the daily reward streak stays")
 	assert_true(loaded.get("best") is Dictionary, "v2 adds the best-times section")
+	assert_eq(loaded.get(SaveStore.JOURNEY_RESET_KEY), true, "the UI is told about the reset")
+
+
+## (v3) A v2 save loses its level stars, level times and level Swift medals, and keeps the rest.
+func test_a_v2_save_migrates_to_v3() -> void:
+	var v2 := {"version": 2, "coins": 120, "levels": {"1": 3, "7": 2},
+		"best": {"level_1": {"ms": 12_000}, "daily_2026-10-21": {"ms": 42_000}},
+		"medals": {"level_1": true, "daily_2026-10-21": true}, "tips": {"pair": true}}
+	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	file.store_string(JSON.stringify(v2))
+	file.close()
+	var loaded := SaveStore.load_data(SAVE_PATH)
+	assert_eq(loaded["levels"], {})
+	assert_false((loaded["best"] as Dictionary).has("level_1"), "level times go")
+	assert_eq(int(loaded["best"]["daily_2026-10-21"]["ms"]), 42_000, "daily times stay")
+	assert_false((loaded["medals"] as Dictionary).has("level_1"), "level medals go")
+	assert_true((loaded["medals"] as Dictionary).has("daily_2026-10-21"))
+	assert_eq(int(loaded["coins"]), 120)
+	assert_eq(loaded["tips"], {"pair": true}, "other sections stay")
+	assert_eq(loaded.get(SaveStore.JOURNEY_RESET_KEY), true)
+
+
+## (v3) Progress exposes the reset to the UI once, until the UI clears it; a fresh save has none.
+func test_progress_reports_a_journey_reset_until_cleared() -> void:
+	assert_false(Progress.journey_reset_pending(), "a fresh save has nothing to report")
+	var file := FileAccess.open(PROGRESS_PATH, FileAccess.WRITE)
+	file.store_string(JSON.stringify({"version": 2, "coins": 50, "levels": {"3": 1}}))
+	file.close()
+	Progress.load_from_disk()
+	assert_true(Progress.journey_reset_pending())
+	assert_eq(Progress.coins(), 50)
+	assert_eq(Progress.stars(3), 0)
+	Progress.clear_journey_reset()
+	assert_false(Progress.journey_reset_pending())
+	Progress.load_from_disk()
+	assert_false(Progress.journey_reset_pending(), "cleared for good once saved")
 
 
 func test_a_v2_save_keeps_its_best_times() -> void:

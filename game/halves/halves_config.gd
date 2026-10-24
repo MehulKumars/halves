@@ -4,7 +4,7 @@ extends RefCounted
 ## Read by the game screen, the board view and the logic in game/halves/ (see docs/HALVES.md).
 ## Changing GEN_VERSION means baking a new data/levels/halves_v<N>.json; never edit a shipped file.
 
-const GEN_VERSION: int = 2
+const GEN_VERSION: int = 3
 
 ## Boosters: free uses per level, then coins or a rewarded video for one more use.
 const FREE_USES: int = 1
@@ -43,6 +43,11 @@ const SWIFT_COINS: int = 10
 const COMBO_WINDOW: float = 2.5
 const COMBO_COINS_AT: int = 5
 const COMBO_COINS: int = 5
+## The PERCEPTIVE bot (v3, docs/HALVES.md 4b): the chance of tapping the most similar free
+## look-alike before a move is PERCEPTIVE_BASE * its similarity, times (1 + PERCEPTIVE_TURNED) when
+## a turned tile is involved, at most 0.9. Rates levels for the generator; tune after real plays.
+const PERCEPTIVE_BASE: float = 0.25
+const PERCEPTIVE_TURNED: float = 0.5
 ## Lucky tiles (v3): removed within LUCKY_SNAPS pairs of first being free, each wins LUCKY_COINS.
 const LUCKY_SNAPS: int = 3
 const LUCKY_COINS: int = 5

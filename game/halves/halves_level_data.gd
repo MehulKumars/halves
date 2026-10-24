@@ -5,6 +5,8 @@ extends RefCounted
 ## screen asks it for a fresh HalvesState. Shuffle reseats into the solution when truly stuck.
 
 var level: int = 0
+## (v3) The place (1-15) the level belongs to; 0 in v2 files and pool boards.
+var place: int = 0
 var role: String = ""
 var mask: String = ""
 var seed_parts: Array = []
@@ -23,6 +25,7 @@ var _geometry: HalvesGeometry
 static func from_dict(entry: Dictionary) -> HalvesLevelData:
 	var data := HalvesLevelData.new()
 	data.level = int(entry.get("level", 0))
+	data.place = int(entry.get("place", 0))
 	data.role = str(entry.get("role", ""))
 	data.mask = str(entry.get("mask", ""))
 	for part: Variant in entry.get("seed_parts", []):
@@ -48,14 +51,14 @@ func to_dict() -> Dictionary:
 	var steps: Array = []
 	for pair in solution:
 		steps.append([pair.x, pair.y])
-	var out := {
-		"level": level,
-		"role": role,
-		"mask": mask,
-		"seed_parts": seed_parts,
-		"tiles": tiles,
-		"solution": steps,
-	}
+	var out := {"level": level}
+	if place > 0:
+		out["place"] = place
+	out["role"] = role
+	out["mask"] = mask
+	out["seed_parts"] = seed_parts
+	out["tiles"] = tiles
+	out["solution"] = steps
 	if not features.is_empty():
 		out["features"] = features
 	if tip != "":

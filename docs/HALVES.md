@@ -155,7 +155,7 @@ The level ends when the board is clear.
 ### Modes (v2)
 | Mode | Boards | Stars / time | Notes |
 |---|---|---|---|
-| Levels | the 100 baked levels, in 10 places of 10 (one sawtooth pack each) | stars, time, par | The main journey. |
+| Levels | (v3) the 300 baked levels, in 15 places of 20 (one sawtooth pack each; v2: 100 in 10 of 10) | stars, time, par | The main journey. |
 | Daily | one board of the daily pool per calendar day (local date) | stars, time | Same board for everyone on that date. Finishing it extends the daily streak. No interstitials. |
 | Zen | the zen pool, endless, in a seeded order | none | No timer, no stars, no ads. Unlocks after level `ZEN_UNLOCK_LEVEL`. |
 | Rush | the rush pool, in a seeded order | score | `RUSH_SECONDS` on the clock; each cleared board adds `RUSH_BOARD_BONUS_S`, each mistake takes `RUSH_MISTAKE_PENALTY_S`; a stuck board shuffles itself. Score = pairs cleared + `RUSH_BOARD_POINTS` per cleared board. Unlocks after level `RUSH_UNLOCK_LEVEL`. |
@@ -529,32 +529,39 @@ static func most_freeing_pair(geometry: HalvesGeometry, remaining: PackedInt64Ar
 
 ### `HalvesBot` (`halves_bot.gd`, static): difficulty rating
 ```
-enum Policy { RANDOM, CAREFUL, WARY }                                          # WARY (v2)
+enum Policy { RANDOM, CAREFUL, WARY, PERCEPTIVE }                              # WARY (v2), PERCEPTIVE (v3)
 static func play(geometry: HalvesGeometry, faces: PackedInt32Array,
 		rng: RandomNumberGenerator, policy: Policy) -> Dictionary
 static func is_trap_move(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: PackedInt64Array,
 		pair: Vector2i) -> bool                                                  # (v2)
 static func rate(geometry: HalvesGeometry, faces: PackedInt32Array, seed_parts: Array,
-		runs: int = 50) -> Dictionary
+		runs: int = 50, level: int = 0) -> Dictionary                           # level (v3)
 static func difficulty(random_win: float, decoy_exposure: float, avg_free_pairs: float) -> float
 ```
 - `play`: from a full board, repeatedly removes one free matching pair until clear or stuck.
   RANDOM picks a uniformly random free pair; CAREFUL picks the pair that leaves the most free tiles
   (ties random); (v2) WARY picks a uniformly random free pair among those that are not trap moves,
-  or among all free pairs if every one is a trap move. Returns `{"cleared": bool, "steps": int,
-  "free_pairs": float, "decoy": float}`. `steps` counts removed pairs. `free_pairs` and `decoy` are
+  or among all free pairs if every one is a trap move; (v3) PERCEPTIVE is section 4b's bot. Returns
+  `{"cleared": bool, "steps": int, "free_pairs": float, "decoy": float, "slips": int}`. `steps`
+  counts removed pairs. `free_pairs` and `decoy` are
   means over every board the bot looked at, **including the final stuck board** when it got stuck:
   `free_pairs` = free pairs on it, `decoy` = (unordered pairs of free tiles that are decoys) /
-  max(1, free pairs).
+  max(1, free pairs). (v3) `slips` counts PERCEPTIVE's mistaps (always 0 for the other policies).
+  The pairs are listed in ascending (first tile, second tile) order over the ascending free tiles,
+  so the rng picks are the same as v2's.
 - (v2) `is_trap_move(geometry, faces, remaining, pair)`: with `after` = `remaining` without the two
   tiles of `pair`: true if `after` is not empty and `after` has no free matching pair, or if some pair key
   has exactly two tiles left in `after` and one of them covers the other. (A half on top of its
   last mate can never be matched: the classic dead end a human learns to see.)
 - `rate`: one rng `SeedService.make_rng(seed_parts + ["rate"], GEN_VERSION)`; `runs` RANDOM games,
-  then `runs` CAREFUL games, then (v2) `runs` WARY games. Returns `{"runs", "random_win",
-  "careful_win", "wary_win", "avg_free_pairs", "decoy_exposure", "difficulty"}`; win rates are the
+  then `runs` CAREFUL games, then (v2) `runs` WARY games, then (v3) `runs` PERCEPTIVE games.
+  Returns `{"runs", "random_win", "careful_win", "wary_win", "avg_free_pairs", "decoy_exposure",
+  "difficulty"}` and (v3) `"perceptive_win", "perceptive_slips", "p3"` (section 4b; `p3` uses
+  `HalvesConfig.star_allowance(LEVELS, level, tiles / 2)`, so `level` 0, the default, means "a
+  level past the star-free ones"; pool boards pass their id). Win rates are the
   share of cleared games; `avg_free_pairs` and `decoy_exposure` are the mean of each RANDOM game's
-  `free_pairs` / `decoy`. (The WARY games come last, so the other values are what v1 gave.)
+  `free_pairs` / `decoy`. (The WARY and PERCEPTIVE games come last, so the other values are what
+  v1 and v2 gave for the same rng.)
 - `difficulty = 100 * (0.6 * (1 - random_win) + 0.25 * min(decoy_exposure / 1.5, 1)
   + 0.15 * (1 - min(avg_free_pairs, 6) / 6))`, from 0 (trivial) to 100.
 
@@ -602,8 +609,8 @@ static func replay(level: HalvesLevelData, run: Dictionary, level_gen: int = -1,
 
 ### `HalvesLevels` (`halves_levels.gd`) and `HalvesLevelData`
 ```
-const PATH := "res://data/levels/halves_v2.json"
-const COUNT := 100
+const PATH := "res://data/levels/halves_v3.json"   # (v3; v2: halves_v2.json, still readable)
+const COUNT := 300                                  # (v3; v2: 100)
 static func get_level(n: int) -> HalvesLevelData   # 1-based; null if missing
 static func count() -> int                         # levels in the file (== COUNT)
 static func gen_version() -> int
@@ -615,6 +622,8 @@ static func gen_version() -> int
 `func geometry() -> HalvesGeometry` (v2: with the features), `func new_state() -> HalvesState`,
 `func to_dict() -> Dictionary`, `static func from_dict(entry: Dictionary) -> HalvesLevelData`.
 JSON numbers are read back as ints. `to_dict` writes `features` and `tip` only when not empty.
+(v3) `place: int` (1-15; 0 when the entry has none: v2 files and pool boards), written by `to_dict`
+right after `level` only when above 0.
 
 ### `HalvesPools` (`halves_pools.gd`, static) (v2)
 ```
@@ -627,10 +636,11 @@ static func daily_number(date: String) -> int                      # 1 + days fr
 static func daily_board(date: String) -> HalvesLevelData           # get_board(DAILY, daily_number(date) - 1)
 static func run_order(kind: Kind, seed_parts: Array) -> PackedInt32Array   # a permutation of 0..count-1, shuffled with SeedService.make_rng(seed_parts, gen_version(kind))
 ```
-Each pool file is loaded only when first asked for.
+Each pool file is loaded only when first asked for. (v3) The pools are `halves_daily_v3.json`,
+`halves_zen_v3.json` and `halves_rush_v3.json` (section 3).
 
 ### `HalvesConfig` (`halves_config.gd`): tunables
-`GEN_VERSION = 2`, `FREE_USES = 1`, `PRICE_HINT = 30`, `PRICE_UNDO = 30`, `PRICE_SHUFFLE = 40`,
+`GEN_VERSION = 3` ((v3); v2: 2), `FREE_USES = 1`, `PRICE_HINT = 30`, `PRICE_UNDO = 30`, `PRICE_SHUFFLE = 40`,
 `STAR2_MAX_MISTAKES = 2` (slips), `TUTORIAL_FORGIVE_LEVELS = 4`, `MATE_PULSE_LEVELS = 2`,
 `STRICT_MISTAKES = false`, `STUCK_DELAY = 0.5` s, `COINS_PER_STAR = 10`, and (v2):
 `GOLD_COINS = 5` (per gold tile), `SWIFT_COINS = 10`, `COMBO_WINDOW = 2.5` s,
@@ -638,13 +648,14 @@ Each pool file is loaded only when first asked for.
 `RUSH_SECONDS = 180`, `RUSH_BOARD_BONUS_S = 5`, `RUSH_MISTAKE_PENALTY_S = 3`,
 `RUSH_BOARD_POINTS = 10`, and the par constants of section 4. (v3): `STAR_FREE_LEVELS = 10`,
 `STAR_ALLOWANCE_PAIRS = 15`, `STAR2_EXTRA_SLIPS = 3` (`STAR2_MAX_MISTAKES` is no longer used),
-`LUCKY_SNAPS = 3`, `LUCKY_COINS = 5` (per lucky tile won), `MEND_BUDGET = 4000`, and
+`LUCKY_SNAPS = 3`, `LUCKY_COINS = 5` (per lucky tile won), `MEND_BUDGET = 4000`,
+`PERCEPTIVE_BASE = 0.25`, `PERCEPTIVE_TURNED = 0.5` (section 4b), and
 ```
 static func star_allowance(mode: int, level: int, pairs: int) -> int   # section 1, Stars (v3); mode is Screens.Mode as int
 ```
 
 ### Places, backgrounds, music and view (not part of the logic contract)
-`HalvesChapters` holds the ten places of ten levels (photo, credit, ambient effect, accent, win
+`HalvesChapters` holds the (v3) fifteen places of twenty levels (photo, credit, ambient effect, accent, win
 jingle) and the home screen's own (`MENU`). `ChapterBackground` shows a place's photo or, if the
 player chose "Drawn" in Settings, the same place drawn in code (`HalvesScenery`). `HalvesMusic`
 holds the music styles the player picks (lo-fi and calm playlists; rain, nature and focus loops).
@@ -666,7 +677,17 @@ half-unit column. `X` marks a tile's top-left corner; `.` (or space) is empty. R
 characters may be omitted. So a row of touching tiles is `X.X.X.`, and the next row of tiles is two
 lines down. Masks are drafts: the human owns their shapes and order.
 
-### Level plan: `tools/levelgen/halves_plan.json`
+(v3) `HalvesMask` allows 13 half-units wide, 16 tall and 5 layers (at most `HalvesGeometry.MAX_TILES`;
+levels stay at or under 120). The file holds three kinds of masks: the hand-made v1/v2 ones (`p1_*`,
+`p2_*`, `p3_*`, and v2's catalogue picks `c<chapter>_*`, kept because the v2 plan and the logic
+tests use them), (v3) the **picture masks** `pic_<name>_<s|m|l>` (Fuji, torii, pagoda, fan, koi,
+crane, lantern, wave; drafted in `tools/levelgen/picture_masks.gd`, which validates them, checks
+the face sizes, prints a preview and writes them here), and (v3) `v3_<catalogue id>`: the shapes
+`build_plan.gd` picked from `tools/levelgen/mask_catalogue.gd`'s catalogue (which v3 extends with
+staggered walls and 4-step plans up to 5 layers and ~110 tiles). A rerun of `build_plan.gd` drops
+and re-picks the `v3_*` masks, so the file and the plan stay in step.
+
+### Level plan: `tools/levelgen/halves_plan.json` (v2) and `halves_plan_v3.json` (v3)
 One slot per level: `{"level", "role" (intro/ramp/hard/rest/finale), "mask", "types" (pair types
 in text form), "target_win", "target_decoy"}` and (v2, all optional):
 - `"trap": [lo, hi]`: trap rates for the candidates (default `[0, 0]`);
@@ -678,7 +699,15 @@ in text form), "target_win", "target_decoy"}` and (v2, all optional):
 The mask's tile count / 2 pairs are spread over `types` round-robin in the listed order (so earlier
 types get the extra copies).
 
-### Baked levels: `data/levels/halves_v2.json` (exported)
+(v3) `halves_plan_v3.json` (`"format": 3`, drafted by `tools/levelgen/build_plan.gd`, section 4b) has
+the same slot shape with these changes: `"place"` (1-15); roles add `breather`; `"target_p3"`
+replaces `"target_decoy"`; `"depth"` records the look-alike chunk size the types were drafted with
+(information only); and the optional slot-level `"gold_pair"` (0/1), `"turned"` and `"lucky"`
+(counts) that `HalvesGenerator.feature_spec` and `HalvesGenerator.deal` read. With `gold_pair`,
+the dealt board's pair types are the round-robin ones with one pair turned into the gold pair.
+The v2 plan stays as it was (the logic tests use its boards as fixtures).
+
+### Baked levels: `data/levels/halves_v2.json` and (v3) `halves_v3.json` (exported)
 ```json
 {"gen_version": 2, "count": 100, "levels": [
 {"level": 1, "role": "intro", "mask": "p1_intro", "seed_parts": ["halves", 1, 7],
@@ -692,18 +721,36 @@ has `runs, random_win, careful_win, wary_win, avg_free_pairs, decoy_exposure, di
 start_free_pairs, traps, trap_rate, par_ms`. Never edit this file by hand and never change a
 shipped level: bump `gen_version` and write a new file instead.
 
+(v3) `halves_v3.json`: `{"gen_version": 3, "count": 300, "levels": [...]}`; each level adds
+`"place"` after `"level"`, and `stats` adds `perceptive_win, perceptive_slips, p3`.
+
 ### Pools (v2): `data/levels/halves_daily_v2.json`, `halves_zen_v2.json`, `halves_rush_v2.json`
 `{"gen_version": 2, "kind": "daily", "count": N, "boards": [...]}`, one board per line, each board
 in the level format with `"level"` = the board id: `10000 + i` (daily), `20000 + i` (zen),
 `30000 + i` (rush) for board index i. Pool recipes live in `tools/levelgen/halves_pools.json`.
 
+(v3) `halves_daily_v3.json` (400 boards), `halves_zen_v3.json` (150), `halves_rush_v3.json` (150),
+same format with `"gen_version": 3`. The recipes (`halves_pools.json`, `"format": 3`) per pool, or
+per weekday for daily: `masks` (names), `target_p3`, `target_win`, `trap`, `min_careful`,
+`min_wary`, `depth` (look-alike chunk size), `type_ratio` (pair types = round(pairs * ratio), at
+least 3), `families` (crest families a board draws from), and optional mechanics: `features`,
+`turned` and `lucky` (counts), `gold_pair` (a chance 0-1).
+
 ## 4. Generating
 ```
-godot --headless --path . -s tools/levelgen/generate_halves.gd                        # all 100 levels
+godot --headless --path . -s tools/levelgen/mask_catalogue.gd                         # (v3) the shape catalogue (build/)
+godot --headless --path . -s tools/levelgen/picture_masks.gd                          # (v3) picture masks -> halves_masks.json
+godot --headless --path . -s tools/levelgen/build_plan.gd                             # (v3) plan, pool recipes, v3_* masks
+godot --headless --path . -s tools/levelgen/generate_halves.gd                        # all levels (v3: 300)
 godot --headless --path . -s tools/levelgen/generate_halves.gd -- 5                   # just level 5 (preview)
 godot --headless --path . -s tools/levelgen/generate_halves.gd -- --pool daily        # a pool
+godot --headless --path . -s tools/levelgen/generate_halves.gd -- --curve             # (v3) curve of the baked levels
 powershell -File tools/levelgen/generate_parallel.ps1                                 # everything, 4 processes
 ```
+(v3) `generate_parallel.ps1` queues ranges of 10 levels or boards, the last (biggest) first, on 4
+processes, and merges them; the result is the same as one process. The generator only bakes the
+current `GEN_VERSION` (3): v2's plan semantics and pool recipes are in git history (2792f42), and
+its data files stay as they are.
 For each slot: parse and validate the mask, build the pair keys, then for candidates
 `k = 0..CANDIDATES-1` (120): `rng = SeedService.make_rng(["halves", level, k], GEN_VERSION)`,
 `trap_rate = lo + (hi - lo) * (k % 4) / 3.0`, and
@@ -806,6 +853,73 @@ mix all crest families; seed parts as v2 with `GEN_VERSION = 3`. Report:
 version bump): stars, unlocks and times start fresh; coins and settings stay; a short "A new
 journey" card says so on first launch.
 
+### As built (v3): the details the implementation fixes
+- **Roles.** `breather` is a role string of its own in the plan and the level file (targets as rest).
+- **Sizes** (`build_plan.gd`). Place `p` spans `lo = 12 + 44 * t`, `hi = 32 + 80 * t` tiles with
+  `t = min(p - 1, 10) / 10`; position k (1-20) aims at `lerp(lo, hi, f_k)` with `f` = 0.1, 0.35,
+  0.45, 0.55, 0.78, 0.25, 0.42, 0.52, 0.62, 0.84, 0.15, 0.48, 0.58, 0.68, 0.9, 0.3, 0.6, 0.72, 0.94,
+  1.0 (a sawtooth that climbs within the place); level 1 is a flat 12-tile board. Layers aimed at:
+  place 1: 1 (level 1), 2, 3 for hard and finale and ramps from level 10; then rest 2 (3 from place
+  8), breather 2 (3 from place 5), ramp 3 (4 from place 8), hard 3 (4 from place 4, 5 from place 9),
+  finale 4 (5 from place 5). A mask scores `3 * |tiles - aim| + 6 * |layers - aim|` plus variety
+  penalties (8 per use of the same base shape in the last 20 levels, 20 for the previous level's
+  base); pictures get -40 on hard and finale levels from place 5 (+25 elsewhere) and come back at
+  most three times, 10 or more levels apart; other shapes come back once, 40 or more levels later
+  (+45), since places 11-15 would otherwise run out of 80-110 tile boards. Masks must keep the face
+  sizes (720 × 1280 notched ≥ 84 px, 720 × 1280, 960 × 1280 and 720 × 1600 ≥ 96 px, plus 1 px of
+  margin), free at least `min(6, max(3, tiles / 5))` tiles at the start, and (catalogue shapes)
+  be mirror-symmetric. Place 1 prefers the hand-made `p1_*` masks.
+- **Types (tuned).** `r` = 0.5 (intro), 0.7 (rest, breather), and from place 2 to place 15
+  (linearly) 0.85 to 0.7 (ramp), 0.75 to 0.68 (hard, finale): the drafted 0.5-0.65 left about two
+  copies a type, the PERCEPTIVE bot met a twin on most moves, rest levels fell to p3 0.3-0.6 (under
+  the ramps) and mid-place ramps could not reach their targets. Depth: 1 in place 1 (2 for its hard and finale levels
+  from level 8, which then show both cuts of a shape) and on every rest and breather level (the
+  drafted depth 2 from place 3 broke the sawtooth the same way), 2 for ramps, 2 for hard and finale
+  in places 2-3 and 3 from place 4; level 21 (look-alikes) has 2. Families: the place's family takes
+  `round(0.6 * T)`, then one or two earlier families (picked at random) split the rest; places 9 and
+  11-15 mix 2 (rest, breather), 2-3 (ramp) or 3 (hard, finale) crest families equally. A family
+  drafts group by group (shuffled), at most `depth` types per group, distinct motifs first, then
+  second cuts; what it cannot fill passes to spare families (other crest families, shapes last),
+  and only if all run out are groups drafted deeper (`HalvesGenerator.draft_types`). Place 1 uses
+  plain shapes only: circle, triangle and square, diamonds from level 10, `T` capped by what the
+  depth allows; level 8 (the cut tip) takes horizontal cuts wherever it can, level 21 vertical only.
+  Elsewhere a type is horizontal with chance 1/3 from level 8 when its motif allows it.
+- **Targets.** `t = (p - 1) / 14`; ramp `target_p3 = lerp(0.75, 0.55, t)`, `target_win =
+  lerp(0.55, 0.35, t)`, minus 0.03 for the second and third ramp of a run and 0.03 in a place's
+  second half; hard `lerp(0.45, 0.3, t)` / `lerp(0.3, 0.15, t)` (minus 0.03 in the second half);
+  finale `lerp(0.35, 0.2, t)` / `lerp(0.15, 0.05, t)`; rest and breather 0.85 / 0.8; intro 1.0.
+  Place 1: target_p3 at least 0.8; levels 2-4 target random 0.9 with no traps, WARY ≥ 1.0; other
+  ramps random 0.7, trap 0.1-0.25, WARY ≥ 0.95; hard random 0.5 (level 5) or 0.45, trap 0.2-0.4,
+  WARY ≥ 0.85; the finale random 0.3, WARY ≥ 0.75; level 6 (the trap tip) has trap 0.25-0.4.
+  CAREFUL floors are section 6's (rest 0.8, ramp 0.6, hard 0.4, finale 0.3) times
+  `clamp((96 - tiles) / 48, 0, 1)`: CAREFUL's greedy is no human model on tall stacks (it clears
+  none of the 110-tile pyramids WARY always clears), so WARY's floor and p3 judge big boards alone.
+- **Mechanics** (seeded per level): each idea's own level has it alone (mist 2, a lock of 1 key
+  pair and 2 locked, lucky 2, frost 2, the gold pair on 161 and 162, turned 2). Then, with the chance
+  "in its place from position 6 / in later places": mist on ramps only, 1-2 tiles (0.5 / 0.12);
+  locks off rest levels, 1 key pair (2 on finales), 2-4 locked (0.6 / 0.25); frost off rest levels,
+  2-5 tiles (0.6 / 0.25); lucky 1-3 tiles, 1-2 on rest levels (0.55 / 0.45); the gold pair
+  (0.35 / 0.25); turned on boards with depth ≥ 2, 2-6 tiles (0.65 / 0.35). Rest levels and breathers
+  keep at most one mechanic; positions 2-5 never use their place's new idea.
+- **PERCEPTIVE.** `t` is the chosen pair's lower tile id; the move is chosen first (WARY's rng
+  draw), then the slip is drawn (`rng.randf() < p`) only when `D` is not empty; the most similar
+  decoy is the lowest id among the most similar. A mend is never preceded by a slip.
+- **Choosing.** Candidates are screened with 12 runs a policy and sorted with trivial hard/finale
+  ones last; the first 6 are rated with 50 runs, and up to 12 more while the best still fails a
+  floor or is trivial. The winner passes the floors, then is not trivial, then has the lowest score.
+- **Pools.** Daily, Monday to Sunday: 28-40 up to 70-100 tiles, target_p3 0.85 to 0.28, random 0.8
+  to 0.12, depth 1-3, `type_ratio` 0.7-0.75, 2 crest families (3 from Friday), mechanics growing
+  from 1 lucky tile to locks, frost and turned tiles. Zen: 36-64 tiles, p3 0.85, depth 1, 1 lucky
+  tile. Rush: 12-24 tiles, p3 0.9, random 0.95, no traps or mechanics.
+- **Report** columns: level, place, role, mask, tiles, layers, types, depth, candidate, trap_rate,
+  traps, random_win, careful_win, wary_win, perceptive_win, perceptive_slips, p3, decoy_exposure,
+  avg_free_pairs, start_free_pairs, difficulty, par_s, locks, frost, mist, gold, gold_pair, turned,
+  lucky, tip. The bake ends with the curve summary (`generate_halves.gd -- --curve` prints it again).
+- **Progress reset.** `SaveStore.CURRENT_VERSION` = 3; the v2 → v3 step empties `levels` and drops
+  the `level_*` entries of `best`, `medals` and the top level (the best-run log file) and sets
+  `journey_reset` when the save had stars. `Progress.journey_reset_pending()` reads it and
+  `Progress.clear_journey_reset()` clears it once the card was shown.
+
 ## 5. Checking
 - `tools/check.ps1`: the logic tests (`tests/test_halves_*.gd`, written from this file by a
   separate session), the baked-file checks, and `test_halves_game.gd`.
@@ -818,11 +932,20 @@ journey" card says so on first launch.
 - **Difficulty dials:** the mask (how many tiles are free at once, how deep the stacks are), the trap
   rate, the number of pair types vs copies (more copies = more twins and more traps), cuts and
   marks (near-twins), features, and the targets in the plan.
-- **Sawtooth in packs of 10:** a rest level brings each new idea (x1 or x6), x5 is hard and x0 is a
+- (v3) **Look-alikes and copies** are the PERCEPTIVE dials: every twin or look-alike free next to
+  the tile a player wants is a chance to slip, so fewer copies a type (`r`) and shallower groups
+  (`depth`) raise p3; deeper groups, turned tiles and bigger boards lower it. The plan's targets
+  pick among candidates; when a whole slot misses its target, change `r`, `depth` or the board size
+  in `build_plan.gd` (section 4b, As built), not the bot.
+- (v3) **Sawtooth in places of 20:** rest (1, 11), three ramps, hard (5), breather (6), three ramps,
+  hard (10), rest, three ramps, hard (15), breather (16), two ramps, hard (19), finale (20).
+  `generate_halves.gd -- --curve` prints p3 by role per place.
+- (v2) **Sawtooth in packs of 10:** a rest level brings each new idea (x1 or x6), x5 is hard and x0 is a
   finale. Core rules are all taught by level 10: layers (2), side blocking (3), decoys (4), the
   first trap (5), horizontal cuts (6), diamonds (7), dot marks (8), line marks (9); gold tiles arrive at 11. New
   features open the later difficulty bands (20 levels each in the generator): mist (21), locks (41), frost (61); band 5 (81-100) mixes all.
-- **Role targets** (random / min WARY / min CAREFUL / trap rate):
+- **Role targets** (v2; v3's are in section 4b; v3's CAREFUL floors are these, faded on big boards)
+  (random / min WARY / min CAREFUL / trap rate):
 
   | Role | random | wary ≥ | careful ≥ | trap |
   |---|---|---|---|---|

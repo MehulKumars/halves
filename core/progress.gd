@@ -5,8 +5,8 @@ extends RefCounted
 ## Stored in the versioned JSON save (SaveStore) and written on every change, so nothing is lost
 ## if Android kills the app. Tests point `path` at a temporary file.
 
-## Halves ships 100 baked levels (HalvesLevels.COUNT; tests keep the two equal).
-const LEVEL_COUNT_DEFAULT: int = 100
+## Halves ships 300 baked levels (HalvesLevels.COUNT; tests keep the two equal).
+const LEVEL_COUNT_DEFAULT: int = 300
 ## Coins for day 1..7 of the daily reward; day 7 is the big one, then the cycle restarts.
 const DAILY_REWARDS: Array[int] = [50, 75, 100, 150, 200, 300, 500]
 
@@ -148,6 +148,19 @@ static func record_time(board: String, ms: int, extra: Dictionary = {}) -> bool:
 	_section("best")[board] = record
 	_save()
 	return true
+
+
+## True once after the save moved to version 3 with a journey in progress: its stars, unlocks and
+## level times were reset (coins and settings kept) and the UI should say so ("A new journey").
+static func journey_reset_pending() -> bool:
+	return bool(_root().get(SaveStore.JOURNEY_RESET_KEY, false))
+
+
+## The UI calls this once it has told the player about the reset.
+static func clear_journey_reset() -> void:
+	if _root().has(SaveStore.JOURNEY_RESET_KEY):
+		_root().erase(SaveStore.JOURNEY_RESET_KEY)
+		_save()
 
 
 ## A game's own part of the save (created empty on first use). Call save() after changing it.
