@@ -5,6 +5,8 @@ extends RefCounted
 ## Polygons get an anti-aliased outline in the same colour (Compatibility polygons have hard edges).
 
 const ARC_STEPS: int = 20
+## (v3) Crests are drawn a little larger than v2 shapes: their detail needs the room.
+const CREST_SCALE: float = 1.18
 
 static var _cache: Dictionary[int, PackedVector2Array] = {}
 
@@ -23,6 +25,10 @@ static func half_polygon(face: int, extent: float) -> PackedVector2Array:
 ## Draws one half (and its mark) on `canvas`, centred at `center`.
 static func draw_half(canvas: CanvasItem, face: int, center: Vector2, extent: float, offset: Vector2 = Vector2.ZERO) -> void:
 	if not HalvesFace.is_valid(face):
+		return
+	if HalvesFace.is_crest(face):
+		HalvesCrest.draw(canvas, HalvesFace.pair_key(face), HalvesFace.side(face), center, extent * CREST_SCALE,
+				HalvesPalette.face_color(face), HalvesPalette.IVORY, offset)
 		return
 	var colour := HalvesPalette.shape_color(HalvesFace.shape(face))
 	var points := half_polygon(face, extent)

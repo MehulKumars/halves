@@ -18,6 +18,8 @@ const SCREENS: PackedStringArray = [
 	"game_l1", "game_selected", "game_l21", "game_l41", "game_l61", "game_l100", "game_stuck", "booster",
 	"results_best", "results_rush", "chapter", "daily", "tip", "zen", "rush", "menu_drawn", "game_drawn",
 ]
+## Taken only when named in -Only: development sheets, not screens of the game.
+const ON_REQUEST: PackedStringArray = ["crests_v0", "crests_v1", "crests_v2", "crests_v3", "crests_h0", "crests_h1", "crests_h2", "crests_h3"]
 
 var _sizes: Array[Vector2i] = []
 var _styles: Array[StringName] = []
@@ -43,8 +45,8 @@ func _initialize() -> void:
 		for size in _sizes:
 			await _resize(size)
 			var shots: Array[Image] = []
-			for screen in SCREENS:
-				if not _only.is_empty() and not _only.has(screen):
+			for screen in SCREENS + ON_REQUEST:
+				if (not _only.is_empty() or ON_REQUEST.has(screen)) and not _only.has(screen):
 					continue
 				await _reset()
 				if not await call("_show_" + screen):
@@ -376,3 +378,48 @@ func _drawn(show: Callable) -> bool:
 ## uses exist (a -s script compiles first), which breaks Settings for the whole run.
 static func _backgrounds() -> GDScript:
 	return load("res://game/halves/chapter_background.gd") as GDScript
+
+
+## Crest sheets (HalvesCrestSheet), 16 motifs a page, halves cut vertically (v) or horizontally (h).
+func _show_crests(cut: int, page: int) -> bool:
+	HalvesCrestSheet.page = page
+	HalvesCrestSheet.cut = cut
+	var packed := PackedScene.new()
+	var sheet := HalvesCrestSheet.new()
+	packed.pack(sheet)
+	sheet.free()
+	change_scene_to_packed(packed)
+	await _frames(4)
+	return true
+
+
+func _show_crests_v0() -> bool:
+	return await _show_crests(0, 0)
+
+
+func _show_crests_v1() -> bool:
+	return await _show_crests(0, 1)
+
+
+func _show_crests_v2() -> bool:
+	return await _show_crests(0, 2)
+
+
+func _show_crests_h0() -> bool:
+	return await _show_crests(1, 0)
+
+
+func _show_crests_h1() -> bool:
+	return await _show_crests(1, 1)
+
+
+func _show_crests_h2() -> bool:
+	return await _show_crests(1, 2)
+
+
+func _show_crests_v3() -> bool:
+	return await _show_crests(0, 3)
+
+
+func _show_crests_h3() -> bool:
+	return await _show_crests(1, 3)
