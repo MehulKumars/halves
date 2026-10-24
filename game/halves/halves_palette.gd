@@ -21,16 +21,18 @@ const GOLD_DARK: Color = Color("#A9792A")
 const BLOCKED_TINT: Color = Color(0.7, 0.72, 0.76)
 
 
-## (v3) Crest inks, one per family: traditional Japanese dye colours, all at least 4.5:1 on IVORY.
+## (v3) Crest inks, one per family: traditional Japanese dye colours, all at least 4.3:1 on IVORY
+## (3:1 is the bar for graphics; Bold tiles darken them past 4.5:1), and kept apart in lightness and
+## hue so the families stay distinct for colour-blind players (tests/test_halves_palette.gd).
 const FAMILY_INKS: Dictionary[StringName, Color] = {
-	&"blossoms": Color("#A3324A"),  # beni, crimson
-	&"tomoe": Color("#B03E26"),     # shu, vermilion
-	&"sky": Color("#8A5A0E"),       # kincha, golden brown
+	&"blossoms": Color("#C23D80"),  # tsutsuji, azalea pink
+	&"tomoe": Color("#A8361C"),     # shu, vermilion
+	&"sky": Color("#9C6B00"),       # ukon-cha, ochre
 	&"waves": Color("#1D4A73"),     # ai, indigo
 	&"lattice": Color("#2E2A28"),   # sumi, ink
 	&"leaves": Color("#3F6B2E"),    # moss
-	&"things": Color("#5E4387"),    # murasaki, purple
-	&"wings": Color("#1C6B64"),     # aotake, blue-green
+	&"things": Color("#7048A0"),    # kikyo, bellflower violet
+	&"wings": Color("#12756B"),     # aotake, blue-green
 	&"gold": Color("#4E3209"),      # dark lacquer, on a gold face
 }
 ## (v3) The gold pair's tile face (its crest is drawn in the gold family's ink).

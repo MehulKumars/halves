@@ -890,7 +890,8 @@ journey" card says so on first launch.
   finale `lerp(0.35, 0.2, t)` / `lerp(0.15, 0.05, t)`; rest and breather 0.85 / 0.8; intro 1.0.
   Place 1: target_p3 at least 0.8; levels 2-4 target random 0.9 with no traps, WARY ≥ 1.0; other
   ramps random 0.7, trap 0.1-0.25, WARY ≥ 0.95; hard random 0.5 (level 5) or 0.45, trap 0.2-0.4,
-  WARY ≥ 0.85; the finale random 0.3, WARY ≥ 0.75; level 6 (the trap tip) has trap 0.25-0.4.
+  WARY ≥ 0.85; the finale random 0.3, WARY ≥ 0.75; level 6 (the trap tip) has trap 0.25-0.4 and,
+  because it teaches decoys, WARY ≥ 0.95 instead of the breather's 0.97.
   CAREFUL floors are section 6's (rest 0.8, ramp 0.6, hard 0.4, finale 0.3) times
   `clamp((96 - tiles) / 48, 0, 1)`: CAREFUL's greedy is no human model on tall stacks (it clears
   none of the 110-tile pyramids WARY always clears), so WARY's floor and p3 judge big boards alone.
