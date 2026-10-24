@@ -1,10 +1,8 @@
 extends Screen
-## Level select over the current place's photo: one section per place of ten levels, a header card
-## (thumbnail, name, stars and Swift medals; tap it for the photo) and, once the place is reached,
-## its ten tiles in a row of five. Places not reached yet show only a locked header (few nodes, so
-## the list scrolls lightly). The next level is scrolled into view. Dev mode opens everything.
-
-const TILE_HEIGHT: float = 140.0
+## The journey map over the current place's photo: one stretch per place, a header card (thumbnail,
+## name, stars and Swift medals; tap it for the photo) and, once the place is reached, its levels as
+## stepping stones on a winding trail (JourneyPath). Places not reached yet show only a locked card,
+## so the map grows with the player. The next level is scrolled into view; dev mode opens all.
 
 @export var level_count: int = Progress.LEVEL_COUNT_DEFAULT
 
@@ -16,18 +14,13 @@ func _ready() -> void:
 	var next := Progress.next_level(level_count)
 	ChapterBackground.install(self, HalvesChapters.index_for_level(next), true, 0.6)
 	HalvesMusic.play()
-	var template: AdaptiveGridContainer = %Grid
-	template.min_cell_width = 100.0
-	template.max_columns = 5
-	# A blank copy made before any tile is added: every later chapter grid starts from it.
-	var blank := template.duplicate() as Container
+	%Grid.queue_free()
 	var sections := VBoxContainer.new()
 	sections.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sections.add_theme_constant_override(&"separation", 20)
+	sections.add_theme_constant_override(&"separation", 12)
 	var scroll: ScrollContainer = %Scroll
 	scroll.add_child(sections)
 	var next_tile: LevelTile = null
-	var used_template := false
 	for chapter in HalvesChapters.count():
 		var first := HalvesChapters.first_level(chapter)
 		if first > level_count:
@@ -36,24 +29,26 @@ func _ready() -> void:
 		sections.add_child(_chapter_header(chapter, reached))
 		if not reached:
 			continue
-		var grid := blank.duplicate() as Container if used_template else template
-		if used_template:
-			sections.add_child(grid)
-		else:
-			grid.reparent(sections)
-			used_template = true
-		for level in range(first, mini(HalvesChapters.last_level(chapter), level_count) + 1):
-			var tile := _level_tile(level, next)
-			grid.add_child(tile)
-			tile.custom_minimum_size.y = TILE_HEIGHT
-			if level == next:
-				next_tile = tile
-	if not used_template:
-		template.queue_free()
-	blank.free()
+		var path := JourneyPath.new()
+		path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		sections.add_child(path)
+		path.build(first, mini(HalvesChapters.last_level(chapter), level_count), next, chapter * 1.7, _level_tile)
+		if path.tile_for(next) != null:
+			next_tile = path.tile_for(next)
 	if next_tile != null:
 		await get_tree().process_frame
 		scroll.ensure_control_visible(next_tile)
+		_breathe(next_tile)
+
+
+## The next level's stone breathes gently, so the eye finds it (off with Reduce Motion).
+func _breathe(tile: LevelTile) -> void:
+	if Juice.motion_scale <= 0.0:
+		return
+	tile.pivot_offset_ratio = Vector2(0.5, 0.5)
+	var breathe := tile.create_tween().set_loops()
+	breathe.tween_property(tile, ^"scale", Vector2.ONE * 1.06, 0.7).set_trans(Tween.TRANS_SINE)
+	breathe.tween_property(tile, ^"scale", Vector2.ONE, 0.7).set_trans(Tween.TRANS_SINE)
 
 
 ## A place is open once its first level is the next one or already won (or in dev mode).

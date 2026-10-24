@@ -65,7 +65,7 @@ icon = ExtResource("7_back")
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"ScreenHeaderLabel"
-text = "Levels"
+text = "Journey"
 horizontal_alignment = 1
 vertical_alignment = 1
 
