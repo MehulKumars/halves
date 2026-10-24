@@ -47,6 +47,10 @@ func _organize() -> void:
 		_chips([["photo", "Photos"], ["drawn", "Drawn"]], ChapterBackground.style(), ChapterBackground.set_style, true),
 		%HapticsToggle.get_parent() as Control, %MotionToggle.get_parent() as Control,
 		_caption("Fewer animations and no falling petals, for comfort or to save battery."),
+		_row(Icons.GRID, "Bold tiles", _toggle(Settings.bold_tiles(), _on_bold_tiles)),
+		_caption("Darker crests and tile edges, for low light or low vision."),
+		_row(Icons.ARROW_BACK, "Left-handed", _toggle(Settings.left_handed(), Settings.set_left_handed)),
+		_caption("Boosters at the bottom left, pause at the top right."),
 		_row(Icons.TIMER, "Show timer", _toggle(Settings.show_timer(), Settings.set_show_timer)),
 		rows.get_node(^"Separator") as Control, _section("More"), %CreditsButton.get_parent() as Control,
 	]
@@ -74,6 +78,11 @@ func _organize() -> void:
 			rows.add_child(order[i])
 		rows.move_child(order[i], i)
 	_show_dev_extras(Settings.dev_mode() or show_style_picker)
+
+
+func _on_bold_tiles(on: bool) -> void:
+	Settings.set_bold_tiles(on)
+	HalvesShapes.bold = on
 
 
 func _music_options() -> Array:

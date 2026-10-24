@@ -20,6 +20,23 @@ most of this audience. Puzzle players skew 35+, so readable text and generous to
 | Separate volume controls | Settings | Music and Sound sliders, plus quick toggles in the pause menu |
 | Offline play | design | Everything except ads works offline |
 
+## In Halves (v3)
+
+- **Shape first, colour second.** Every tile is told apart by its crest's shape; each crest family
+  also has its own ink, but no rule depends on colour. Look-alikes differ in shape (petal count,
+  notch, ring), never in colour alone.
+- **Bold tiles** (Settings > Look and feel): darker crest ink, a dark edge round every tile face,
+  and blocked tiles dimmed further, for low light or low vision. Applies at once, mid-level too.
+- **Left-handed** (Settings): the boosters sit at the bottom left and pause at the top right.
+- **Reduce Motion** stops the falling petals, drift, snaps' flight and shakes at once (no restart
+  needed); the snap still shows its card for a moment, so a match is never missed.
+- **Every event is visual.** Snaps show a gold seam, mistakes shake and ring the tiles red, lucky
+  tiles glow with dots that count down by pairs (never by seconds), a mend flies the mate out of the
+  stack. Sounds (pentatonic chimes, a wooden knock) and haptics only add to these.
+- **Calm stars.** Levels 1-10 never lose a star; later boards allow a few free slips, and nothing
+  runs on a timer except the optional Swift medal and the Rush mode.
+- **No TalkBack promise:** Godot's screen-reader support does not reach Android yet (see Known gaps).
+
 ## Each game must still do
 
 - **Never carry information by colour alone.** About 1 in 12 men has red-green colour blindness.

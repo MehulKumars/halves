@@ -164,6 +164,9 @@ func _draw() -> void:
 	_side_box.set_corner_radius_all(radius)
 	var face_box := _gold_box if HalvesFace.family(face) == &"gold" else _face_box
 	face_box.set_corner_radius_all(radius)
+	# Bold tiles: a dark edge round each face, so tiles stand apart in low light.
+	face_box.border_color = HalvesPalette.SIDE
+	face_box.set_border_width_all(maxi(2, int(w * 0.025)) if HalvesShapes.bold else 0)
 	draw_style_box(_side_box, Rect2(-w * 0.5, top + depth, w, h + lift))
 	draw_style_box(face_box, Rect2(-w * 0.5, top, w, h))
 	var face_rect := Rect2(-w * 0.5, top, w, h)
@@ -316,7 +319,7 @@ func _apply_tint() -> void:
 	if not blocked:
 		modulate = Color.WHITE
 		return
-	var tint := HalvesPalette.BLOCKED_TINT * layer_shade
+	var tint := HalvesPalette.BLOCKED_TINT * layer_shade * (0.85 if HalvesShapes.bold else 1.0)
 	tint.a = 1.0
 	modulate = tint
 

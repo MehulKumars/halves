@@ -20,7 +20,7 @@ const SCREENS: PackedStringArray = [
 ]
 ## Taken only when named in -Only: development sheets, not screens of the game.
 const ON_REQUEST: PackedStringArray = ["crests_v0", "crests_v1", "crests_v2", "crests_v3", "crests_h0", "crests_h1", "crests_h2", "crests_h3",
-		"tip_lookalike", "tip_gold_pair", "tip_mend", "tip_turned", "tip_lucky"]
+		"tip_lookalike", "tip_gold_pair", "tip_mend", "tip_turned", "tip_lucky", "game_bold", "game_left"]
 
 var _sizes: Array[Vector2i] = []
 var _styles: Array[StringName] = []
@@ -29,6 +29,8 @@ var _only: PackedStringArray = []
 var _out_dir: String = "build/snapshots"
 var _ui: Node
 var _style_before: String = ""
+## A shot switched an accessibility look on (bold tiles, left-handed); _reset switches it off.
+var _look_changed: bool = false
 
 
 func _initialize() -> void:
@@ -137,6 +139,11 @@ func _resize(size: Vector2i) -> void:
 
 func _reset() -> void:
 	paused = false
+	if _look_changed:
+		var settings := load("res://core/settings.gd")
+		settings.call(&"set_bold_tiles", false)
+		settings.call(&"set_left_handed", false)
+		_look_changed = false
 	if not _style_before.is_empty():
 		_backgrounds().call(&"set_style", _style_before)
 		_style_before = ""
@@ -459,3 +466,18 @@ func _show_tip_lucky() -> bool:
 
 func _show_crest_book() -> bool:
 	return await _open(Screens.CREST_BOOK)
+
+
+## Accessibility looks: bold tiles, and the left-handed layout (both switched back off after).
+func _show_game_bold() -> bool:
+	var settings := load("res://core/settings.gd")
+	settings.call(&"set_bold_tiles", true)
+	_look_changed = true
+	return await _show_game_level(41)
+
+
+func _show_game_left() -> bool:
+	var settings := load("res://core/settings.gd")
+	settings.call(&"set_left_handed", true)
+	_look_changed = true
+	return await _show_game_level(41)

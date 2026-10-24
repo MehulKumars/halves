@@ -506,6 +506,13 @@ func _snapshot() -> Dictionary:
 			"mends": state.mends, "lucky_won": state.lucky_won}
 
 
+## Redraws every tile after a look setting changed (bold tiles).
+func refresh_look() -> void:
+	_refresh()
+	for tile in _tiles:
+		tile.queue_redraw()
+
+
 ## Pairs left on a lucky tile's clock (section 1): -1 when it is not lucky, not free yet or over.
 func _lucky_dots(i: int) -> int:
 	if not HalvesBits.has(state.lucky, i) or not state.lucky_start.has(i):

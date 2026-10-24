@@ -17,6 +17,7 @@ var _rush: Button
 func _ready() -> void:
 	var next := Progress.next_level()
 	ChapterBackground.install(self, ChapterBackground.MENU, true, 1.0, true)
+	HalvesShapes.bold = Settings.bold_tiles()
 	HalvesMusic.play()
 	_title.text = ProjectSettings.get_setting("application/config/name", "Halves")
 	_coins.value = Progress.coins()

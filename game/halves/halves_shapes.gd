@@ -7,6 +7,9 @@ extends RefCounted
 const ARC_STEPS: int = 20
 ## (v3) Crests are drawn a little larger than v2 shapes: their detail needs the room.
 const CREST_SCALE: float = 1.18
+## (v3) Bold tiles (Settings): darker ink for every half. Set by the screens from Settings, since
+## this class also runs in tools where Settings is not available.
+static var bold: bool = false
 
 static var _cache: Dictionary[int, PackedVector2Array] = {}
 
@@ -28,9 +31,9 @@ static func draw_half(canvas: CanvasItem, face: int, center: Vector2, extent: fl
 		return
 	if HalvesFace.is_crest(face):
 		HalvesCrest.draw(canvas, HalvesFace.pair_key(face), HalvesFace.side(face), center, extent * CREST_SCALE,
-				HalvesPalette.face_color(face), HalvesPalette.face_paper(face), offset)
+				ink(face), HalvesPalette.face_paper(face), offset)
 		return
-	var colour := HalvesPalette.shape_color(HalvesFace.shape(face))
+	var colour := ink(face)
 	var points := half_polygon(face, extent)
 	var moved := PackedVector2Array()
 	moved.resize(points.size())
@@ -105,3 +108,9 @@ static func _centroid(points: PackedVector2Array) -> Vector2:
 	if absf(area) < 0.0001:
 		return points[0]
 	return sum / (3.0 * area)
+
+
+## The colour a face's half is drawn in: its family's ink or its shape's colour, darker when bold.
+static func ink(face: int) -> Color:
+	var colour := HalvesPalette.face_color(face)
+	return colour.darkened(0.35) if bold else colour

@@ -9,6 +9,9 @@ const MUSIC_BUS: StringName = &"Music"
 const SFX_BUS: StringName = &"SFX"
 const KEY_SHOW_TIMER: String = "ShowTimer"
 const KEY_DEV_MODE: String = "DevMode"
+## (v3) Accessibility: high-contrast tiles, and the booster bar on the left for left thumbs.
+const KEY_BOLD_TILES: String = "BoldTiles"
+const KEY_LEFT_HANDED: String = "LeftHanded"
 
 
 ## Linear volume 0..1 of an audio bus ("Music", "SFX", "Master").
@@ -44,6 +47,27 @@ static func reduce_motion() -> bool:
 static func set_reduce_motion(enabled: bool) -> void:
 	PlayerConfig.set_config(AppLifecycle.SECTION, AppLifecycle.KEY_REDUCE_MOTION, enabled)
 	_apply()
+	Events.setting_changed.emit(&"reduce_motion", enabled)
+
+
+## Bold tiles: darker crest ink and dark tile edges, for low light or low vision.
+static func bold_tiles() -> bool:
+	return PlayerConfig.get_config(AppLifecycle.SECTION, KEY_BOLD_TILES, false)
+
+
+static func set_bold_tiles(enabled: bool) -> void:
+	PlayerConfig.set_config(AppLifecycle.SECTION, KEY_BOLD_TILES, enabled)
+	Events.setting_changed.emit(&"bold_tiles", enabled)
+
+
+## Left-handed: the boosters sit at the bottom left and pause at the top right.
+static func left_handed() -> bool:
+	return PlayerConfig.get_config(AppLifecycle.SECTION, KEY_LEFT_HANDED, false)
+
+
+static func set_left_handed(enabled: bool) -> void:
+	PlayerConfig.set_config(AppLifecycle.SECTION, KEY_LEFT_HANDED, enabled)
+	Events.setting_changed.emit(&"left_handed", enabled)
 
 
 ## The clock in the game HUD (time is always recorded; this only hides it during play).

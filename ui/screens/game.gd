@@ -73,6 +73,9 @@ func _ready() -> void:
 	_board.stuck.connect(_on_stuck)
 	_board.cleared.connect(_on_cleared)
 	_board.show_mat = true
+	HalvesShapes.bold = Settings.bold_tiles()
+	Events.setting_changed.connect(_on_setting_changed)
+	_apply_hand()
 	_board.mended.connect(_on_mended)
 	_board.mend_earned.connect(_on_mend_earned)
 	var data := _first_board()
@@ -289,6 +292,25 @@ func _on_combo(count: int, _at: Vector2) -> void:
 
 func _on_shuffled(count: int, was_stuck: bool) -> void:
 	_run.record(HalvesRun.Event.SHUFFLE, count, 1 if was_stuck else 0)
+
+
+## Look settings changed while playing (from the pause menu's settings).
+func _on_setting_changed(key: StringName, value: Variant) -> void:
+	match key:
+		&"bold_tiles":
+			HalvesShapes.bold = bool(value)
+			_board.refresh_look()
+		&"left_handed":
+			_apply_hand()
+
+
+## Left-handed: boosters at the bottom left, pause at the top right; otherwise centred, pause left.
+func _apply_hand() -> void:
+	var left := Settings.left_handed()
+	var hud: Node = %PauseButton.get_parent()
+	hud.move_child(%PauseButton, hud.get_child_count() - 1 if left else 0)
+	var bar := %HintButton.get_parent() as BoxContainer
+	bar.alignment = BoxContainer.ALIGNMENT_BEGIN if left else BoxContainer.ALIGNMENT_CENTER
 
 
 ## The Mend button sits with the boosters (same look) and only shows once the gold pair is cleared.

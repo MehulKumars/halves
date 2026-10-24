@@ -123,6 +123,17 @@ func refresh() -> void:
 	_build_ambient()
 
 
+func _ready() -> void:
+	Events.setting_changed.connect(_on_setting_changed)
+
+
+## Reduce Motion takes effect at once: the falling petals and the drift stop (or start).
+func _on_setting_changed(key: StringName, _value: Variant) -> void:
+	if key == &"reduce_motion":
+		set_process(drift and _texture != null and Juice.motion_scale > 0.0)
+		_build_ambient()
+
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
 		queue_redraw()
