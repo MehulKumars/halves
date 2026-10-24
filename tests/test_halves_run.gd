@@ -272,6 +272,9 @@ func test_replay_a_mismatch_costs_a_star() -> void:
 	run.record(E.MISMATCH, decoy.x, decoy.y)
 	_record_pairs(run, _solution_from(data, k))
 	_assert_result(HalvesRun.replay(data, run.to_dict()), true, true, 2, 1, "level %d" % data.level)
+	# (v3) The default allowance is 0; with an allowance of 1 (or unlimited) one slip is free.
+	_assert_result(HalvesRun.replay(data, run.to_dict(), -1, 1), true, true, 3, 1, "level %d, allowance 1" % data.level)
+	_assert_result(HalvesRun.replay(data, run.to_dict(), -1, -1), true, true, 3, 1, "level %d, unlimited" % data.level)
 	# The same run with the tutorial's free mistake: the mismatch still replays, at no cost.
 	run.free_mistakes = 1
 	_assert_result(HalvesRun.replay(data, run.to_dict()), true, true, 3, 0, "level %d, free mistake" % data.level)

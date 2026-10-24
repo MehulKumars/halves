@@ -137,6 +137,26 @@ static func _build(spec: Dictionary) -> Array[Dictionary]:
 			_dragonfly(out, size)
 		&"goose":
 			_goose(out, spec, size)
+	return _fit(out)
+
+
+## Scales a crest that reaches past the unit circle back inside it (the contract's promise, and
+## what keeps every crest the same size on a tile).
+static func _fit(out: Array[Dictionary]) -> Array[Dictionary]:
+	var reach := 0.0
+	for layer in out:
+		for polygon: PackedVector2Array in layer.polygons:
+			for p in polygon:
+				reach = maxf(reach, p.length())
+	if reach <= 1.0:
+		return out
+	var shrink := Transform2D(0.0, Vector2.ONE / reach, 0.0, Vector2.ZERO)
+	for layer in out:
+		var scaled: Array[PackedVector2Array] = []
+		for polygon: PackedVector2Array in layer.polygons:
+			scaled.append(shrink * polygon)
+		layer.polygons = scaled
+		layer.edges = _edges(scaled)
 	return out
 
 

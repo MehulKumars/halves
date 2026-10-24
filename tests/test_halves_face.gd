@@ -2,6 +2,7 @@ extends GutTest
 ## HalvesFace: the int encoding of a half-shape face, matching, decoys, validity and text forms.
 ## Written from docs/HALVES.md alone, in a separate session from the implementation.
 ## Expected ints are worked out by hand from make = shape << 4 | cut << 3 | mark << 1 | side.
+## (v3) These are the v2 faces (pairs 0-31), unchanged; crest faces are in test_halves_crests.gd.
 
 # Hand-encoded faces used below.
 const CIRCLE_V_A := 0        # circle:v:-:a
@@ -132,7 +133,12 @@ func test_is_valid_rejects_unknown_values_and_horizontal_triangles() -> void:
 	assert_false(HalvesFace.is_valid(6), "mark value 3 does not exist")
 	assert_false(HalvesFace.is_valid(32 | 8 | 6 | 1), "mark value 3 does not exist")
 	assert_false(HalvesFace.is_valid(-1))
-	assert_false(HalvesFace.is_valid(64), "shape value 4 does not exist")
+	# (v3) Face 64 (v2: shape value 4) is now the first crest, pair 32; values past the crest
+	# catalogue are the unknown ones.
+	var past := (HalvesCrests.FIRST_PAIR + HalvesCrests.motif_count() * 2) << 1
+	assert_false(HalvesFace.is_valid(past), "pair %d is past the crest catalogue" % (past >> 1))
+	assert_false(HalvesFace.is_valid(past + 1), "pair %d is past the crest catalogue" % (past >> 1))
+	assert_false(HalvesFace.is_valid(past + 2))
 
 
 func test_exactly_42_valid_faces_below_64() -> void:

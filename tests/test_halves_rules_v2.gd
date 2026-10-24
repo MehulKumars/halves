@@ -1,5 +1,5 @@
 extends GutTest
-## HalvesState v2: slips (mistakes + stuck shuffles) and stars by slips, apply_deal's stuck flag, mist
+## HalvesState v2: slips (mistakes + stuck shuffles) and stars by slips (v3: the slip allowance), apply_deal's stuck flag, mist
 ## (veiled, revealed when first free, never hidden again), gold, locks and frost in try_pair, and solve,
 ## hint and shuffle on boards with features. Written from docs/HALVES.md alone; mostly hand-built boards.
 
@@ -65,22 +65,29 @@ func test_apply_deal_counts_only_stuck_shuffles() -> void:
 
 
 func test_stars_by_slips() -> void:
-	assert_eq(HalvesConfig.STAR2_MAX_MISTAKES, 2)
+	# (v3) stars(allowance): 3 up to the allowance, 2 up to allowance + STAR2_EXTRA_SLIPS, else 1.
+	# Mistakes and stuck shuffles count the same. stars() is stars(0).
+	assert_eq(HalvesConfig.STAR2_EXTRA_SLIPS, 3)
 	var s := _column(["circle:v:-:a", "circle:v:-:b"])
-	var want := {0: 3, 1: 2, 2: 2, 3: 1, 4: 1}
+	var want := {0: 3, 1: 2, 2: 2, 3: 2, 4: 1, 5: 1}
+	var want_1 := {0: 3, 1: 3, 2: 2, 3: 2, 4: 2, 5: 1}
 	for n: int in want:
 		s.mistakes = 0
 		s.stuck_shuffles = n
 		assert_eq(s.stars(), want[n], "%d stuck shuffles" % n)
+		assert_eq(s.stars(1), want_1[n], "%d stuck shuffles, allowance 1" % n)
 		s.mistakes = n
 		s.stuck_shuffles = 0
 		assert_eq(s.stars(), want[n], "%d mistakes" % n)
+		assert_eq(s.stars(1), want_1[n], "%d mistakes, allowance 1" % n)
 	s.mistakes = 1
 	s.stuck_shuffles = 1
-	assert_eq(s.stars(), 2, "1 mistake + 1 stuck shuffle = 2 slips")
+	assert_eq(s.stars(1), 2, "1 mistake + 1 stuck shuffle = 2 slips, over an allowance of 1")
+	assert_eq(s.stars(2), 3, "2 slips within an allowance of 2")
 	s.mistakes = 2
-	s.stuck_shuffles = 1
-	assert_eq(s.stars(), 1, "3 slips")
+	s.stuck_shuffles = 2
+	assert_eq(s.stars(), 1, "4 slips")
+	assert_eq(s.stars(1), 2, "4 slips = allowance 1 + 3")
 
 
 func test_undo_does_not_take_back_a_stuck_shuffle() -> void:

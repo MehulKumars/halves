@@ -4,6 +4,7 @@ extends GutTest
 ## Uses its own save file; popups open on the UI autoload, so each test closes them again.
 ## (v2) Levels are picked by what their data holds ("the first level with a free decoy ...") instead
 ## of fixed numbers; TUTORIAL_FORGIVE_LEVELS is 4; a stuck shuffle counts as a slip; coins add Swift and gold.
+## (v3) The HUD's stars use HalvesConfig.star_allowance: no star goes on levels 1-10.
 
 const H := preload("res://tests/halves_helpers.gd")
 const SIZES: Array[Vector2i] = [Vector2i(720, 1280), Vector2i(720, 1600), Vector2i(960, 1280)]
@@ -26,6 +27,7 @@ func after_all() -> void:
 	Progress.path = SaveStore.DEFAULT_PATH
 	Progress.load_from_disk()
 	Screens.level = 1
+	Screens.mode = Screens.Mode.LEVELS
 
 
 ## The first level in [from, to] whose baked data passes `pred`, or -1.
@@ -79,24 +81,53 @@ func test_level_one_played_through_reaches_the_results() -> void:
 	_close(game)
 
 
-func test_a_mistake_costs_the_flawless_star_and_undo_gives_it_back() -> void:
-	var level := _first_level(HalvesConfig.TUTORIAL_FORGIVE_LEVELS + 1, HalvesLevels.COUNT,
+## (v3) A star goes only when the slips pass the board's allowance,
+## HalvesConfig.star_allowance(LEVELS, level, pairs), on levels after STAR_FREE_LEVELS.
+func test_a_slip_past_the_allowance_costs_a_star_and_undo_gives_it_back() -> void:
+	var level := _first_level(HalvesConfig.STAR_FREE_LEVELS + 1, HalvesLevels.COUNT,
 			func(d: HalvesLevelData) -> bool: return d.tip == "" and _has_free_decoy(d))
-	assert_ne(level, -1, "some level after the tutorial offers a twin or near-twin to tap at the start")
+	assert_ne(level, -1, "some level after the free levels offers a twin or near-twin to tap at the start")
 	if level == -1:
+		return
+	var data := HalvesLevels.get_level(level)
+	var allowance := HalvesConfig.star_allowance(Screens.Mode.LEVELS, level, int(data.positions.size() / 2.0))
+	assert_gte(allowance, 1, "test setup: level %d has a limited allowance" % level)
+	var game := await _open_game(level)
+	var board := _board(game)
+	var stars := game.get_node(^"%Stars") as StarRating
+	var decoy := H.free_decoy(board.state)
+	assert_ne(decoy, Vector2i(-1, -1), "level %d offers a twin or near-twin to tap" % level)
+	for i: int in allowance:
+		board.tap(decoy.x)
+		board.tap(decoy.y)
+	assert_eq(board.state.mistakes, allowance)
+	assert_eq(stars.stars, 3, "level %d: %d slips are within the allowance" % [level, allowance])
+	board.tap(decoy.x)
+	board.tap(decoy.y)
+	assert_eq(board.state.mistakes, allowance + 1)
+	assert_eq(stars.stars, 2, "one slip past the allowance: the HUD drops to two stars")
+	(game.get_node(^"%UndoButton") as Button).pressed.emit()
+	await _wait(0.2)
+	assert_eq(board.state.mistakes, allowance, "the free undo takes the last mistake back")
+	assert_eq(stars.stars, 3)
+	_close(game)
+
+
+## (v3) Levels 1..STAR_FREE_LEVELS of the LEVELS mode have an unlimited allowance.
+func test_the_first_levels_never_drop_a_star() -> void:
+	assert_eq(HalvesConfig.STAR_FREE_LEVELS, 10)
+	var level := _first_level(1, HalvesConfig.STAR_FREE_LEVELS, _has_free_decoy)
+	if level == -1:
+		pending("no level up to %d has a free decoy at the start" % HalvesConfig.STAR_FREE_LEVELS)
 		return
 	var game := await _open_game(level)
 	var board := _board(game)
 	var decoy := H.free_decoy(board.state)
-	assert_ne(decoy, Vector2i(-1, -1), "level %d offers a twin or near-twin to tap" % level)
-	board.tap(decoy.x)
-	board.tap(decoy.y)
-	assert_eq(board.state.mistakes, 1)
-	assert_eq((game.get_node(^"%Stars") as StarRating).stars, 2, "the HUD drops to two stars")
-	(game.get_node(^"%UndoButton") as Button).pressed.emit()
-	await _wait(0.2)
-	assert_eq(board.state.mistakes, 0, "the free undo takes the mistake back")
-	assert_eq((game.get_node(^"%Stars") as StarRating).stars, 3)
+	for i: int in 6:
+		board.tap(decoy.x)
+		board.tap(decoy.y)
+	assert_gte(board.state.mistakes, 5, "real slips (the tutorial forgives at most one)")
+	assert_eq((game.get_node(^"%Stars") as StarRating).stars, 3, "level %d keeps three stars" % level)
 	_close(game)
 
 
@@ -216,6 +247,7 @@ func _check_every_level(size: Vector2i, insets: Vector4i) -> void:
 ## Opens the game on `level`. A tip card (v2) may open as a popup on some levels: it is closed so
 ## the test starts on the bare board.
 func _open_game(level: int, size: Vector2i = Vector2i(720, 1280)) -> Node:
+	Screens.mode = Screens.Mode.LEVELS
 	Screens.level = level
 	var viewport := SubViewport.new()
 	viewport.size = size

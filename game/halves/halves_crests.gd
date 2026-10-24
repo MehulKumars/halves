@@ -84,11 +84,11 @@ const MOTIFS: Array[Dictionary] = [
 	{"id": &"uzu2", "name": "Double whirlpool", "family": &"waves", "group": &"whirl", "cuts": [0, 1],
 		"spec": {"kind": &"whirl", "turn": &"left", "arms": 2}},
 	# Lattice: diamonds, tortoise-shell hexagons and well frames.
-	{"id": &"hishi", "name": "Diamond", "family": &"lattice", "group": &"diamond", "cuts": [0, 1],
+	{"id": &"hishi", "name": "Diamond", "family": &"lattice", "group": &"lozenge", "cuts": [0, 1],
 		"spec": {"kind": &"diamond", "count": 1, "ring": false}},
-	{"id": &"yotsu_bishi", "name": "Four diamonds", "family": &"lattice", "group": &"diamond", "cuts": [0, 1],
+	{"id": &"yotsu_bishi", "name": "Four diamonds", "family": &"lattice", "group": &"lozenge", "cuts": [0, 1],
 		"spec": {"kind": &"diamond", "count": 4, "ring": false}},
-	{"id": &"hishi_maru", "name": "Diamond in a ring", "family": &"lattice", "group": &"diamond", "cuts": [0, 1],
+	{"id": &"hishi_maru", "name": "Diamond in a ring", "family": &"lattice", "group": &"lozenge", "cuts": [0, 1],
 		"spec": {"kind": &"diamond", "count": 1, "ring": true}},
 	{"id": &"kikko", "name": "Tortoise shell", "family": &"lattice", "group": &"hex", "cuts": [0, 1],
 		"spec": {"kind": &"hexagon", "inner": &"none", "ring": false}},
@@ -222,6 +222,9 @@ static func pairs_in_family(family: StringName) -> PackedInt32Array:
 static func similarity(pair_a: int, pair_b: int) -> float:
 	if pair_a == pair_b:
 		return 1.0
+	# Shapes and crests never pass for each other.
+	if (pair_a < FIRST_PAIR) != (pair_b < FIRST_PAIR):
+		return 0.0
 	var group := group_of(pair_a)
 	if group == &"" or group != group_of(pair_b):
 		return 0.0

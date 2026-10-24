@@ -201,12 +201,20 @@ func test_undo_on_a_fresh_board() -> void:
 
 
 func test_stars_thresholds() -> void:
-	assert_eq(HalvesConfig.STAR2_MAX_MISTAKES, 2)
+	# (v3) stars(allowance): 3 up to the allowance, 2 up to allowance + STAR2_EXTRA_SLIPS (3), else 1;
+	# a negative allowance is unlimited. stars() is stars(0).
+	assert_eq(HalvesConfig.STAR2_EXTRA_SLIPS, 3)
 	var s := _column(["circle:v:-:a", "circle:v:-:b"])
-	var want := {0: 3, 1: 2, 2: 2, 3: 1, 4: 1, 10: 1}
+	var want := {0: 3, 1: 2, 2: 2, 3: 2, 4: 1, 10: 1}
 	for m: int in want:
 		s.mistakes = m
 		assert_eq(s.stars(), want[m], "%d mistakes" % m)
+	var want_2 := {0: 3, 2: 3, 3: 2, 5: 2, 6: 1, 10: 1}
+	for m: int in want_2:
+		s.mistakes = m
+		assert_eq(s.stars(2), want_2[m], "%d mistakes, allowance 2" % m)
+	s.mistakes = 10
+	assert_eq(s.stars(-1), 3, "unlimited")
 
 
 func test_free_pairs_lists_every_free_match_sorted() -> void:
