@@ -32,11 +32,23 @@ func _ready() -> void:
 	_build_modes()
 	_refresh_daily_dot()
 	_intro()
+	_journey_note()
 
 
 func on_back() -> void:
 	if await UI.confirm("Quit the game?", "Your progress is saved.", "Quit"):
 		get_tree().quit()
+
+
+## Once, after the v3 save step reset a beta journey: say why the stars are gone (coins stay).
+func _journey_note() -> void:
+	if not Progress.journey_reset_pending():
+		return
+	Progress.clear_journey_reset()
+	await get_tree().process_frame
+	await UI.confirm("A new journey",
+		"Halves now has 300 levels in 15 places, with new crests to restore. Your stars start fresh; your coins and settings are kept.",
+		"Let's go")
 
 
 func _on_play() -> void:
