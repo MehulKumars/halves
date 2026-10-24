@@ -142,7 +142,7 @@ func _build_mark() -> void:
 	_logo.add_child(_mark)
 	_logo.move_child(_mark, 0)
 	(_logo.get_parent().get_node(^"TopSpace") as Control).size_flags_stretch_ratio = 0.25
-	(%Logo.get_node(^"Tagline") as Label).text = "Match each half with its mirror"
+	(%Logo.get_node(^"Tagline") as Label).text = "Find each crest's other half"
 
 
 ## The mark snaps together, the logo settles, then Play breathes gently (off with Reduce Motion).

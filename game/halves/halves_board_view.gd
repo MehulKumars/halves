@@ -448,6 +448,7 @@ func _refresh() -> void:
 	var keys := HalvesBits.empty()
 	for group: Dictionary in state.geometry.features.get("locks", []):
 		keys = HalvesBits.union(keys, HalvesFeatures.mask(group.keys))
+	var turned := HalvesFeatures.mask(state.geometry.features.get("turned", []))
 	for tile in _tiles:
 		var i := tile.index
 		var present := HalvesBits.has(state.remaining, i)
@@ -460,3 +461,4 @@ func _refresh() -> void:
 			tile.lock_amount = 1.0 if HalvesBits.has(now.locked, i) else 0.0
 			tile.frost = 1.0 if HalvesBits.has(now.frosted, i) else 0.0
 			tile.gold = HalvesBits.has(state.gold, i)
+			tile.turned = HalvesBits.has(turned, i)

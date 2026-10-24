@@ -64,6 +64,11 @@ var gold: bool = false:
 	set(value):
 		gold = value
 		queue_redraw()
+## (v3) The half is drawn turned 90 degrees clockwise (the "turned" feature).
+var turned: bool = false:
+	set(value):
+		turned = value
+		queue_redraw()
 ## Where layout put the tile; shakes and nudges return here.
 var rest_position: Vector2 = Vector2.ZERO
 
@@ -159,7 +164,12 @@ func _draw() -> void:
 	if veiled:
 		_draw_mist(face_rect)
 	else:
-		HalvesShapes.draw_half(self, face, Vector2(0.0, top + h * 0.5), w * 0.31)
+		if turned:
+			draw_set_transform(Vector2(0.0, top + h * 0.5), PI * 0.5, Vector2.ONE)
+			HalvesShapes.draw_half(self, face, Vector2.ZERO, w * 0.31)
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		else:
+			HalvesShapes.draw_half(self, face, Vector2(0.0, top + h * 0.5), w * 0.31)
 	if frost > 0.0:
 		_draw_frost(face_rect, radius)
 	if gold:

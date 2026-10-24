@@ -721,6 +721,85 @@ HalvesFeatures.tile_count(features)`. Constants in `HalvesConfig`: `PAR_BASE_S =
 `halves_pools.json` for each board (daily: by the weekday of its date, easiest on Monday, hardest on
 Sunday), and seed parts `["halves", kind, i, k]`.
 
+## 4b. Generating v3 (`gen_version` 3): 300 levels in 15 places
+v3 keeps the v2 pipeline (deal candidates, rate with bots, keep the best) and changes what goes in
+and how candidates are judged. v2 files stay readable; the game loads the v3 files once they exist.
+
+**Places.** 15 places of 20 levels (`HalvesChapters.LEVELS_PER_CHAPTER = 20`, `HalvesLevels.COUNT =
+300`). Each place brings one crest family and at most one new idea, on a rest level:
+
+| Place | Levels | Family (new) | New idea (tip) |
+|---|---|---|---|
+| 1 Fuji lake | 1-20 | shapes (plain: no dot or line marks) | pair 1, layers 2, sides 3, decoy 4, trap 6, cut_h 8, diamond 10 |
+| 2 Sakura | 21-40 | blossoms | lookalike 21 |
+| 3 Bamboo grove | 41-60 | leaves | (bigger boards) |
+| 4 Old Kyoto | 61-80 | things | mist 61 |
+| 5 Floating gate | 81-100 | waves | picture layouts, 5 layers |
+| 6 Nara | 101-120 | wings | lock 101 |
+| 7 City lights | 121-140 | lattice | lucky 121 |
+| 8 Autumn path | 141-160 | tomoe | frost 141 |
+| 9 Golden pavilion | 161-180 | gold + mixed | gold_pair 161, mend 162 |
+| 10 Moon night | 181-200 | sky | turned 181 |
+| 11-15 | 201-300 | mixed (two or three families a board) | combinations, biggest boards |
+
+**Sawtooth inside a place** (roles by position 1-20): `rest, ramp, ramp, ramp, hard, breather, ramp,
+ramp, ramp, hard, rest, ramp, ramp, ramp, hard, breather, ramp, ramp, hard, finale`. Level 1 is
+`intro`. A place's new idea arrives on its first `rest` (position 1) and recurs from position 6 on.
+
+**Types (pair keys) per slot**, drafted by `tools/levelgen/build_plan.gd` into the plan (the human
+owns the plan afterwards): `pairs = tiles / 2`; `T` distinct pair keys = `round(pairs * r)` with `r`
+= 0.5 (intro, rest, breather), 0.55 (ramp), 0.6 (hard), 0.65 (finale), at least 3; the types come
+in look-alike groups of `depth` motifs (1 in place 1-2 rest levels, 2 for ramps from place 2, 3 for
+hard and finale from place 4), the place's family first (about 60%), then earlier families.
+Cuts: vertical, plus horizontal from level 8 on (about a third of the pairs).
+
+**Board sizes** (tiles, by place 1-15, small for rest/breather, large for hard/finale): from
+`[12, 32]` in place 1 rising to `[56, 112]` in places 11-15. Masks come from the catalogue (now up to
+13 half-units wide, 16 tall, 5 layers, 120 tiles) and from hand-drawn **picture masks** (`pic_*`:
+Fuji, torii, pagoda, fan, koi, crane, lantern, wave), which hard and finale levels prefer from place 5.
+Faces stay at least 96 px on a 720 × 1600 and a 960 × 1280 screen, and at least 84 px on 720 × 1280
+with a 64/32 px notch (old 16:9 phones).
+
+**Mechanics per slot** (feature spec and `gold_pair`): introduced as the table says, then mixed in.
+Mist stays rare (at most 2 tiles, only on ramps). From place 9 about one board in four has a gold
+pair; lucky tiles appear on about half the boards from place 7 (1-3 tiles); turned tiles from place
+10 (2-6 tiles, on look-alike groups).
+
+**The PERCEPTIVE bot** (`HalvesBot.Policy.PERCEPTIVE`): a careful player who sometimes misreads.
+It chooses moves as WARY does. Before each move it may slip: let `t` be the move's first tile and `D`
+the free tiles in `t`'s look-alike group that are not mates of `t` (twins included). With
+probability `p = min(0.9, PERCEPTIVE_BASE * max similarity(pair(t), pair(d)) for d in D *
+(1 + PERCEPTIVE_TURNED if t or the chosen decoy is turned))` (`PERCEPTIVE_BASE = 0.25`,
+`PERCEPTIVE_TURNED = 0.5`, twins have similarity 1) it taps the most similar decoy first: a mistake
+(slip), then makes its move. If stuck it mends (if it has a mend) as section 2 says; otherwise the run
+ends uncleared. `rate` adds `perceptive_win` (cleared), `perceptive_slips` (mean slips over all runs)
+and `p3` (share of runs that cleared with slips within `HalvesConfig.star_allowance(LEVELS, level,
+pairs)`).
+
+**Choosing a candidate (v3).** Rejected as in v2 (`careful_win`, `wary_win` floors, fewer than 2 free
+pairs at the start after level 1). The best has the lowest `2 * |p3 - target_p3| + 0.5 *
+|random_win - target_win|` (ties: lower k). Role targets:
+
+| Role | target_p3 | random | wary ≥ | trap |
+|---|---|---|---|---|
+| intro | 1.0 | 1.0 | 1.0 | 0 |
+| rest, breather | 0.85 | 0.8 | 0.97 | ≤ 0.1 |
+| ramp | 0.75 falling to 0.55 by place 15 | 0.55 falling to 0.35 | 0.9 | 0.15-0.3 |
+| hard | 0.45 falling to 0.3 | 0.3 falling to 0.15 | 0.75 | 0.3-0.5 |
+| finale | 0.35 falling to 0.2 | 0.15 falling to 0.05 | 0.6 | 0.4-0.6 |
+
+Place 1 is gentler: every target_p3 at least 0.8. **No hard or finale level may keep `wary_win = 1.0`
+with `p3 > 0.9`**: such a candidate is rejected when another exists.
+
+**Files.** `data/levels/halves_v3.json` (300 levels, the v2 format plus `"place"` and the new stats),
+`halves_daily_v3.json` (400), `halves_zen_v3.json` (150), `halves_rush_v3.json` (150); pool recipes
+mix all crest families; seed parts as v2 with `GEN_VERSION = 3`. Report:
+`tools/levelgen/reports/halves_v3.csv` (adds place, perceptive_win, perceptive_slips, p3).
+
+**Progress.** Saved stars are per level number, so v3 resets beta progress once (`Progress` save
+version bump): stars, unlocks and times start fresh; coins and settings stay; a short "A new
+journey" card says so on first launch.
+
 ## 5. Checking
 - `tools/check.ps1`: the logic tests (`tests/test_halves_*.gd`, written from this file by a
   separate session), the baked-file checks, and `test_halves_game.gd`.

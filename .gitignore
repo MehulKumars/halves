@@ -44,3 +44,6 @@ addons/ef_ds_uids/
 tools/art/src/
 # Downloaded music sources (tools/audio/fetch_music.sh)
 tools/audio/src/
+
+# Agent worktrees (Claude Code)
+.claude/worktrees/
