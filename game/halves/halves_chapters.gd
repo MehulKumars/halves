@@ -122,3 +122,8 @@ static func credit_line(index: int) -> String:
 static func _photo(index: int) -> String:
 	var c := get_chapter(index)
 	return str(c.get("photo", c.id))
+
+
+## (v3) The soft 720 x 1440 copy baked for behind the board (tools/art/process_photos.gd).
+static func play_path(index: int) -> String:
+	return "res://assets/backgrounds/%s_play.webp" % _photo(index)

@@ -48,6 +48,12 @@ var state: HalvesState
 var show_mates: bool = false
 ## (v3) The next tap on a free tile mends it (set by the game screen's Mend button).
 var mend_mode: bool = false
+## (v3) A soft dark mat under the board, so tiles always sit on calm ground over the photo (the
+## game screen turns it on; tip cards leave it off).
+var show_mat: bool = false:
+	set(value):
+		show_mat = value
+		queue_redraw()
 var shuffles: int = 0
 ## The current chain of quick snaps (1 after a lone snap).
 var combo_count: int = 0
@@ -453,6 +459,7 @@ func _layout() -> void:
 	var top_layer := state.geometry.max_z()
 	_unit = unit_for(size, bounds, top_layer)
 	_origin = ((size - board_size(_unit, bounds, top_layer)) * 0.5).floor()
+	queue_redraw()
 	for tile in _tiles:
 		tile.face_size = Vector2(FACE_W, FACE_H) * _unit
 		tile.depth = SIDE_DEPTH * _unit
@@ -461,6 +468,21 @@ func _layout() -> void:
 		tile.position = tile.rest_position
 		if tile.index == _selected:
 			tile.lift = LIFT * _unit
+
+
+## The mat: the board's whole footprint plus a margin, rounded, a little darker than the photo.
+func _draw() -> void:
+	if not show_mat or state == null:
+		return
+	var bounds := state.geometry.bounds()
+	var area := Rect2(_origin, board_size(_unit, bounds, state.geometry.max_z())).grow(_unit * 0.2)
+	var mat := StyleBoxFlat.new()
+	mat.bg_color = Color(0.03, 0.06, 0.11, 0.34)
+	mat.border_color = Color(1.0, 1.0, 1.0, 0.07)
+	mat.set_border_width_all(maxi(1, int(_unit * 0.02)))
+	mat.set_corner_radius_all(int(_unit * 0.36))
+	mat.anti_aliasing = true
+	draw_style_box(mat, area)
 
 
 ## Free, veiled, locked and frosted tiles right now (HalvesBits sets), to see what a snap changed.

@@ -8,7 +8,7 @@ const SHUFFLE_ICON: Texture2D = preload("res://game/halves/icons/shuffle.svg")
 ## Explain a blocked tap this many times per reason (locks and frost always explain the first time).
 const BLOCK_HELP_LEVELS: int = 6
 ## How bright the place behind the board is (the tiles must stand out on any photo).
-const BACKGROUND_DIM: float = 0.52
+const BACKGROUND_DIM: float = 0.8
 
 ## Shared across levels so ad pacing (first session free, gaps, caps) works for the whole run.
 static var ad_policy := AdPolicy.new()
@@ -72,16 +72,17 @@ func _ready() -> void:
 	_board.shuffled.connect(_on_shuffled)
 	_board.stuck.connect(_on_stuck)
 	_board.cleared.connect(_on_cleared)
+	_board.show_mat = true
 	_board.mended.connect(_on_mended)
 	_board.mend_earned.connect(_on_mend_earned)
 	var data := _first_board()
 	if data == null:
 		push_error("Halves: no board for mode %d (level %d)" % [_mode, _level])
 		return
-	_background = ChapterBackground.install(self, _chapter, true, BACKGROUND_DIM)
+	_background = ChapterBackground.install(self, _chapter, true, BACKGROUND_DIM, false, true)
 	HalvesMusic.play()
 	if _mode == Screens.Mode.LEVELS and _level % HalvesChapters.LEVELS_PER_CHAPTER >= HalvesChapters.LEVELS_PER_CHAPTER - 2:
-		ChapterBackground.preload_chapter(_chapter + 1)
+		ChapterBackground.preload_chapter(_chapter + 1, true)
 	_start_board(data)
 	Events.level_started.emit(_board_id())
 	_log_level_start()

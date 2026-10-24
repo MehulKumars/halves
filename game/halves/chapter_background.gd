@@ -27,6 +27,8 @@ var dim: float = 1.0
 var scrim: bool = false
 ## A slow zoom so a menu's photo is never quite still.
 var drift: bool = false
+## (v3) Behind the board: the soft baked copy of the photo (HalvesChapters.play_path).
+var soft: bool = false
 var _texture: Texture2D
 var _scenery: HalvesScenery
 var _scrim: Control
@@ -51,8 +53,9 @@ func _init() -> void:
 ## Puts `chapter_index`'s place (MENU for the home screen) behind `screen`'s content and hides
 ## its "Background" node.
 static func install(screen: Control, chapter_index: int, ambient: bool = true, dim_to: float = 1.0,
-		menu_look: bool = false) -> ChapterBackground:
+		menu_look: bool = false, soft_look: bool = false) -> ChapterBackground:
 	var bg := ChapterBackground.new()
+	bg.soft = soft_look
 	bg.ambient_enabled = ambient
 	bg.dim = dim_to
 	bg.scrim = menu_look
@@ -83,8 +86,8 @@ static func set_style(id: String) -> void:
 
 
 ## Starts loading a chapter's photo on a thread (call before it is needed).
-static func preload_chapter(chapter_index: int) -> void:
-	var path := HalvesChapters.photo_path(chapter_index)
+static func preload_chapter(chapter_index: int, soft_look: bool = false) -> void:
+	var path := _photo_for(chapter_index, soft_look)
 	if style() == "photo" and path != _loaded_path and ResourceLoader.exists(path):
 		ResourceLoader.load_threaded_request(path)
 
@@ -99,7 +102,9 @@ func set_chapter(chapter_index: int) -> void:
 ## Rebuilds for the current style (after Settings changes it).
 func refresh() -> void:
 	var id: String = HalvesChapters.scene_id(chapter)
-	if style() == "drawn" and HalvesScenery.has_scene(id):
+	var path := _photo_for(chapter, soft)
+	var no_photo := not ResourceLoader.exists(path)
+	if (style() == "drawn" or no_photo) and HalvesScenery.has_scene(id):
 		_texture = null
 		if _scenery == null:
 			_scenery = HalvesScenery.new()
@@ -111,7 +116,7 @@ func refresh() -> void:
 		if _scenery != null:
 			_scenery.queue_free()
 			_scenery = null
-		_texture = _load(HalvesChapters.photo_path(chapter))
+		_texture = _load(path)
 	set_process(drift and _texture != null and Juice.motion_scale > 0.0)
 	queue_redraw()
 	_scrim.queue_redraw()
@@ -153,6 +158,12 @@ func _draw_scrim() -> void:
 	var bottom := HalvesScenery.gradient([Color(0, 0, 0, 0.0), Color(0, 0, 0, 0.5)])
 	_scrim.draw_texture_rect(top, Rect2(0, 0, size.x, size.y * 0.32), false)
 	_scrim.draw_texture_rect(bottom, Rect2(0, size.y * 0.55, size.x, size.y * 0.45), false)
+
+
+## The soft play copy when asked for and baked, else the sharp photo.
+static func _photo_for(chapter_index: int, soft_look: bool) -> String:
+	var play := HalvesChapters.play_path(chapter_index)
+	return play if soft_look and ResourceLoader.exists(play) else HalvesChapters.photo_path(chapter_index)
 
 
 static func _load(path: String) -> Texture2D:
