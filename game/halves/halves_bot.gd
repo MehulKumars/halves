@@ -98,9 +98,9 @@ static func difficulty(random_win: float, decoy_exposure: float, avg_free_pairs:
 			+ 0.15 * (1.0 - minf(avg_free_pairs, 6.0) / 6.0))
 
 
-## (v3) The mend a bot makes when stuck: Vector2i(a, b) with `a` the free tile whose remaining mate
-## `b` (the lowest-id remaining tile with the mate face) has the most remaining tiles on top of it
-## (ties: lowest a); (-1, -1) if no free tile has a remaining mate.
+## (v3) The mend a bot makes when stuck: `a` is the free tile whose lowest-id remaining mate has the
+## most remaining tiles on top of it (ties: lowest a), and `b` the mate the mend really takes
+## (HalvesState.mend_mate, the same as in play); (-1, -1) if no free tile has a remaining mate.
 static func _mend_pick(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: PackedInt64Array) -> Vector2i:
 	var best := Vector2i(-1, -1)
 	var best_cover := -1
@@ -115,6 +115,8 @@ static func _mend_pick(geometry: HalvesGeometry, faces: PackedInt32Array, remain
 				best_cover = on_b
 				best = Vector2i(a, b)
 			break
+	if best.x >= 0:
+		best.y = HalvesState.mend_mate(geometry, faces, remaining, best.x)
 	return best
 
 

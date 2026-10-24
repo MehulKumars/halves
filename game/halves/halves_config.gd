@@ -46,6 +46,8 @@ const COMBO_COINS: int = 5
 ## Lucky tiles (v3): removed within LUCKY_SNAPS pairs of first being free, each wins LUCKY_COINS.
 const LUCKY_SNAPS: int = 3
 const LUCKY_COINS: int = 5
+## Mend (v3): solver nodes spent on each candidate mate when a tile has twins (HalvesState.mend_mate).
+const MEND_BUDGET: int = 4000
 
 ## Modes: unlock levels and the Rush clock (seconds).
 const ZEN_UNLOCK_LEVEL: int = 10

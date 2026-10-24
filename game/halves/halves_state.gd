@@ -79,7 +79,7 @@ func try_pair(a: int, b: int) -> Result:
 func try_mend(a: int) -> Result:
 	if mends <= 0 or a < 0 or a >= geometry.size() or not HalvesBits.has(remaining, a):
 		return Result.INVALID
-	var b := _mate_of(a)
+	var b := mend_mate(geometry, faces, remaining, a)
 	if b < 0:
 		return Result.INVALID
 	if not geometry.is_free(a, remaining):
@@ -88,6 +88,29 @@ func try_mend(a: int) -> Result:
 	history.append({"kind": "mend", "a": a, "b": b})
 	_remove(a, b)
 	return Result.MATCH
+
+
+## (v3) The mate a mend takes for tile `a` (docs/HALVES.md section 1, Mend): with twins, the wrong
+## one can strand a half on its only mate, so take the lowest-id mate whose removal with `a` leaves
+## the board solvable (solver, HalvesConfig.MEND_BUDGET nodes each); else the lowest-id mate not
+## proven unsolvable; else the lowest-id mate. -1 when `a` has no remaining mate.
+static func mend_mate(board: HalvesGeometry, board_faces: PackedInt32Array, left: PackedInt64Array, a: int) -> int:
+	var want := HalvesFace.mate(board_faces[a])
+	var mates: Array[int] = []
+	for tile in HalvesBits.ids(left):
+		if board_faces[tile] == want:
+			mates.append(tile)
+	if mates.size() <= 1:
+		return mates[0] if mates.size() == 1 else -1
+	var undecided := -1
+	for b in mates:
+		var rest := HalvesBits.removed(HalvesBits.removed(left, a), b)
+		var status: int = HalvesSolver.solve(board, board_faces, rest, HalvesConfig.MEND_BUDGET).status
+		if status == HalvesSolver.Status.SOLVED:
+			return b
+		if status == HalvesSolver.Status.UNKNOWN and undecided < 0:
+			undecided = b
+	return undecided if undecided >= 0 else mates[0]
 
 
 ## (v3) True for the gold pair's faces (the gold crest family).
@@ -216,14 +239,6 @@ func _mends_earned(a: int, b: int) -> int:
 
 
 ## The lowest-id remaining tile whose face is the mate of tile a's face, -1 if none.
-func _mate_of(a: int) -> int:
-	var want := HalvesFace.mate(faces[a])
-	for tile in HalvesBits.ids(remaining):
-		if faces[tile] == want:
-			return tile
-	return -1
-
-
 ## How many of tiles a and b are gold.
 func _gold_in(a: int, b: int) -> int:
 	return (1 if HalvesBits.has(gold, a) else 0) + (1 if HalvesBits.has(gold, b) else 0)

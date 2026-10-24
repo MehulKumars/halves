@@ -83,18 +83,22 @@ to be read from one picture.
 | Mechanic | Rule | Shown as |
 |---|---|---|
 | **Gold pair** (faces, not a feature) | A pair whose faces are the gold crest (`HalvesCrests` motif `kin`, family `gold`, group `gold`). It matches like any pair. Clearing it gives one **mend** for this board. At most one gold pair per board. | Tiles with a gold face and a dark crest. A Mend button with a count appears on the booster bar while mends > 0. |
-| **Mend** (earned) | With a mend, tap Mend, then a free tile `a`: `a` and `b` = the lowest-id remaining tile whose face is the mate of `a`'s face (covered, side-blocked, locked or frosted alike) are removed as a pair. Not a slip, costs no coins, never suggested by the hint. If `a` has no remaining mate, nothing happens. | The mate lifts out of the stack and flies to `a`; a gold-seam snap. |
+| **Mend** (earned) | With a mend, tap Mend, then a free tile `a`: `a` and `b` = a remaining tile with the mate face of `a` (covered, side-blocked, locked or frosted alike; chosen by `HalvesState.mend_mate`, below) are removed as a pair. Not a slip, costs no coins, never suggested by the hint. If `a` has no remaining mate, nothing happens. | The mate lifts out of the stack and flies to `a`; a gold-seam snap. |
 | **Turned** (feature `turned`) | No effect on the rules. The tile's half is drawn turned 90° clockwise. Positional (stays with the position on a shuffle). | The turned half; nothing else marks it. |
 | **Lucky** (feature `lucky`) | No effect on solvability. A lucky tile's clock starts the first time it is free (after `_init`, a pair, a mend, an undo or a deal; `pairs_done` = pairs + mends made so far). Removing it while `pairs_done - start < LUCKY_SNAPS` (3) wins `LUCKY_COINS` (5) coins at the end of the board. Positional. | A soft gold glow with three dots that empty by pairs, not seconds; "+5" when won. |
 
 Gold (v2 coin tiles) stays readable in v2 data; v3 data uses lucky instead.
 
-**Why a mend can never make a board unsolvable.** Take any solution of the current board. If the
-mended tiles `a`, `b` are paired with each other in it, drop that step. Otherwise `a` is paired with
-some `b'` and `b` with some `a'` (twins of `b` and `a`): pair `a'` with `b'` at the later of their two
-steps instead. Both were free at their own step and, by the monotone rule, stay free with fewer
-tiles. Every other step only has fewer tiles around it, so it stays valid. So solvers, the shuffle's
-reseat and the bots need no new reasoning: a mend is a pair removal.
+**Which mate a mend takes, and why the board stays solvable.** In any solution of the current board,
+`a` is paired with some mate `b*`. Removing `a` and `b*` drops one step of that solution and leaves
+every other step valid (fewer tiles only unblock), so the rest is still solvable. Another mate is not
+safe: with twins, pulling out the wrong one can strand a half on its only mate (tiles `circle a` at
+(0,0,0), `circle b` at (4,0,0), `circle a` at (6,0,0), `circle b` at (5,0,1) bridging the two: mending
+the first with the lowest-id `circle b` leaves the top `circle b` lying on its only mate). So
+`mend_mate` takes the lowest-id mate whose removal with `a` leaves the board solvable, as the solver
+proves within `HalvesConfig.MEND_BUDGET` nodes per mate; if none is proven, the lowest-id mate not
+proven unsolvable; else the lowest-id mate. With one remaining mate it takes that one without asking
+the solver. On a solvable board within the budget, a mend therefore never makes it unsolvable.
 
 ### A turn
 - Tap a free tile: it lifts (selected). Tap it again: it drops.
@@ -410,12 +414,14 @@ var lucky: PackedInt64Array              # the lucky tiles, from geometry.featur
 var lucky_start: Dictionary[int, int]    # lucky tile -> pairs_done when it was first free
 var lucky_won: int = 0                   # lucky tiles removed in time
 func try_mend(a: int) -> Result          # MATCH, BLOCKED or INVALID (below)
+static func mend_mate(board: HalvesGeometry, board_faces: PackedInt32Array, left: PackedInt64Array,
+		a: int) -> int                       # the mate a mend takes (section 1); -1 if none
 func is_gold(face: int) -> bool          # static; HalvesFace.family(face) == &"gold"
 ```
 - A `MATCH` of two gold faces adds 1 to `mends`.
 - `try_mend(a)`: `INVALID` if `mends == 0`, `a` is out of range or not remaining, or no remaining
-  tile has the mate face of `a`; `BLOCKED` if `a` is not free; otherwise `MATCH`: `b` = the
-  lowest-id remaining tile with face `HalvesFace.mate(faces[a])`, both leave `remaining`,
+  tile has the mate face of `a`; `BLOCKED` if `a` is not free; otherwise `MATCH`: `b` =
+  `mend_mate(geometry, faces, remaining, a)` (section 1, Mechanics), both leave `remaining`,
   `mends -= 1`, history gets `{"kind": "mend", "a": a, "b": b}`. A mend is not a slip.
 - Every pair and mend adds 1 to `pairs_done`. **Lucky clocks:** after `_init`, every `MATCH`, mend,
   `undo()` and `apply_deal`, each lucky tile that is remaining, free and has no clock gets
@@ -553,8 +559,8 @@ static func difficulty(random_win: float, decoy_exposure: float, avg_free_pairs:
   + 0.15 * (1 - min(avg_free_pairs, 6) / 6))`, from 0 (trivial) to 100.
 
 (v3) Mends in play: every policy that has a mend (it cleared the gold pair) uses it when stuck, on
-the free tile whose remaining mate has the most tiles covering it (ties: lowest id), then carries
-on; a mend never counts as a slip and the hint never suggests one.
+the free tile whose lowest-id remaining mate has the most tiles covering it (ties: lowest id),
+taking the mate `HalvesState.mend_mate` picks (as in play), then carries on; a mend never counts as a slip and the hint never suggests one.
 
 ### `HalvesRun` (`halves_run.gd`, RefCounted) (v2): the clock and the move log
 ```
@@ -632,7 +638,7 @@ Each pool file is loaded only when first asked for.
 `RUSH_SECONDS = 180`, `RUSH_BOARD_BONUS_S = 5`, `RUSH_MISTAKE_PENALTY_S = 3`,
 `RUSH_BOARD_POINTS = 10`, and the par constants of section 4. (v3): `STAR_FREE_LEVELS = 10`,
 `STAR_ALLOWANCE_PAIRS = 15`, `STAR2_EXTRA_SLIPS = 3` (`STAR2_MAX_MISTAKES` is no longer used),
-`LUCKY_SNAPS = 3`, `LUCKY_COINS = 5` (per lucky tile won), and
+`LUCKY_SNAPS = 3`, `LUCKY_COINS = 5` (per lucky tile won), `MEND_BUDGET = 4000`, and
 ```
 static func star_allowance(mode: int, level: int, pairs: int) -> int   # section 1, Stars (v3); mode is Screens.Mode as int
 ```
