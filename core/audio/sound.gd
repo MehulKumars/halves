@@ -8,7 +8,7 @@ const SFX_PATH: String = "res://assets/audio/sfx/%s.wav"
 const POOL_SIZE: int = 12
 const MUSIC_FADE: float = 1.2
 ## Sounds that carry a meaning players learn (confirm tones, the combo ladder) keep their pitch.
-const STEADY: Array[StringName] = [&"star", &"best", &"swift", &"chapter", &"tick", &"click"]
+const STEADY: Array[StringName] = [&"star", &"best", &"swift", &"chapter", &"tick", &"click", &"chime", &"seam"]
 
 var _players: Array[AudioStreamPlayer] = []
 var _next: int = 0

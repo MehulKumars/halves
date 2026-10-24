@@ -84,7 +84,8 @@ func _initialize() -> void:
 	await _save("cleared")
 	await _wait(1.5)
 	await _save("results")
-	print("playtest: level %d, %d mistake(s), %d star(s), shots in %s" % [level, state.mistakes, state.stars(), _out])
+	print("playtest: level %d, %d mistake(s), %d star(s), shots in %s" % [level, state.mistakes,
+			state.stars(HalvesConfig.star_allowance(Screens.Mode.LEVELS, level, state.geometry.size() / 2)), _out])
 	SaveStore.delete_save(Progress.path)
 	quit()
 

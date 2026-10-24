@@ -330,6 +330,9 @@ func _on_match(a: int, b: int, before: Dictionary, mend: bool = false) -> void:
 	fx.play(state.faces[a], state.faces[b], start_a, start_b, _tiles[a].face_size)
 	Haptics.pulse(15 + 3 * mini(chain, 5))
 	HalvesSfx.step(&"snap_big" if combo_count >= HalvesConfig.COMBO_COINS_AT else &"snap", chain)
+	HalvesSfx.chime(state.faces[a])
+	if mend:
+		HalvesSfx.play(&"seam", 1.0, -6.0)
 	_refresh()
 	_feature_feedback(before, at, a, b)
 	if combo_count >= 2:
@@ -397,7 +400,8 @@ func _on_mistake(a: int, b: int, forgiven: bool) -> void:
 	for i in [a, b]:
 		_tiles[i].shake(0.07 * _unit)
 		_tiles[i].flash_ring(HalvesTileView.Ring.MISTAKE, 0.5)
-	HalvesSfx.play(&"mistake")
+	HalvesSfx.play(&"knock")
+	Haptics.tick()
 	mismatched.emit(a, b)
 	mistake_made.emit(forgiven)
 	changed.emit()

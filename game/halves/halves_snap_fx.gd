@@ -79,11 +79,13 @@ func _draw() -> void:
 	var card := Vector2(face_size.x * 1.3, face_size.y * 0.9)
 	var depth := face_size.x * 0.09
 	_card_box.set_corner_radius_all(radius)
+	_card_box.bg_color = HalvesPalette.face_paper(face_a)
 	_side_box.set_corner_radius_all(radius)
 	draw_style_box(_side_box, Rect2(-card * 0.5 + Vector2(0, depth), card))
 	draw_style_box(_card_box, Rect2(-card * 0.5, card))
 	var key := HalvesFace.pair_key(face_a)
 	HalvesShapes.draw_whole(self, key, Vector2.ZERO, extent * 1.1, lerpf(face_size.x * 0.12, 3.0, join))
+	_draw_seam(card)
 	if Juice.motion_scale <= 0.0:
 		return
 	# Sand speed lines along the cut direction, and four sparkles at the corners (motion only).
@@ -99,6 +101,20 @@ func _draw() -> void:
 	for corner in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
 		var spot: Vector2 = corner * (card * 0.5 + Vector2.ONE * face_size.x * 0.1 * join)
 		draw_circle(spot, spark, HalvesPalette.SAND, true, -1.0, true)
+
+
+## The kintsugi moment: a gold seam glows along the cut as the halves close (the card's mend).
+func _draw_seam(card: Vector2) -> void:
+	var vertical := HalvesFace.cut(face_a) == HalvesFace.Cut.VERTICAL
+	var reach := (card.y if vertical else card.x) * 0.4
+	var along := Vector2.DOWN if vertical else Vector2.RIGHT
+	var width := maxf(2.0, face_size.x * 0.03)
+	var glow := HalvesPalette.GOLD
+	glow.a = 0.3 * join
+	draw_line(-along * reach, along * reach, glow, width * 3.2, true)
+	var core := HalvesPalette.GOLD
+	core.a = join
+	draw_line(-along * reach * 0.94, along * reach * 0.94, core, width, true)
 
 
 static func _box(colour: Color) -> StyleBoxFlat:
