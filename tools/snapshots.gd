@@ -14,7 +14,7 @@ extends SceneTree
 const SETTLE_FRAMES: int = 40
 const SIZE_PRESETS: Array[Vector2i] = [Vector2i(720, 1280), Vector2i(720, 1600), Vector2i(960, 1280), Vector2i(1080, 1280)]
 const SCREENS: PackedStringArray = [
-	"splash", "main_menu", "level_select", "game", "pause", "results_win", "settings", "ranks", "confirm", "credits", "gallery",
+	"splash", "main_menu", "level_select", "game", "pause", "results_win", "settings", "ranks", "confirm", "credits", "crest_book", "gallery",
 	"game_l1", "game_selected", "game_l21", "game_l41", "game_l61", "game_l100", "game_stuck", "booster",
 	"results_best", "results_rush", "chapter", "daily", "tip", "zen", "rush", "menu_drawn", "game_drawn",
 ]
@@ -455,3 +455,7 @@ func _show_tip_turned() -> bool:
 
 func _show_tip_lucky() -> bool:
 	return await _show_tip_card("lucky")
+
+
+func _show_crest_book() -> bool:
+	return await _open(Screens.CREST_BOOK)

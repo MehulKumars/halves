@@ -7,7 +7,7 @@ extends GutTest
 const TOUCH := 96.0
 const SIZES: Array[Vector2i] = [Vector2i(720, 1280), Vector2i(720, 1600), Vector2i(960, 1280)]
 const PAGES: Array[String] = [
-	Screens.SPLASH, Screens.MAIN_MENU, Screens.LEVEL_SELECT, Screens.GAME, Screens.CREDITS,
+	Screens.SPLASH, Screens.MAIN_MENU, Screens.LEVEL_SELECT, Screens.GAME, Screens.CREDITS, Screens.CREST_BOOK,
 	Screens.GALLERY, Screens.PAUSE, Screens.RESULTS, Screens.SETTINGS,
 	Screens.CONFIRM, Screens.RANKS, Screens.BOOSTER, Screens.TIP, Screens.CHAPTER, Screens.DAILY,
 ]

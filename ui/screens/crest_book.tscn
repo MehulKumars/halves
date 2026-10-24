@@ -1,0 +1,85 @@
+[gd_scene format=3 uid="uid://h5e38x30byfn"]
+
+[ext_resource type="Script" path="res://ui/screens/crest_book.gd" id="1_script"]
+[ext_resource type="Script" path="res://core/ui/styled_background.gd" id="2_bg"]
+[ext_resource type="Script" path="res://core/ui/safe_area_margin.gd" id="3_safe"]
+[ext_resource type="Script" path="res://core/ui/max_width_container.gd" id="4_column"]
+[ext_resource type="Texture2D" path="res://core/ui/icons/arrow_back.svg" id="5_back"]
+[ext_resource type="Script" path="res://core/ui/touch_scroll_container.gd" id="6_scroll"]
+
+[node name="CrestBook" type="Control" unique_id=1394408650]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1925006026]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_bg")
+
+[node name="Safe" type="MarginContainer" parent="." unique_id=1595997749]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_safe")
+extra_margin = 32
+
+[node name="Column" type="Container" parent="Safe" unique_id=2047766514]
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("4_column")
+max_width = 820.0
+
+[node name="Layout" type="VBoxContainer" parent="Safe/Column" unique_id=769311321]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 20
+
+[node name="Header" type="HBoxContainer" parent="Safe/Column/Layout" unique_id=1741961517]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="BackButton" type="Button" parent="Safe/Column/Layout/Header" unique_id=454573447]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"IconButton"
+icon = ExtResource("5_back")
+
+[node name="Title" type="Label" parent="Safe/Column/Layout/Header" unique_id=1612937079]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ScreenHeaderLabel"
+text = "Crest Book"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HeaderBalance" type="Control" parent="Safe/Column/Layout/Header" unique_id=865639103]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Scroll" type="ScrollContainer" parent="Safe/Column/Layout" unique_id=1179635847]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+script = ExtResource("6_scroll")
+
+[node name="Pages" type="VBoxContainer" parent="Safe/Column/Layout/Scroll" unique_id=961977126]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 16

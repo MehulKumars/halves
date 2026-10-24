@@ -20,6 +20,7 @@ func _ready() -> void:
 	sections.add_theme_constant_override(&"separation", 12)
 	var scroll: ScrollContainer = %Scroll
 	scroll.add_child(sections)
+	sections.add_child(_book_card())
 	var next_tile: LevelTile = null
 	for chapter in HalvesChapters.count():
 		var first := HalvesChapters.first_level(chapter)
@@ -39,6 +40,17 @@ func _ready() -> void:
 		await get_tree().process_frame
 		scroll.ensure_control_visible(next_tile)
 		_breathe(next_tile)
+
+
+## The Crest Book's card at the top of the map: how many crests the journey has restored.
+func _book_card() -> Button:
+	var button := Button.new()
+	button.theme_type_variation = &"TileButton"
+	button.custom_minimum_size = Vector2(0, 104)
+	button.icon = Icons.STAR
+	button.text = "Crest Book  ·  %d of %d restored" % [HalvesCrestBook.restored_total(), HalvesLevels.count()]
+	button.pressed.connect(UI.goto.bind(Screens.CREST_BOOK))
+	return button
 
 
 ## The next level's stone breathes gently, so the eye finds it (off with Reduce Motion).

@@ -8,6 +8,7 @@ const MAIN_MENU: String = "res://ui/screens/main_menu.tscn"
 const LEVEL_SELECT: String = "res://ui/screens/level_select.tscn"
 const GAME: String = "res://ui/screens/game.tscn"
 const CREDITS: String = "res://ui/screens/credits.tscn"
+const CREST_BOOK: String = "res://ui/screens/crest_book.tscn"
 const GALLERY: String = "res://ui/screens/ui_gallery.tscn"
 
 const PAUSE: String = "res://ui/popups/pause_popup.tscn"
