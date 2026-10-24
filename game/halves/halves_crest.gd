@@ -137,6 +137,8 @@ static func _build(spec: Dictionary) -> Array[Dictionary]:
 			_dragonfly(out, size)
 		&"goose":
 			_goose(out, spec, size)
+		&"sun":
+			_sun(out, spec, size)
 	return _fit(out)
 
 
@@ -519,6 +521,18 @@ static func _goose(out: Array[Dictionary], spec: Dictionary, size: float) -> voi
 	_paint(out, true, parts)
 	if spec.get("crest", false):
 		_paint(out, false, [_circle(Vector2(0.0, 0.2 * size), 0.07 * size)])
+
+
+## A radiant sun: a disc in a ring, with pointed rays all round.
+static func _sun(out: Array[Dictionary], spec: Dictionary, size: float) -> void:
+	var rays := int(spec.rays)
+	var parts: Array[PackedVector2Array] = [_circle(Vector2.ZERO, 0.6 * size)]
+	for i in rays:
+		var angle := -PI * 0.5 + TAU * i / rays
+		parts.append(_lens(Vector2.from_angle(angle) * 0.5 * size, Vector2.from_angle(angle) * 0.98 * size, 0.1 * size))
+	_paint(out, true, parts)
+	_paint(out, false, [_circle(Vector2.ZERO, 0.47 * size)])
+	_paint(out, true, [_circle(Vector2.ZERO, 0.36 * size)])
 
 
 # --- Primitives ----------------------------------------------------------------------------------

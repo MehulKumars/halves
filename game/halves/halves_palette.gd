@@ -31,7 +31,15 @@ const FAMILY_INKS: Dictionary[StringName, Color] = {
 	&"leaves": Color("#3F6B2E"),    # moss
 	&"things": Color("#5E4387"),    # murasaki, purple
 	&"wings": Color("#1C6B64"),     # aotake, blue-green
+	&"gold": Color("#4E3209"),      # dark lacquer, on a gold face
 }
+## (v3) The gold pair's tile face (its crest is drawn in the gold family's ink).
+const GOLD_FACE: Color = Color("#E9C25C")
+
+
+## What a face's crest cuts its holes with: the tile face it sits on.
+static func face_paper(face: int) -> Color:
+	return GOLD_FACE if HalvesFace.family(face) == &"gold" else IVORY
 
 
 ## The colour a face is drawn in: its shape's colour (v2) or its family's ink (crests).

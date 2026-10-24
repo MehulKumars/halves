@@ -76,6 +76,26 @@ A level may carry **features**: sets of tile ids with extra rules. All of them a
   The solver shortcut, the reseat proof and the generator's validity all rely on this; any future
   feature must keep it.
 
+### Mechanics (v3)
+Each is introduced on a rest level of its own place, at most one new idea per place, and is meant
+to be read from one picture.
+
+| Mechanic | Rule | Shown as |
+|---|---|---|
+| **Gold pair** (faces, not a feature) | A pair whose faces are the gold crest (`HalvesCrests` motif `kin`, family `gold`, group `gold`). It matches like any pair. Clearing it gives one **mend** for this board. At most one gold pair per board. | Tiles with a gold face and a dark crest. A Mend button with a count appears on the booster bar while mends > 0. |
+| **Mend** (earned) | With a mend, tap Mend, then a free tile `a`: `a` and `b` = the lowest-id remaining tile whose face is the mate of `a`'s face (covered, side-blocked, locked or frosted alike) are removed as a pair. Not a slip, costs no coins, never suggested by the hint. If `a` has no remaining mate, nothing happens. | The mate lifts out of the stack and flies to `a`; a gold-seam snap. |
+| **Turned** (feature `turned`) | No effect on the rules. The tile's half is drawn turned 90° clockwise. Positional (stays with the position on a shuffle). | The turned half; nothing else marks it. |
+| **Lucky** (feature `lucky`) | No effect on solvability. A lucky tile's clock starts the first time it is free (after `_init`, a pair, a mend, an undo or a deal; `pairs_done` = pairs + mends made so far). Removing it while `pairs_done - start < LUCKY_SNAPS` (3) wins `LUCKY_COINS` (5) coins at the end of the board. Positional. | A soft gold glow with three dots that empty by pairs, not seconds; "+5" when won. |
+
+Gold (v2 coin tiles) stays readable in v2 data; v3 data uses lucky instead.
+
+**Why a mend can never make a board unsolvable.** Take any solution of the current board. If the
+mended tiles `a`, `b` are paired with each other in it, drop that step. Otherwise `a` is paired with
+some `b'` and `b` with some `a'` (twins of `b` and `a`): pair `a'` with `b'` at the later of their two
+steps instead. Both were free at their own step and, by the monotone rule, stay free with fewer
+tiles. Every other step only has fewer tiles around it, so it stays valid. So solvers, the shuffle's
+reseat and the bots need no new reasoning: a mend is a pair removal.
+
 ### A turn
 - Tap a free tile: it lifts (selected). Tap it again: it drops.
 - With a tile selected, tap another free tile:
@@ -230,6 +250,8 @@ static func similarity(pair_a: int, pair_b: int) -> float  # 0..1, 1 only for th
   the distinct top-level keys of both specs, minus 0.1 if the cuts differ; v2 pairs within a shape:
   0.8 for the same mark and other cut, 0.6 for another mark. Used to rate how easy a decoy is to
   mistake (generator and the perceptive bot).
+- (v3) The last family is `gold` with one motif, `kin` (a radiant gold crest), group `gold`: the gold
+  pair's faces (section 1, Mechanics). Gold faces are drawn dark on a gold tile.
 - Never in the catalogue: the 16-petal imperial chrysanthemum, the government paulownia, the
   Tokugawa hollyhock, three diamonds in a triangle (corporate mark).
 
@@ -299,14 +321,15 @@ static func mask(ids: Array) -> PackedInt64Array                    # (v3) Halve
 ```
 - `normalize`: ints everywhere (JSON floats cast), every list sorted ascending and without
   duplicates, empty lists and lock groups with no keys or no locked tiles removed; key order
-  `locks, frost, mist, gold`. `normalize(normalize(x)) == normalize(x)`.
+  `locks, frost, mist, gold, turned, lucky` ((v3) adds `turned` and `lucky`, lists of tile ids).
+  `normalize(normalize(x)) == normalize(x)`.
 - `validate` reports, in readable sentences: an id outside `0..size-1`; a lock group whose keys and
   locked tiles overlap; a tile that is a key in one group and locked in another; and, when
   `solution` is given, a pair of the solution whose tiles are not both free (under the rules) at
   their step, or a solution that does not clear the board.
 - `place` adds features to a dealt board **after** its removal order is known, so the order stays a
   valid solution under the new rules. `spec` keys (all optional ints, default 0):
-  `key_pairs, locked, frost, mist, gold`. With `n = order.size()`, `step[t]` the step that removes
+  `key_pairs, locked, frost, mist, gold` ((v3) and `turned`, `lucky`). With `n = order.size()`, `step[t]` the step that removes
   tile t, and `free_before[k]` the free mask before step k (no features):
   1. **Locks** (only if `key_pairs > 0` and `locked > 0`): choose `min(key_pairs, size of range)`
      distinct steps from `[n / 3, 2n / 3)` (integer division) with `rng`; their tiles are the keys
@@ -318,8 +341,12 @@ static func mask(ids: Array) -> PackedInt64Array                    # (v3) Halve
      tile `y` of a live trap link (`HalvesFill.trap_links` on these faces). Take the first `mist`.
   4. **Gold:** candidates are tiles not used by 1-3 on layers `z >= 1` first, then layer 0. Take
      the first `gold`.
+  5. (v3) **Turned:** candidates are tiles not mist; tiles whose face has a look-alike (same group,
+     other pair) elsewhere on the board come first. Take the first `turned`.
+  6. (v3) **Lucky:** candidates are tiles not free at the start and not mist; tiles whose step is in
+     `[n / 3, 2n / 3)` come first. Take the first `lucky`.
   "First" means: the candidate list (preferred group, then the rest) where each group is put in a
-  random order with `HalvesFill.shuffle_ints` and `rng`. The rng is used in the order 1, 2, 3, 4.
+  random order with `HalvesFill.shuffle_ints` and `rng`. The rng is used in the order 1, 2, 3, 4 (v3: 5, 6).
   The result is normalised; fewer tiles than asked is fine.
 
 ### `HalvesState` (`halves_state.gd`, RefCounted)
@@ -375,6 +402,32 @@ and happens after `_init`, after a `MATCH`, after an `undo()` and after `apply_d
 hides a tile again. `gold_earned` goes up by the number of gold tiles in a matched pair and down by
 the number of gold tiles an undone pair returns.
 
+(v3) Mends and lucky tiles (section 1, Mechanics):
+```
+var mends: int = 0                       # mends earned and not used yet
+var pairs_done: int = 0                  # pairs and mends made (undo takes them back)
+var lucky: PackedInt64Array              # the lucky tiles, from geometry.features ("lucky")
+var lucky_start: Dictionary[int, int]    # lucky tile -> pairs_done when it was first free
+var lucky_won: int = 0                   # lucky tiles removed in time
+func try_mend(a: int) -> Result          # MATCH, BLOCKED or INVALID (below)
+func is_gold(face: int) -> bool          # static; HalvesFace.family(face) == &"gold"
+```
+- A `MATCH` of two gold faces adds 1 to `mends`.
+- `try_mend(a)`: `INVALID` if `mends == 0`, `a` is out of range or not remaining, or no remaining
+  tile has the mate face of `a`; `BLOCKED` if `a` is not free; otherwise `MATCH`: `b` = the
+  lowest-id remaining tile with face `HalvesFace.mate(faces[a])`, both leave `remaining`,
+  `mends -= 1`, history gets `{"kind": "mend", "a": a, "b": b}`. A mend is not a slip.
+- Every pair and mend adds 1 to `pairs_done`. **Lucky clocks:** after `_init`, every `MATCH`, mend,
+  `undo()` and `apply_deal`, each lucky tile that is remaining, free and has no clock gets
+  `lucky_start[t] = pairs_done`. When a pair or mend removes a lucky tile `t` with a clock and
+  `pairs_done` (before that removal is counted) `- lucky_start[t] < HalvesConfig.LUCKY_SNAPS`,
+  `lucky_won += 1`.
+- `undo()` takes back exactly what the undone entry did: the tiles return, `pairs_done -= 1`, the
+  mend it earned (gold pair) or spent (mend) is returned, `lucky_won` loses what that entry won,
+  and clocks started by that entry are removed.
+- `apply_deal` keeps `mends`, `pairs_done`, `lucky_start` and `lucky_won` (lucky is positional).
+- `is_stuck()` is unchanged (a mend is not a free pair); the game offers Mend on the stuck card.
+
 ### `HalvesFill` (`halves_fill.gd`, static): reverse-removal fill, traps and shuffle
 ```
 static func removal_order(geometry: HalvesGeometry, mask: PackedInt64Array, rng: RandomNumberGenerator,
@@ -390,6 +443,8 @@ static func deal(geometry: HalvesGeometry, pair_keys: PackedInt32Array,
 		rng: RandomNumberGenerator) -> Dictionary
 static func deal_v2(geometry: HalvesGeometry, pair_keys: PackedInt32Array, rng: RandomNumberGenerator,
 		trap_rate: float, feature_spec: Dictionary) -> Dictionary                                  # (v2)
+static func with_gold_pair(geometry: HalvesGeometry, order: Array[Vector2i], faces: PackedInt32Array,
+		rng: RandomNumberGenerator) -> PackedInt32Array                                      # (v3)
 static func remaining_pair_keys(state: HalvesState) -> PackedInt32Array
 static func shuffle(state: HalvesState, solution: Array[Vector2i],
 		rng: RandomNumberGenerator) -> Dictionary
@@ -441,6 +496,12 @@ static func shuffle_ints(values: PackedInt32Array, rng: RandomNumberGenerator) -
 - `shuffle_rng(level, count)`: `SeedService.make_rng(["halves", level, "shuffle", count], GEN_VERSION)`.
   Pool boards (section 3) use their id as `level`.
 
+(v3) `with_gold_pair` returns a copy of `faces` where the two tiles of one step of `order` get the
+gold faces (`kin`, same cut as `HalvesCrests.pair_of(kin, 0)`; the step's side-a tile stays side
+a). The step is chosen with `rng` from the steps in `[n / 3, 2n / 3)` (`n = order.size()`, at least
+one step), preferring steps whose two tiles are both not free at the start; `order` stays a valid
+solution. The generator calls it after dealing faces and before `HalvesFeatures.place`.
+
 ### `HalvesSolver` (`halves_solver.gd`, static)
 ```
 enum Status { SOLVED, UNSOLVABLE, UNKNOWN }
@@ -491,9 +552,13 @@ static func difficulty(random_win: float, decoy_exposure: float, avg_free_pairs:
 - `difficulty = 100 * (0.6 * (1 - random_win) + 0.25 * min(decoy_exposure / 1.5, 1)
   + 0.15 * (1 - min(avg_free_pairs, 6) / 6))`, from 0 (trivial) to 100.
 
+(v3) Mends in play: every policy that has a mend (it cleared the gold pair) uses it when stuck, on
+the free tile whose remaining mate has the most tiles covering it (ties: lowest id), then carries
+on; a mend never counts as a slip and the hint never suggests one.
+
 ### `HalvesRun` (`halves_run.gd`, RefCounted) (v2): the clock and the move log
 ```
-enum Event { PAIR, MISMATCH, UNDO, SHUFFLE, HINT }
+enum Event { PAIR, MISMATCH, UNDO, SHUFFLE, HINT, MEND }   # MEND (v3): [ms, MEND, a]; replay calls try_mend(a)
 const FORMAT := 1
 const MAX_STEP_MS := 250
 var board: String              # "level_12", "daily_2026-10-21", "zen", "rush"
@@ -566,7 +631,8 @@ Each pool file is loaded only when first asked for.
 `COMBO_COINS_AT = 5` and `COMBO_COINS = 5`, `ZEN_UNLOCK_LEVEL = 10`, `RUSH_UNLOCK_LEVEL = 15`,
 `RUSH_SECONDS = 180`, `RUSH_BOARD_BONUS_S = 5`, `RUSH_MISTAKE_PENALTY_S = 3`,
 `RUSH_BOARD_POINTS = 10`, and the par constants of section 4. (v3): `STAR_FREE_LEVELS = 10`,
-`STAR_ALLOWANCE_PAIRS = 15`, `STAR2_EXTRA_SLIPS = 3` (`STAR2_MAX_MISTAKES` is no longer used), and
+`STAR_ALLOWANCE_PAIRS = 15`, `STAR2_EXTRA_SLIPS = 3` (`STAR2_MAX_MISTAKES` is no longer used),
+`LUCKY_SNAPS = 3`, `LUCKY_COINS = 5` (per lucky tile won), and
 ```
 static func star_allowance(mode: int, level: int, pairs: int) -> int   # section 1, Stars (v3); mode is Screens.Mode as int
 ```

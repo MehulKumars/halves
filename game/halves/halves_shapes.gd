@@ -28,7 +28,7 @@ static func draw_half(canvas: CanvasItem, face: int, center: Vector2, extent: fl
 		return
 	if HalvesFace.is_crest(face):
 		HalvesCrest.draw(canvas, HalvesFace.pair_key(face), HalvesFace.side(face), center, extent * CREST_SCALE,
-				HalvesPalette.face_color(face), HalvesPalette.IVORY, offset)
+				HalvesPalette.face_color(face), HalvesPalette.face_paper(face), offset)
 		return
 	var colour := HalvesPalette.shape_color(HalvesFace.shape(face))
 	var points := half_polygon(face, extent)

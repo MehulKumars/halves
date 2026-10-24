@@ -75,6 +75,8 @@ var _pop_tween: Tween
 
 static var _side_box: StyleBoxFlat = _make_box(HalvesPalette.SIDE)
 static var _face_box: StyleBoxFlat = _make_box(HalvesPalette.IVORY)
+## (v3) The gold pair's tiles have a gold face.
+static var _gold_box: StyleBoxFlat = _make_box(HalvesPalette.GOLD_FACE)
 static var _ring_box: StyleBoxFlat = _make_ring_box()
 static var _frost_box: StyleBoxFlat = _make_box(HalvesPalette.ICE)
 
@@ -149,9 +151,10 @@ func _draw() -> void:
 	var top := -h * 0.5 - lift
 	var radius := int(round(w * 0.15))
 	_side_box.set_corner_radius_all(radius)
-	_face_box.set_corner_radius_all(radius)
+	var face_box := _gold_box if HalvesFace.family(face) == &"gold" else _face_box
+	face_box.set_corner_radius_all(radius)
 	draw_style_box(_side_box, Rect2(-w * 0.5, top + depth, w, h + lift))
-	draw_style_box(_face_box, Rect2(-w * 0.5, top, w, h))
+	draw_style_box(face_box, Rect2(-w * 0.5, top, w, h))
 	var face_rect := Rect2(-w * 0.5, top, w, h)
 	if veiled:
 		_draw_mist(face_rect)

@@ -16,6 +16,7 @@ const FAMILIES: Array[Dictionary] = [
 	{"id": &"leaves", "name": "Leaves"},
 	{"id": &"things", "name": "Things"},
 	{"id": &"wings", "name": "Wings"},
+	{"id": &"gold", "name": "Gold"},
 ]
 
 ## spec: what HalvesCrest draws. Top-level entries are also what similarity() compares, so a
@@ -147,6 +148,9 @@ const MOTIFS: Array[Dictionary] = [
 		"spec": {"kind": &"goose", "crest": false, "ring": false}},
 	{"id": &"kari_maru", "name": "Wild goose in a ring", "family": &"wings", "group": &"goose", "cuts": [0, 1],
 		"spec": {"kind": &"goose", "crest": false, "ring": true}},
+	# Gold: the gold pair's crest (section 1, Mechanics). One motif, never a look-alike.
+	{"id": &"kin", "name": "Gold sun", "family": &"gold", "group": &"gold", "cuts": [0],
+		"spec": {"kind": &"sun", "rays": 8, "ring": false}},
 ]
 
 static var _index: Dictionary[StringName, int] = {}
