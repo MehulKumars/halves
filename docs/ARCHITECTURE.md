@@ -41,8 +41,9 @@ ui/                    Screens (ui/screens/) and popups (ui/popups/) of the game
 scenes/                Maaack's loading screen (for SceneLoader, heavy scenes only)
 assets/                Halves art and audio: backgrounds/ (baked photos), audio/sfx, audio/music, icon/ (app icons);
                        template_icon/ is the template's placeholder (no longer used by Halves)
-game/halves/           Halves: pure logic (faces, geometry, features, state, fill, solver, bots, run clock,
-                       levels, pools), the board view and effects, chapters, records, tips. See HALVES.md
+game/halves/           Halves: pure logic (faces, tile sets (HalvesBits), crest catalogue, geometry, features,
+                       state, fill, solver, bots, run clock, levels, pools), crests drawn in code (HalvesCrest),
+                       the board view and effects, chapters, records, the Crest Book, tips. See HALVES.md
 data/levels/           Baked Halves levels and the daily, zen and rush pools (*_v2.json), made by tools/levelgen/
 tests/                 GUT unit tests (test_*.gd)
 tools/                 check.ps1, snapshots, build_theme.gd, scene_edit.gd, hooks/ (Claude Code auto-check),
@@ -208,11 +209,16 @@ Everything is in [UI_KIT.md](UI_KIT.md).
 The game: rules, data formats, the logic API and how to regenerate levels are in
 [HALVES.md](HALVES.md). `Progress.start_session()` (called by the splash once per launch) feeds
 `AdPolicy.start_session()` so the first session stays free of interstitials. The game screen
-plays four modes (`Screens.mode`: levels, daily, zen, rush); `HalvesChapters` gives each 10 levels a
-place: a photo (or, by the Backgrounds setting, the place drawn in code by `HalvesScenery`) and an
-ambience (`ChapterBackground` puts it behind any screen and hides its `StyledBackground`); music
+plays four modes (`Screens.mode`: levels, daily, zen, rush); `HalvesChapters` gives each 20 levels a
+place (15 in v3): a photo (or, by the Backgrounds setting, the place drawn in code by `HalvesScenery`)
+and an ambience (`ChapterBackground` puts it behind any screen and hides its `StyledBackground`;
+behind the board it shows the soft baked `_play` copy, with a mat under the tiles); music
 is the player's choice (`HalvesMusic`); `HalvesRecords` keeps best times, Swift medals, best-run move logs
 (`user://halves_runs.json`), the daily streak, zen and rush records and seen tip cards.
+(v3) Tiles show halves of crests (`HalvesCrests` catalogue, `HalvesCrest` builds them from
+compass-and-ruler primitives); the journey map (`ui/screens/level_select` with `JourneyPath`) shows
+levels as stepping stones; `HalvesCrestBook` and `ui/screens/crest_book` keep the crest each won
+level restores. Sounds of our own (chime, knock, seam) come from `tools/audio/synth_sfx.gd`.
 
 ### DevTools (`core/dev_tools.gd`)
 Debug builds only. Open the console with `` ` `` on PC or a three-finger tap on a phone.
