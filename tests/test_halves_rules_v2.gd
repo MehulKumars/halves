@@ -33,8 +33,8 @@ func test_a_fresh_state_has_no_slips() -> void:
 	var s := _column(["circle:v:-:a", "circle:v:-:b"])
 	assert_eq(s.stuck_shuffles, 0)
 	assert_eq(s.slips(), 0)
-	assert_eq(s.veiled, 0, "no features, no mist")
-	assert_eq(s.gold, 0, "no features, no gold")
+	assert_eq(s.veiled, HalvesBits.empty(), "no features, no mist")
+	assert_eq(s.gold, HalvesBits.empty(), "no features, no gold")
 	assert_eq(s.gold_earned, 0)
 
 
@@ -108,15 +108,15 @@ func test_mist_starts_veiled_only_where_not_free() -> void:
 func test_mist_is_revealed_when_a_tile_becomes_free_and_never_hidden_again() -> void:
 	var s := _mist_state()
 	assert_eq(s.try_pair(2, 5), R.MATCH, "the bridge goes")
-	assert_eq(s.veiled, 0, "0 and 1 are free now")
+	assert_eq(s.veiled, HalvesBits.empty(), "0 and 1 are free now")
 	assert_true(s.undo())
 	assert_eq(s.remaining, s.geometry.full_mask(), "the bridge is back on 0 and 1")
-	assert_eq(s.veiled, 0, "revealing never hides a tile again")
+	assert_eq(s.veiled, HalvesBits.empty(), "revealing never hides a tile again")
 
 
 func test_a_mismatch_reveals_nothing_new() -> void:
 	var s := _column(["circle:v:-:a", "circle:v:-:a"], {"mist": [0, 1]})
-	assert_eq(s.veiled, 0, "both free at the start")
+	assert_eq(s.veiled, HalvesBits.empty(), "both free at the start")
 	# Tile 0 lies under tile 1; tile 2 stands apart. All three are the same face.
 	var g := H.geometry([Vector3i(0, 0, 0), Vector3i(0, 0, 1), Vector3i(4, 0, 0)]).with_features({"mist": [0]})
 	var stacked := HalvesState.new(g, H.faces(["circle:v:-:a", "circle:v:-:a", "circle:v:-:a"]))
@@ -131,7 +131,7 @@ func test_mist_is_revealed_after_apply_deal() -> void:
 	s.apply_deal(s.geometry.full_mask(), s.faces)
 	assert_eq(s.veiled, H.mask_of([0, 1]), "same board: still covered")
 	s.apply_deal(H.mask_of([0, 1, 3, 4]), faces)
-	assert_eq(s.veiled, 0, "the new board leaves 0 and 1 free")
+	assert_eq(s.veiled, HalvesBits.empty(), "the new board leaves 0 and 1 free")
 
 
 func test_mist_is_revealed_after_undo() -> void:
@@ -195,7 +195,7 @@ func test_a_locked_pair_is_blocked_until_the_keys_are_cleared() -> void:
 			{"locks": [{"keys": [0, 1], "locked": [4, 5]}]})
 	assert_eq(s.free_pairs(), H.pairs([Vector2i(0, 1), Vector2i(2, 3)]))
 	assert_eq(s.try_pair(4, 5), R.BLOCKED)
-	assert_eq(s.remaining, 0b111111, "nothing changes")
+	assert_eq(s.remaining, H.from_int(0b111111), "nothing changes")
 	assert_eq(s.try_pair(0, 1), R.MATCH)
 	assert_eq(s.free_pairs(), H.pairs([Vector2i(2, 3), Vector2i(4, 5)]))
 	assert_eq(s.try_pair(4, 5), R.MATCH)
@@ -259,7 +259,7 @@ func test_shuffle_keeps_a_board_with_features_solvable() -> void:
 	assert_false(result.is_empty())
 	if result.is_empty():
 		return
-	var rem: int = result["remaining"]
+	var rem: PackedInt64Array = result["remaining"]
 	var faces: PackedInt32Array = result["faces"]
 	assert_eq(H.faces_on(rem, faces), H.faces_on(s.remaining, s.faces), "same faces, new places")
 	assert_true(H.solvable(s.geometry, faces, rem), "solvable under the features (locks and frost stay put)")

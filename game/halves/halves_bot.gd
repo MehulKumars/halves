@@ -16,7 +16,7 @@ static func play(geometry: HalvesGeometry, faces: PackedInt32Array, rng: RandomN
 	var looks := 0
 	var pair_sum := 0.0
 	var decoy_sum := 0.0
-	while remaining != 0:
+	while not HalvesBits.is_empty(remaining):
 		var free := geometry.free_tiles(remaining)
 		var pairs: Array[Vector2i] = []
 		var decoys := 0
@@ -41,10 +41,11 @@ static func play(geometry: HalvesGeometry, faces: PackedInt32Array, rng: RandomN
 				pick = _wary_pick(geometry, faces, remaining, pairs, rng)
 			_:
 				pick = pairs[rng.randi_range(0, pairs.size() - 1)]
-		remaining &= ~(1 << pick.x) & ~(1 << pick.y)
+		HalvesBits.clear_bit(remaining, pick.x)
+		HalvesBits.clear_bit(remaining, pick.y)
 		steps += 1
 	return {
-		"cleared": remaining == 0,
+		"cleared": HalvesBits.is_empty(remaining),
 		"steps": steps,
 		"free_pairs": pair_sum / looks,
 		"decoy": decoy_sum / looks,
@@ -88,12 +89,12 @@ static func difficulty(random_win: float, decoy_exposure: float, avg_free_pairs:
 			+ 0.15 * (1.0 - minf(avg_free_pairs, 6.0) / 6.0))
 
 
-static func _careful_pick(geometry: HalvesGeometry, remaining: int, pairs: Array[Vector2i],
+static func _careful_pick(geometry: HalvesGeometry, remaining: PackedInt64Array, pairs: Array[Vector2i],
 		rng: RandomNumberGenerator) -> Vector2i:
 	var best: Array[Vector2i] = []
 	var best_free := -1
 	for pair in pairs:
-		var free := HalvesGeometry.popcount(geometry.free_mask(remaining & ~(1 << pair.x) & ~(1 << pair.y)))
+		var free := HalvesBits.count(geometry.free_mask(_without(remaining, pair)))
 		if free > best_free:
 			best_free = free
 			best = [pair]
@@ -104,20 +105,28 @@ static func _careful_pick(geometry: HalvesGeometry, remaining: int, pairs: Array
 
 ## True if taking `pair` leads straight into a dead end a human learns to see: no free pair left
 ## with tiles remaining, or a pair type whose last two tiles sit one on top of the other.
-static func is_trap_move(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: int, pair: Vector2i) -> bool:
-	var after := remaining & ~(1 << pair.x) & ~(1 << pair.y)
-	if after == 0:
+static func is_trap_move(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: PackedInt64Array,
+		pair: Vector2i) -> bool:
+	var after := _without(remaining, pair)
+	if HalvesBits.is_empty(after):
 		return false
 	var by_key: Dictionary[int, PackedInt32Array] = {}
+	var a0 := after[0]
+	var a1 := after[1]
 	for i in geometry.size():
-		if after & (1 << i) != 0:
+		if (a0 if i < 64 else a1) & (1 << (i & 63)) != 0:
 			var key := HalvesFace.pair_key(faces[i])
 			if not by_key.has(key):
 				by_key[key] = PackedInt32Array()
 			by_key[key].append(i)
 	for tiles: PackedInt32Array in by_key.values():
-		if tiles.size() == 2 and (geometry.cover[tiles[0]] & (1 << tiles[1]) != 0 \
-				or geometry.cover[tiles[1]] & (1 << tiles[0]) != 0):
+		if tiles.size() != 2:
+			continue
+		var x := tiles[0]
+		var y := tiles[1]
+		var on_x := geometry.cover[x]
+		var on_y := geometry.cover[y]
+		if on_x[y >> 6] & (1 << (y & 63)) != 0 or on_y[x >> 6] & (1 << (x & 63)) != 0:
 			return true
 	var free := geometry.free_tiles(after)
 	for i in free.size():
@@ -127,7 +136,7 @@ static func is_trap_move(geometry: HalvesGeometry, faces: PackedInt32Array, rema
 	return true
 
 
-static func _wary_pick(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: int,
+static func _wary_pick(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: PackedInt64Array,
 		pairs: Array[Vector2i], rng: RandomNumberGenerator) -> Vector2i:
 	var safe: Array[Vector2i] = []
 	for pair in pairs:
@@ -135,3 +144,11 @@ static func _wary_pick(geometry: HalvesGeometry, faces: PackedInt32Array, remain
 			safe.append(pair)
 	var pool := safe if not safe.is_empty() else pairs
 	return pool[rng.randi_range(0, pool.size() - 1)]
+
+
+## `remaining` without the two tiles of `pair` (valid tile ids), as a new set.
+static func _without(remaining: PackedInt64Array, pair: Vector2i) -> PackedInt64Array:
+	var after := remaining.duplicate()
+	after[pair.x >> 6] &= ~(1 << (pair.x & 63))
+	after[pair.y >> 6] &= ~(1 << (pair.y & 63))
+	return after

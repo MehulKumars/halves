@@ -3,12 +3,13 @@ extends RefCounted
 ## One Halves board in play: which tiles remain, their faces, mistakes and the undo history.
 ## The board view drives it with try_pair(); the solver, bot, shuffle and run replay read it.
 ## Slips (mistakes and stuck shuffles) only cost stars; mist and gold come from geometry features.
+## Tile sets (remaining, veiled, gold) are HalvesBits sets, replaced on change, never edited in place.
 
 enum Result { MATCH, MISMATCH, SWITCH, BLOCKED, INVALID }
 
 var geometry: HalvesGeometry
 var faces: PackedInt32Array
-var remaining: int = 0
+var remaining: PackedInt64Array = HalvesBits.empty()
 var mistakes: int = 0
 ## Mismatches that cost nothing (the tutorial forgives the first one).
 var free_mistakes: int = 0
@@ -17,8 +18,8 @@ var strict: bool = false
 ## Shuffles applied while the board was stuck (each one is a slip).
 var stuck_shuffles: int = 0
 ## Mist tiles whose face is still hidden; the gold tiles; gold tiles cleared so far.
-var veiled: int = 0
-var gold: int = 0
+var veiled: PackedInt64Array = HalvesBits.empty()
+var gold: PackedInt64Array = HalvesBits.empty()
 var gold_earned: int = 0
 ## {"kind": "pair", "a": int, "b": int} or {"kind": "mistake"}, oldest first.
 var history: Array[Dictionary] = []
@@ -38,14 +39,14 @@ func try_pair(a: int, b: int) -> Result:
 	var count := geometry.size()
 	if a == b or a < 0 or b < 0 or a >= count or b >= count:
 		return Result.INVALID
-	if remaining & (1 << a) == 0 or remaining & (1 << b) == 0:
+	if not HalvesBits.has(remaining, a) or not HalvesBits.has(remaining, b):
 		return Result.INVALID
 	if not geometry.is_free(a, remaining) or not geometry.is_free(b, remaining):
 		return Result.BLOCKED
 	if HalvesFace.matches(faces[a], faces[b]):
-		remaining &= ~(1 << a) & ~(1 << b)
+		remaining = HalvesBits.removed(HalvesBits.removed(remaining, a), b)
 		history.append({"kind": "pair", "a": a, "b": b})
-		gold_earned += HalvesGeometry.popcount(gold & ((1 << a) | (1 << b)))
+		gold_earned += _gold_in(a, b)
 		_reveal()
 		return Result.MATCH
 	if strict or HalvesFace.is_decoy(faces[a], faces[b]):
@@ -63,8 +64,8 @@ func undo() -> bool:
 		return false
 	var last: Dictionary = history.pop_back()
 	if last.kind == "pair":
-		remaining |= 1 << int(last.a) | 1 << int(last.b)
-		gold_earned -= HalvesGeometry.popcount(gold & ((1 << int(last.a)) | (1 << int(last.b))))
+		remaining = HalvesBits.added(HalvesBits.added(remaining, int(last.a)), int(last.b))
+		gold_earned -= _gold_in(int(last.a), int(last.b))
 		_reveal()
 	else:
 		mistakes -= 1
@@ -87,15 +88,15 @@ func free_pairs() -> Array[Vector2i]:
 
 
 func is_cleared() -> bool:
-	return remaining == 0
+	return HalvesBits.is_empty(remaining)
 
 
 func is_stuck() -> bool:
-	return remaining != 0 and free_pairs().is_empty()
+	return not HalvesBits.is_empty(remaining) and free_pairs().is_empty()
 
 
 func tiles_left() -> int:
-	return HalvesGeometry.popcount(remaining)
+	return HalvesBits.count(remaining)
 
 
 ## Mistakes plus shuffles out of a dead end: what the stars count.
@@ -111,8 +112,8 @@ func stars() -> int:
 
 ## Takes a shuffled board (HalvesFill.shuffle); the old undo history no longer applies.
 ## `stuck`: the board was stuck when the shuffle was asked for, which is a slip.
-func apply_deal(new_remaining: int, new_faces: PackedInt32Array, stuck: bool = false) -> void:
-	remaining = new_remaining
+func apply_deal(new_remaining: PackedInt64Array, new_faces: PackedInt32Array, stuck: bool = false) -> void:
+	remaining = new_remaining.duplicate()
 	faces = new_faces.duplicate()
 	history.clear()
 	if stuck:
@@ -122,5 +123,10 @@ func apply_deal(new_remaining: int, new_faces: PackedInt32Array, stuck: bool = f
 
 ## Mist faces show once their tile is free, and stay shown.
 func _reveal() -> void:
-	if veiled != 0:
-		veiled &= ~geometry.free_mask(remaining)
+	if not HalvesBits.is_empty(veiled):
+		veiled = HalvesBits.minus(veiled, geometry.free_mask(remaining))
+
+
+## How many of tiles a and b are gold.
+func _gold_in(a: int, b: int) -> int:
+	return (1 if HalvesBits.has(gold, a) else 0) + (1 if HalvesBits.has(gold, b) else 0)

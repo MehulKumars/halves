@@ -46,15 +46,22 @@ static func pairs(list: Array) -> Array[Vector2i]:
 	return out
 
 
-static func bit(i: int) -> int:
-	return 1 << i
+## (v3) Tile sets are HalvesBits sets (PackedInt64Array); these build them.
+static func bit(i: int) -> PackedInt64Array:
+	return HalvesBits.of([i])
 
 
-static func mask_of(ids: Array) -> int:
-	var m := 0
-	for i: int in ids:
-		m |= 1 << i
-	return m
+static func mask_of(ids: Array) -> PackedInt64Array:
+	return HalvesBits.of(ids)
+
+
+## The set of the bits of a 64-bit int: lets tests keep their v2 binary literals (0b1010).
+static func from_int(m: int) -> PackedInt64Array:
+	var out := HalvesBits.empty()
+	for i: int in 64:
+		if (m & (1 << i)) != 0:
+			HalvesBits.set_bit(out, i)
+	return out
 
 
 ## A pair with the lower id first, so tests do not depend on the order inside a pair.
@@ -117,8 +124,8 @@ static func plan_keys(level: int, tile_count: int) -> PackedInt32Array:
 
 ## "" when `order` is a valid removal order from `mask`: both tiles remaining and free at their
 ## step (checked before either is removed), every tile used once, and nothing left at the end.
-static func order_error(geo: HalvesGeometry, mask: int, order: Array) -> String:
-	var rem := mask
+static func order_error(geo: HalvesGeometry, mask: PackedInt64Array, order: Array) -> String:
+	var rem := mask.duplicate()
 	for step: int in order.size():
 		var p: Vector2i = order[step]
 		if p.x == p.y:
@@ -126,13 +133,14 @@ static func order_error(geo: HalvesGeometry, mask: int, order: Array) -> String:
 		for t: int in [p.x, p.y]:
 			if t < 0 or t >= geo.size():
 				return "step %d: tile %d is out of range" % [step, t]
-			if (rem & (1 << t)) == 0:
+			if not HalvesBits.has(rem, t):
 				return "step %d: tile %d is not remaining" % [step, t]
 			if not geo.is_free(t, rem):
 				return "step %d: tile %d is not free" % [step, t]
-		rem &= ~((1 << p.x) | (1 << p.y))
-	if rem != 0:
-		return "%d tiles left at the end" % HalvesGeometry.popcount(rem)
+		HalvesBits.clear_bit(rem, p.x)
+		HalvesBits.clear_bit(rem, p.y)
+	if not HalvesBits.is_empty(rem):
+		return "%d tiles left at the end" % HalvesBits.count(rem)
 	return ""
 
 
@@ -149,12 +157,12 @@ static func replay_error(s: HalvesState, moves: Array) -> String:
 
 
 ## Brute-force check, independent of HalvesSolver: can `remaining` be cleared with `faces`?
-static func solvable(geo: HalvesGeometry, face_list: PackedInt32Array, remaining: int) -> bool:
+static func solvable(geo: HalvesGeometry, face_list: PackedInt32Array, remaining: PackedInt64Array) -> bool:
 	return _solvable(geo, face_list, remaining, {})
 
 
-static func _solvable(geo: HalvesGeometry, face_list: PackedInt32Array, rem: int, dead: Dictionary) -> bool:
-	if rem == 0:
+static func _solvable(geo: HalvesGeometry, face_list: PackedInt32Array, rem: PackedInt64Array, dead: Dictionary) -> bool:
+	if HalvesBits.is_empty(rem):
 		return true
 	if dead.has(rem):
 		return false
@@ -165,26 +173,26 @@ static func _solvable(geo: HalvesGeometry, face_list: PackedInt32Array, rem: int
 			var a: int = free[i]
 			var b: int = free[j]
 			if HalvesFace.matches(face_list[a], face_list[b]):
-				if _solvable(geo, face_list, rem & ~((1 << a) | (1 << b)), dead):
+				if _solvable(geo, face_list, HalvesBits.removed(HalvesBits.removed(rem, a), b), dead):
 					return true
 	return false
 
 
 ## Sorted faces of the tiles in `mask` (a multiset).
-static func faces_on(mask: int, face_list: PackedInt32Array) -> Array[int]:
+static func faces_on(mask: PackedInt64Array, face_list: PackedInt32Array) -> Array[int]:
 	var out: Array[int] = []
 	for i: int in face_list.size():
-		if (mask & (1 << i)) != 0:
+		if HalvesBits.has(mask, i):
 			out.append(face_list[i])
 	out.sort()
 	return out
 
 
 ## Sorted pair keys of the side-A faces among the tiles in `mask`.
-static func side_a_keys(mask: int, face_list: PackedInt32Array) -> Array[int]:
+static func side_a_keys(mask: PackedInt64Array, face_list: PackedInt32Array) -> Array[int]:
 	var out: Array[int] = []
 	for i: int in face_list.size():
-		if (mask & (1 << i)) != 0 and HalvesFace.side(face_list[i]) == HalvesFace.SIDE_A:
+		if HalvesBits.has(mask, i) and HalvesFace.side(face_list[i]) == HalvesFace.SIDE_A:
 			out.append(HalvesFace.pair_key(face_list[i]))
 	out.sort()
 	return out
@@ -216,10 +224,10 @@ static func js(value: Variant) -> String:
 
 
 ## Ids of the set bits of `mask`, ascending.
-static func ids(mask: int) -> Array[int]:
+static func ids(mask: PackedInt64Array) -> Array[int]:
 	var out: Array[int] = []
-	for i: int in 64:
-		if (mask & (1 << i)) != 0:
+	for i: int in HalvesBits.MAX:
+		if HalvesBits.has(mask, i):
 			out.append(i)
 	return out
 

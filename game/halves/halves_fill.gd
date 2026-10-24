@@ -10,10 +10,10 @@ const BRANCH: int = 3
 
 ## Pairs of tiles in `mask` that can be removed in this order (both free at their step).
 ## Empty when none was found within the budget, or when `mask` is empty.
-static func removal_order(geometry: HalvesGeometry, mask: int, rng: RandomNumberGenerator,
+static func removal_order(geometry: HalvesGeometry, mask: PackedInt64Array, rng: RandomNumberGenerator,
 		budget: int = 4000, restarts: int = 30) -> Array[Vector2i]:
 	var order: Array[Vector2i] = []
-	if mask == 0 or HalvesGeometry.popcount(mask) % 2 != 0:
+	if HalvesBits.is_empty(mask) or HalvesBits.count(mask) % 2 != 0:
 		return order
 	var weights := _blocking_weights(geometry)
 	for _attempt in restarts:
@@ -48,10 +48,15 @@ static func trap_links(geometry: HalvesGeometry, order: Array[Vector2i]) -> Arra
 	var links: Array[Vector4i] = []
 	var before := _free_before(geometry, order)
 	for q in order.size():
+		var free_q := before[q]
 		for p in range(q + 1, order.size()):
 			for x: int in [order[q].x, order[q].y]:
 				for y: int in [order[p].x, order[p].y]:
-					if geometry.cover[y] & (1 << x) != 0 and before[q] & (1 << _other(order[p], y)) != 0:
+					var on_y := geometry.cover[y]
+					if on_y[x >> 6] & (1 << (x & 63)) == 0:
+						continue
+					var other := _other(order[p], y)
+					if free_q[other >> 6] & (1 << (other & 63)) != 0:
 						links.append(Vector4i(q, p, x, y))
 	links.sort_custom(func(a: Vector4i, b: Vector4i) -> bool: return a < b)
 	return links
@@ -153,7 +158,7 @@ static func deal_v2(geometry: HalvesGeometry, pair_keys: PackedInt32Array, rng: 
 static func remaining_pair_keys(state: HalvesState) -> PackedInt32Array:
 	var keys := PackedInt32Array()
 	for i in state.geometry.size():
-		if state.remaining & (1 << i) != 0 and HalvesFace.side(state.faces[i]) == HalvesFace.SIDE_A:
+		if HalvesBits.has(state.remaining, i) and HalvesFace.side(state.faces[i]) == HalvesFace.SIDE_A:
 			keys.append(HalvesFace.pair_key(state.faces[i]))
 	keys.sort()
 	return keys
@@ -163,24 +168,25 @@ static func remaining_pair_keys(state: HalvesState) -> PackedInt32Array:
 ## Keeps the tile positions when they can still be cleared; otherwise reseats the tiles into the
 ## positions `solution` leaves after the same number of pairs (solvable by the rest of it).
 static func shuffle(state: HalvesState, solution: Array[Vector2i], rng: RandomNumberGenerator) -> Dictionary:
-	if state.remaining == 0:
+	if HalvesBits.is_empty(state.remaining):
 		return {}
 	var geometry := state.geometry
 	var keys := remaining_pair_keys(state)
-	var target := state.remaining
+	var target := state.remaining.duplicate()
 	var order := removal_order(geometry, target, rng)
 	if order.is_empty():
 		var done := (geometry.size() - state.tiles_left()) / 2
 		target = geometry.full_mask()
 		for step in done:
-			target &= ~(1 << solution[step].x) & ~(1 << solution[step].y)
+			HalvesBits.clear_bit(target, solution[step].x)
+			HalvesBits.clear_bit(target, solution[step].y)
 		order = removal_order(geometry, target, rng)
 		if order.is_empty():
 			order = solution.slice(done)
 	return {
 		"remaining": target,
 		"faces": assign_faces(order, keys, rng, geometry.size()),
-		"reseated": target != state.remaining,
+		"reseated": not HalvesBits.equal(target, state.remaining),
 	}
 
 
@@ -198,9 +204,9 @@ static func shuffle_ints(values: PackedInt32Array, rng: RandomNumberGenerator) -
 
 
 ## Depth-first search for a removal order; `spent[0]` counts expanded states against `budget`.
-static func _search(geometry: HalvesGeometry, remaining: int, rng: RandomNumberGenerator,
+static func _search(geometry: HalvesGeometry, remaining: PackedInt64Array, rng: RandomNumberGenerator,
 		weights: PackedInt32Array, order: Array[Vector2i], spent: Array[int], budget: int) -> bool:
-	if remaining == 0:
+	if HalvesBits.is_empty(remaining):
 		return true
 	spent[0] += 1
 	if spent[0] > budget:
@@ -215,7 +221,10 @@ static func _search(geometry: HalvesGeometry, remaining: int, rng: RandomNumberG
 		if pair.x < 0:
 			break
 		order.append(pair)
-		if _search(geometry, remaining & ~(1 << pair.x) & ~(1 << pair.y), rng, weights, order, spent, budget):
+		var after := remaining.duplicate()
+		HalvesBits.clear_bit(after, pair.x)
+		HalvesBits.clear_bit(after, pair.y)
+		if _search(geometry, after, rng, weights, order, spent, budget):
 			return true
 		order.pop_back()
 		if spent[0] > budget:
@@ -254,14 +263,16 @@ static func _weighted_pick(free: PackedInt32Array, weights: PackedInt32Array,
 
 
 ## The free mask before each step of `order`, starting from the tiles `order` uses.
-static func _free_before(geometry: HalvesGeometry, order: Array[Vector2i]) -> PackedInt64Array:
-	var left_over := 0
+static func _free_before(geometry: HalvesGeometry, order: Array[Vector2i]) -> Array[PackedInt64Array]:
+	var left_over := HalvesBits.empty()
 	for pair in order:
-		left_over |= (1 << pair.x) | (1 << pair.y)
-	var before := PackedInt64Array()
+		HalvesBits.set_bit(left_over, pair.x)
+		HalvesBits.set_bit(left_over, pair.y)
+	var before: Array[PackedInt64Array] = []
 	for pair in order:
 		before.append(geometry.free_mask(left_over))
-		left_over &= ~(1 << pair.x) & ~(1 << pair.y)
+		HalvesBits.clear_bit(left_over, pair.x)
+		HalvesBits.clear_bit(left_over, pair.y)
 	return before
 
 
@@ -288,8 +299,7 @@ static func _blocking_weights(geometry: HalvesGeometry) -> PackedInt32Array:
 	weights.resize(geometry.size())
 	weights.fill(1)
 	for i in geometry.size():
-		var blockers := geometry.cover[i] | geometry.left[i] | geometry.right[i]
-		for j in geometry.size():
-			if blockers & (1 << j) != 0:
-				weights[j] += 1
+		var blockers := HalvesBits.union(HalvesBits.union(geometry.cover[i], geometry.left[i]), geometry.right[i])
+		for j in HalvesBits.ids(blockers):
+			weights[j] += 1
 	return weights

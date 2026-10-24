@@ -61,7 +61,7 @@ func test_level_one_played_through_reaches_the_results() -> void:
 	Progress.reset()
 	var game := await _open_game(1)
 	var board := _board(game)
-	var gold := HalvesGeometry.popcount(board.state.gold)
+	var gold := HalvesBits.count(board.state.gold)
 	for pair in board.level_data.solution:
 		board.tap(pair.x)
 		board.tap(pair.y)

@@ -35,24 +35,24 @@ func _side(p: Array[Vector3i], j: int, i: int, dx: int) -> bool:
 
 ## Section 1: j touches i if j covers i, j is a left or right neighbour, or j is directly above or
 ## below in the same layer (|dx| < 2, |dy| == 2). Tiles that i covers do not touch i.
-func _touch_ref(p: Array[Vector3i], i: int) -> int:
-	var m := 0
+func _touch_ref(p: Array[Vector3i], i: int) -> PackedInt64Array:
+	var m := HalvesBits.empty()
 	for j: int in p.size():
 		if j == i:
 			continue
 		var same_layer_vertical := p[j].z == p[i].z and absi(p[j].x - p[i].x) < 2 and absi(p[j].y - p[i].y) == 2
 		if _covers(p, j, i) or _side(p, j, i, -2) or _side(p, j, i, 2) or same_layer_vertical:
-			m |= 1 << j
+			HalvesBits.set_bit(m, j)
 	return m
 
 
 ## The first blocking reason by the rules of section 1 for features in normalised form.
-func _reason_ref(p: Array[Vector3i], features: Dictionary, i: int, rem: int) -> int:
+func _reason_ref(p: Array[Vector3i], features: Dictionary, i: int, rem: PackedInt64Array) -> int:
 	var covered := false
 	var has_left := false
 	var has_right := false
 	for j: int in p.size():
-		if j == i or (rem & (1 << j)) == 0:
+		if j == i or not HalvesBits.has(rem, j):
 			continue
 		covered = covered or _covers(p, j, i)
 		has_left = has_left or _side(p, j, i, -2)
@@ -64,12 +64,12 @@ func _reason_ref(p: Array[Vector3i], features: Dictionary, i: int, rem: int) -> 
 	var locks: Array = features.get("locks", [])
 	for group: Dictionary in locks:
 		var locked: Array = group.get("locked", [])
-		if locked.has(i) and (rem & HalvesFeatures.mask(group.get("keys", []))) != 0:
+		if locked.has(i) and HalvesBits.intersects(rem, HalvesFeatures.mask(group.get("keys", []))):
 			return B.LOCKED
 	var frost: Array = features.get("frost", [])
 	if frost.has(i):
 		var need := _touch_ref(p, i)
-		if need != 0 and (need & ~rem) == 0:
+		if not HalvesBits.is_empty(need) and HalvesBits.is_empty(HalvesBits.minus(need, rem)):
 			return B.FROSTED
 	return B.FREE
 
@@ -107,20 +107,21 @@ func test_touch_by_hand() -> void:
 		assert_eq(g.touch[i], H.mask_of(want[i]), "touch[%d]" % i)
 		assert_eq(g.touch[i], _touch_ref(g.positions, i), "touch[%d] matches the reference" % i)
 	# Tiles that i covers do not touch i, so touch is not symmetric.
-	assert_eq(g.touch[6] & H.mask_of([0, 1]), 0, "the bridge does not touch the tiles under it")
-	assert_ne(g.touch[0] & H.bit(6), 0, "but they touch it")
+	assert_eq(HalvesBits.intersection(g.touch[6], H.mask_of([0, 1])), HalvesBits.empty(),
+			"the bridge does not touch the tiles under it")
+	assert_ne(HalvesBits.intersection(g.touch[0], H.bit(6)), HalvesBits.empty(), "but they touch it")
 
 
 func test_touch_in_a_column_is_the_tile_above_and_below() -> void:
 	var g := H.geometry(H.column(4))
-	assert_eq(g.touch, PackedInt64Array([H.mask_of([1]), H.mask_of([0, 2]), H.mask_of([1, 3]), H.mask_of([2])]))
-	assert_eq(g.free_mask(g.full_mask()), 0b1111, "touching never blocks by itself")
+	assert_eq(g.touch, [H.mask_of([1]), H.mask_of([0, 2]), H.mask_of([1, 3]), H.mask_of([2])])
+	assert_eq(g.free_mask(g.full_mask()), H.from_int(0b1111), "touching never blocks by itself")
 
 
 func test_touch_is_not_diagonal_or_far() -> void:
 	# |dx| == 2 with |dy| == 2 is a diagonal; |dy| == 3 is too far; |dx| == 1 with |dy| == 2 touches.
 	var g := H.geometry([Vector3i(0, 0, 0), Vector3i(2, 2, 0), Vector3i(4, 3, 0), Vector3i(1, 6, 0), Vector3i(0, 8, 0)])
-	assert_eq(g.touch[0], 0, "diagonal neighbour")
+	assert_eq(g.touch[0], HalvesBits.empty(), "diagonal neighbour")
 	assert_eq(g.touch[1], H.mask_of([2]), "(4,3) is a right neighbour of (2,2): |dy| 1")
 	assert_eq(g.touch[3], H.mask_of([4]), "(0,8) is below (1,6): |dx| 1, |dy| 2")
 	for i: int in g.size():
@@ -140,22 +141,23 @@ func test_without_features_every_subset_follows_the_v1_rules() -> void:
 			Vector3i(4, 0, 0), Vector3i(6, 0, 0)])]:
 		var plain := g.with_features({})
 		var bad := ""
-		for rem: int in 1 << g.size():
-			var want_mask := 0
+		for r: int in 1 << g.size():
+			var rem := H.from_int(r)
+			var want_mask := HalvesBits.empty()
 			for i: int in g.size():
-				if (rem & (1 << i)) == 0:
+				if not HalvesBits.has(rem, i):
 					continue
 				var want := _reason_ref(g.positions, {}, i, rem)
 				if want == B.FREE:
-					want_mask |= 1 << i
+					HalvesBits.set_bit(want_mask, i)
 				if g.blocked_reason(i, rem) != want and bad == "":
-					bad = "tile %d in %d: reason %d, want %d" % [i, rem, g.blocked_reason(i, rem), want]
+					bad = "tile %d in %d: reason %d, want %d" % [i, r, g.blocked_reason(i, rem), want]
 				if g.is_free(i, rem) != (want == B.FREE) and bad == "":
-					bad = "tile %d in %d: is_free %s" % [i, rem, g.is_free(i, rem)]
+					bad = "tile %d in %d: is_free %s" % [i, r, g.is_free(i, rem)]
 			if g.free_mask(rem) != want_mask and bad == "":
-				bad = "free_mask(%d) = %d, want %d" % [rem, g.free_mask(rem), want_mask]
+				bad = "free_mask(%d) = %s, want %s" % [r, H.ids(g.free_mask(rem)), H.ids(want_mask)]
 			if plain.free_mask(rem) != want_mask and bad == "":
-				bad = "with_features({}).free_mask(%d) = %d, want %d" % [rem, plain.free_mask(rem), want_mask]
+				bad = "with_features({}).free_mask(%d) = %s, want %s" % [r, H.ids(plain.free_mask(rem)), H.ids(want_mask)]
 		assert_eq(bad, "", "%d-tile board follows the v1 rules" % g.size())
 
 
@@ -201,8 +203,9 @@ func test_with_features_keeps_the_normalised_features() -> void:
 
 func test_lock_need_and_frost_need() -> void:
 	var g := _order_board().with_features(_order_features())
-	assert_eq(g.lock_need, PackedInt64Array([H.bit(3), H.bit(3), H.bit(3), 0, 0]))
-	assert_eq(g.frost_need, PackedInt64Array([H.mask_of([1]), H.mask_of([0, 2, 4]), H.mask_of([1]), 0, 0]))
+	var none := HalvesBits.empty()
+	assert_eq(g.lock_need, [H.bit(3), H.bit(3), H.bit(3), none, none])
+	assert_eq(g.frost_need, [H.mask_of([1]), H.mask_of([0, 2, 4]), H.mask_of([1]), none, none])
 
 
 func test_a_lock_waits_for_every_key_of_its_group() -> void:
@@ -210,15 +213,16 @@ func test_a_lock_waits_for_every_key_of_its_group() -> void:
 	var full := g.full_mask()
 	assert_false(g.is_free(4, full))
 	assert_eq(g.blocked_reason(4, full), B.LOCKED)
-	assert_false(g.is_free(4, full & ~H.bit(0)), "key 1 is left")
-	assert_false(g.is_free(4, full & ~H.bit(1)), "key 0 is left")
-	assert_true(g.is_free(4, full & ~H.mask_of([0, 1])), "the last key is gone")
-	assert_eq(g.blocked_reason(4, full & ~H.mask_of([0, 1])), B.FREE)
+	assert_false(g.is_free(4, HalvesBits.minus(full, H.bit(0))), "key 1 is left")
+	assert_false(g.is_free(4, HalvesBits.minus(full, H.bit(1))), "key 0 is left")
+	assert_true(g.is_free(4, HalvesBits.minus(full, H.mask_of([0, 1]))), "the last key is gone")
+	assert_eq(g.blocked_reason(4, HalvesBits.minus(full, H.mask_of([0, 1]))), B.FREE)
 	for i: int in [0, 1, 2, 3, 5]:
 		assert_true(g.is_free(i, full), "tile %d has no lock" % i)
 	assert_eq(g.free_mask(full), H.mask_of([0, 1, 2, 3, 5]))
-	assert_eq(g.lock_need, PackedInt64Array([0, 0, 0, 0, H.mask_of([0, 1]), 0]))
-	assert_eq(g.frost_need, PackedInt64Array([0, 0, 0, 0, 0, 0]))
+	var none := HalvesBits.empty()
+	assert_eq(g.lock_need, [none, none, none, none, H.mask_of([0, 1]), none])
+	assert_eq(g.frost_need, [none, none, none, none, none, none])
 
 
 func test_a_tile_locked_by_two_groups_needs_both_groups_keys_gone() -> void:
@@ -227,11 +231,11 @@ func test_a_tile_locked_by_two_groups_needs_both_groups_keys_gone() -> void:
 	var full := g.full_mask()
 	assert_eq(g.lock_need[4], H.mask_of([0, 1]), "the union of both groups' keys")
 	assert_eq(g.lock_need[5], H.mask_of([1]))
-	assert_false(g.is_free(4, full & ~H.bit(0)), "group 2 still waits for key 1")
-	assert_false(g.is_free(4, full & ~H.bit(1)), "group 1 still waits for key 0")
-	assert_true(g.is_free(4, full & ~H.mask_of([0, 1])))
-	assert_true(g.is_free(5, full & ~H.bit(1)), "tile 5 only needs key 1")
-	assert_false(g.is_free(5, full & ~H.bit(0)))
+	assert_false(g.is_free(4, HalvesBits.minus(full, H.bit(0))), "group 2 still waits for key 1")
+	assert_false(g.is_free(4, HalvesBits.minus(full, H.bit(1))), "group 1 still waits for key 0")
+	assert_true(g.is_free(4, HalvesBits.minus(full, H.mask_of([0, 1]))))
+	assert_true(g.is_free(5, HalvesBits.minus(full, H.bit(1))), "tile 5 only needs key 1")
+	assert_false(g.is_free(5, HalvesBits.minus(full, H.bit(0))))
 
 
 func test_frost_thaws_when_a_touching_tile_is_removed() -> void:
@@ -240,30 +244,30 @@ func test_frost_thaws_when_a_touching_tile_is_removed() -> void:
 	var full := g.full_mask()
 	assert_eq(g.frost_need[3], H.mask_of([2, 4]))
 	assert_eq(g.blocked_reason(3, full), B.FROSTED)
-	assert_false(g.is_free(3, full & ~H.bit(0)), "tile 0 does not touch tile 3")
-	assert_false(g.is_free(3, full & ~H.bit(5)))
-	assert_true(g.is_free(3, full & ~H.bit(2)), "the tile above is gone")
-	assert_true(g.is_free(3, full & ~H.bit(4)), "the tile below is gone")
+	assert_false(g.is_free(3, HalvesBits.minus(full, H.bit(0))), "tile 0 does not touch tile 3")
+	assert_false(g.is_free(3, HalvesBits.minus(full, H.bit(5))))
+	assert_true(g.is_free(3, HalvesBits.minus(full, H.bit(2))), "the tile above is gone")
+	assert_true(g.is_free(3, HalvesBits.minus(full, H.bit(4))), "the tile below is gone")
 	assert_eq(g.free_mask(full), H.mask_of([0, 1, 2, 4, 5]))
 
 
 func test_frost_thaws_when_its_cover_tile_is_removed() -> void:
 	var g := H.geometry([Vector3i(0, 0, 0), Vector3i(4, 0, 0), Vector3i(0, 0, 1)]).with_features({"frost": [0]})
 	assert_eq(g.frost_need[0], H.bit(2), "only the tile on top touches it")
-	assert_eq(g.blocked_reason(0, 0b111), B.COVERED)
-	assert_eq(g.blocked_reason(0, 0b011), B.FREE, "uncovered and thawed by the same removal")
+	assert_eq(g.blocked_reason(0, H.from_int(0b111)), B.COVERED)
+	assert_eq(g.blocked_reason(0, H.from_int(0b011)), B.FREE, "uncovered and thawed by the same removal")
 
 
 func test_blocked_reason_order() -> void:
 	var g := _order_board().with_features(_order_features())
 	var full := g.full_mask()
 	assert_eq(g.blocked_reason(1, full), B.COVERED, "covered, sides, locked and frosted")
-	assert_eq(g.blocked_reason(1, full & ~H.bit(4)), B.SIDES, "sides, locked and frosted")
+	assert_eq(g.blocked_reason(1, HalvesBits.minus(full, H.bit(4))), B.SIDES, "sides, locked and frosted")
 	assert_eq(g.blocked_reason(1, H.mask_of([0, 1, 2])), B.SIDES, "sides only (key and cover gone)")
 	assert_eq(g.blocked_reason(1, H.mask_of([1, 2, 3])), B.LOCKED, "locked (frost thawed by tile 0)")
 	assert_eq(g.blocked_reason(0, full), B.LOCKED, "locked and frosted")
-	assert_eq(g.blocked_reason(0, full & ~H.bit(3)), B.FROSTED, "the key is gone, tile 1 still touches")
-	assert_eq(g.blocked_reason(0, full & ~H.mask_of([1, 3])), B.FREE)
+	assert_eq(g.blocked_reason(0, HalvesBits.minus(full, H.bit(3))), B.FROSTED, "the key is gone, tile 1 still touches")
+	assert_eq(g.blocked_reason(0, HalvesBits.minus(full, H.mask_of([1, 3]))), B.FREE)
 	assert_eq(g.blocked_reason(2, H.mask_of([0, 1, 2, 4])), B.FROSTED)
 	assert_eq(g.blocked_reason(2, H.mask_of([0, 2, 4])), B.FREE)
 	assert_eq(g.blocked_reason(3, full), B.FREE, "a key has no rule of its own")
@@ -281,20 +285,21 @@ func test_every_subset_matches_the_reference_rules() -> void:
 		var features := HalvesFeatures.normalize(entry[1])
 		var g := plain.with_features(features)
 		var bad := ""
-		for rem: int in 1 << g.size():
-			var want_mask := 0
+		for r: int in 1 << g.size():
+			var rem := H.from_int(r)
+			var want_mask := HalvesBits.empty()
 			for i: int in g.size():
-				if (rem & (1 << i)) == 0:
+				if not HalvesBits.has(rem, i):
 					continue
 				var want := _reason_ref(g.positions, features, i, rem)
 				if want == B.FREE:
-					want_mask |= 1 << i
+					HalvesBits.set_bit(want_mask, i)
 				if g.blocked_reason(i, rem) != want and bad == "":
-					bad = "tile %d in %d: reason %d, want %d" % [i, rem, g.blocked_reason(i, rem), want]
+					bad = "tile %d in %d: reason %d, want %d" % [i, r, g.blocked_reason(i, rem), want]
 				if g.is_free(i, rem) != (want == B.FREE) and bad == "":
-					bad = "tile %d in %d: is_free %s, reason %d" % [i, rem, g.is_free(i, rem), want]
+					bad = "tile %d in %d: is_free %s, reason %d" % [i, r, g.is_free(i, rem), want]
 			if g.free_mask(rem) != want_mask and bad == "":
-				bad = "free_mask(%d) = %d, want %d" % [rem, g.free_mask(rem), want_mask]
+				bad = "free_mask(%d) = %s, want %s" % [r, H.ids(g.free_mask(rem)), H.ids(want_mask)]
 		assert_eq(bad, "", "%d-tile board with %s" % [g.size(), H.js(features)])
 
 
@@ -303,10 +308,12 @@ func test_mist_and_gold_do_not_change_the_rules() -> void:
 	var all: Array = [0, 1, 2, 3, 4, 5, 6, 7]
 	var g2 := g.with_features({"mist": all, "gold": all})
 	assert_true(g2.has_features())
-	assert_eq(g2.lock_need, PackedInt64Array([0, 0, 0, 0, 0, 0, 0, 0]))
-	assert_eq(g2.frost_need, PackedInt64Array([0, 0, 0, 0, 0, 0, 0, 0]))
+	var none := HalvesBits.empty()
+	assert_eq(g2.lock_need, [none, none, none, none, none, none, none, none])
+	assert_eq(g2.frost_need, [none, none, none, none, none, none, none, none])
 	var same := true
-	for rem: int in 1 << g.size():
+	for r: int in 1 << g.size():
+		var rem := H.from_int(r)
 		same = same and g2.free_mask(rem) == g.free_mask(rem)
 	assert_true(same, "mist and gold have no effect on the rules")
 
@@ -317,13 +324,15 @@ func test_monotone_on_hand_boards_exhaustive() -> void:
 	var n := g.size()
 	var bad := ""
 	for rem: int in 1 << n:
-		var free := g.free_mask(rem)
+		var free := g.free_mask(H.from_int(rem))
 		var sub := rem
 		while true:
-			var sub_free := g.free_mask(sub)
+			var sub_set := H.from_int(sub)
+			var sub_free := g.free_mask(sub_set)
 			# Every tile free in rem and still in sub must be free in sub.
-			if (free & sub & ~sub_free) != 0 and bad == "":
-				bad = "free in %d but not in its subset %d: %d" % [rem, sub, free & sub & ~sub_free]
+			var lost := HalvesBits.minus(HalvesBits.intersection(free, sub_set), sub_free)
+			if not HalvesBits.is_empty(lost) and bad == "":
+				bad = "free in %d but not in its subset %d: %s" % [rem, sub, H.ids(lost)]
 			if sub == 0:
 				break
 			sub = (sub - 1) & rem
@@ -344,13 +353,12 @@ func test_monotone_on_dealt_boards_with_random_subsets() -> void:
 		var full := g.full_mask()
 		var bad := ""
 		for trial: int in 300:
-			var rem := ((rng.randi() << 32) | rng.randi()) & full
-			var sub := rem & ((rng.randi() << 32) | rng.randi())
+			var rem := HalvesBits.intersection(H.from_int((rng.randi() << 32) | rng.randi()), full)
+			var sub := HalvesBits.intersection(rem, H.from_int((rng.randi() << 32) | rng.randi()))
 			var free := gf.free_mask(rem)
 			for i: int in g.size():
-				var b := 1 << i
-				if (sub & b) != 0 and (free & b) != 0 and not gf.is_free(i, sub) and bad == "":
-					bad = "tile %d free in %d but not in %d" % [i, rem, sub]
+				if HalvesBits.has(sub, i) and HalvesBits.has(free, i) and not gf.is_free(i, sub) and bad == "":
+					bad = "tile %d free in %s but not in %s" % [i, H.ids(rem), H.ids(sub)]
 		assert_eq(bad, "", "level %d with %s" % [level, H.js(features)])
 
 
@@ -444,12 +452,13 @@ func test_tile_count() -> void:
 	assert_eq(HalvesFeatures.tile_count({"locks": [{"keys": [0], "locked": [3]}, {"keys": [1], "locked": [3]}]}), 3)
 
 
+## (v3) A mask is a HalvesBits set: tile i is bit i & 63 of word i >> 6; the edge is tile 127.
 func test_mask() -> void:
-	assert_eq(HalvesFeatures.mask([]), 0)
-	assert_eq(HalvesFeatures.mask([0, 3]), 9)
-	assert_eq(HalvesFeatures.mask([3, 0, 3]), 9)
-	assert_eq(HalvesFeatures.mask([63]), 1 << 63)
-	assert_eq(HalvesFeatures.mask([0, 63]), (1 << 63) | 1)
+	assert_eq(HalvesFeatures.mask([]), PackedInt64Array([0, 0]))
+	assert_eq(HalvesFeatures.mask([0, 3]), PackedInt64Array([9, 0]))
+	assert_eq(HalvesFeatures.mask([3, 0, 3]), PackedInt64Array([9, 0]))
+	assert_eq(HalvesFeatures.mask([127]), PackedInt64Array([0, 1 << 63]))
+	assert_eq(HalvesFeatures.mask([0, 127]), PackedInt64Array([1, 1 << 63]))
 
 
 # --- HalvesFeatures.place ---
@@ -512,12 +521,13 @@ func _check_place(g: HalvesGeometry, order: Array[Vector2i], faces: PackedInt32A
 	var n := order.size()
 	var size := g.size()
 	var step := H.steps_of(order, size)
-	var free_before: Array[int] = []
+	var free_before: Array[PackedInt64Array] = []
 	var rem := g.full_mask()
 	for k: int in n:
 		free_before.append(g.free_mask(rem))
-		rem &= ~((1 << order[k].x) | (1 << order[k].y))
+		rem = HalvesBits.minus(rem, H.mask_of([order[k].x, order[k].y]))
 	var all := g.full_mask()
+	var none := HalvesBits.empty()
 
 	assert_eq(H.js(f), H.js(HalvesFeatures.normalize(f)), label + ": normalised")
 	var errors := HalvesFeatures.validate(g, f, order)
@@ -525,8 +535,8 @@ func _check_place(g: HalvesGeometry, order: Array[Vector2i], faces: PackedInt32A
 
 	# 1. Locks.
 	var locks: Array = f.get("locks", [])
-	var keys := 0
-	var locked := 0
+	var keys := HalvesBits.empty()
+	var locked := HalvesBits.empty()
 	assert_true(locks.size() <= 1, label + ": at most one group")
 	if locks.size() == 1:
 		keys = HalvesFeatures.mask((locks[0] as Dictionary).get("keys", []))
@@ -541,74 +551,75 @@ func _check_place(g: HalvesGeometry, order: Array[Vector2i], faces: PackedInt32A
 			key_steps[step[t]] = true
 		var last := -1
 		for k: int in key_steps:
-			assert_ne(keys & (1 << order[k].x), 0, label + ": both tiles of key step %d" % k)
-			assert_ne(keys & (1 << order[k].y), 0, label + ": both tiles of key step %d" % k)
+			assert_ne(HalvesBits.intersection(keys, H.bit(order[k].x)), none, label + ": both tiles of key step %d" % k)
+			assert_ne(HalvesBits.intersection(keys, H.bit(order[k].y)), none, label + ": both tiles of key step %d" % k)
 			last = maxi(last, k)
 		assert_eq(key_steps.size(), mini(int(spec.get("key_pairs", 0)), hi - lo), label + ": key steps")
-		var cand := 0
-		var pref := 0
+		var cand := HalvesBits.empty()
+		var pref := HalvesBits.empty()
 		for t: int in size:
 			if step[t] <= last:
 				continue
-			cand |= 1 << t
+			HalvesBits.set_bit(cand, t)
 			for k: int in last + 1:
-				if (free_before[k] & (1 << t)) != 0:
-					pref |= 1 << t
-		assert_eq(locked & ~cand, 0, label + ": locked tiles leave after the last key")
-		assert_eq(HalvesGeometry.popcount(locked), mini(int(spec.get("locked", 0)), HalvesGeometry.popcount(cand)),
+				if HalvesBits.has(free_before[k], t):
+					HalvesBits.set_bit(pref, t)
+		assert_eq(HalvesBits.minus(locked, cand), none, label + ": locked tiles leave after the last key")
+		assert_eq(HalvesBits.count(locked), mini(int(spec.get("locked", 0)), HalvesBits.count(cand)),
 				label + ": locked count")
 		_assert_preferred(locked, pref, label + ": locked tiles free early come first")
 	else:
 		assert_eq(locks.size(), 0, label + ": no lock group")
 
 	# 2. Frost.
-	var used := keys | locked
+	var used := HalvesBits.union(keys, locked)
 	var frost := HalvesFeatures.mask(f.get("frost", []))
-	var frost_cand := 0
+	var frost_cand := HalvesBits.empty()
 	for t: int in size:
-		if (used & (1 << t)) != 0:
+		if HalvesBits.has(used, t):
 			continue
 		var touching := _touch_ref(g.positions, t)
 		for j: int in H.ids(touching):
 			if step[j] < step[t]:
-				frost_cand |= 1 << t
-	assert_eq(frost & ~frost_cand, 0, label + ": every frost tile has a touching tile removed earlier")
-	assert_eq(HalvesGeometry.popcount(frost), mini(int(spec.get("frost", 0)), HalvesGeometry.popcount(frost_cand)),
+				HalvesBits.set_bit(frost_cand, t)
+	assert_eq(HalvesBits.minus(frost, frost_cand), none, label + ": every frost tile has a touching tile removed earlier")
+	assert_eq(HalvesBits.count(frost), mini(int(spec.get("frost", 0)), HalvesBits.count(frost_cand)),
 			label + ": frost count")
-	_assert_preferred(frost, frost_cand & free_before[0], label + ": frost on tiles free at the start first")
+	_assert_preferred(frost, HalvesBits.intersection(frost_cand, free_before[0]),
+			label + ": frost on tiles free at the start first")
 
 	# 3. Mist.
-	used |= frost
-	var live_y := 0
+	used = HalvesBits.union(used, frost)
+	var live_y := HalvesBits.empty()
 	for link: Vector4i in HalvesFill.trap_links(g, order):
 		var other_q := order[link.x].x + order[link.x].y - link.z
 		var other_p := order[link.y].x + order[link.y].y - link.w
 		if HalvesFace.matches(faces[link.z], faces[link.w]) and HalvesFace.matches(faces[other_q], faces[other_p]):
-			live_y |= 1 << link.w
+			HalvesBits.set_bit(live_y, link.w)
 	var mist := HalvesFeatures.mask(f.get("mist", []))
-	var mist_cand := all & ~free_before[0] & ~used & ~live_y
-	assert_eq(mist & free_before[0], 0, label + ": mist tiles are not free at the start")
-	assert_eq(mist & ~mist_cand, 0, label + ": mist candidates only")
-	assert_eq(HalvesGeometry.popcount(mist), mini(int(spec.get("mist", 0)), HalvesGeometry.popcount(mist_cand)),
+	var mist_cand := HalvesBits.minus(HalvesBits.minus(HalvesBits.minus(all, free_before[0]), used), live_y)
+	assert_eq(HalvesBits.intersection(mist, free_before[0]), none, label + ": mist tiles are not free at the start")
+	assert_eq(HalvesBits.minus(mist, mist_cand), none, label + ": mist candidates only")
+	assert_eq(HalvesBits.count(mist), mini(int(spec.get("mist", 0)), HalvesBits.count(mist_cand)),
 			label + ": mist count")
 
 	# 4. Gold.
-	used |= mist
+	used = HalvesBits.union(used, mist)
 	var gold := HalvesFeatures.mask(f.get("gold", []))
-	var gold_cand := all & ~used
-	var upper := 0
+	var gold_cand := HalvesBits.minus(all, used)
+	var upper := HalvesBits.empty()
 	for t: int in size:
 		if g.positions[t].z >= 1:
-			upper |= 1 << t
-	assert_eq(gold & ~gold_cand, 0, label + ": gold only on unused tiles")
-	assert_eq(HalvesGeometry.popcount(gold), mini(int(spec.get("gold", 0)), HalvesGeometry.popcount(gold_cand)),
+			HalvesBits.set_bit(upper, t)
+	assert_eq(HalvesBits.minus(gold, gold_cand), none, label + ": gold only on unused tiles")
+	assert_eq(HalvesBits.count(gold), mini(int(spec.get("gold", 0)), HalvesBits.count(gold_cand)),
 			label + ": gold count")
-	_assert_preferred(gold, gold_cand & upper, label + ": gold prefers z >= 1")
+	_assert_preferred(gold, HalvesBits.intersection(gold_cand, upper), label + ": gold prefers z >= 1")
 
 
 ## "Preferred first": with k chosen, either all k come from the preferred set or all of it was taken.
-func _assert_preferred(chosen: int, preferred: int, label: String) -> void:
-	if HalvesGeometry.popcount(chosen) <= HalvesGeometry.popcount(preferred):
-		assert_eq(chosen & ~preferred, 0, label)
+func _assert_preferred(chosen: PackedInt64Array, preferred: PackedInt64Array, label: String) -> void:
+	if HalvesBits.count(chosen) <= HalvesBits.count(preferred):
+		assert_eq(HalvesBits.minus(chosen, preferred), HalvesBits.empty(), label)
 	else:
-		assert_eq(preferred & ~chosen, 0, label)
+		assert_eq(HalvesBits.minus(preferred, chosen), HalvesBits.empty(), label)
