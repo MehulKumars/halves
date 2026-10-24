@@ -154,6 +154,37 @@ static func deal_v2(geometry: HalvesGeometry, pair_keys: PackedInt32Array, rng: 
 	return {"faces": faces, "solution": order, "features": features, "traps": live_traps(plain, order, faces)}
 
 
+## (v3) A copy of `faces` where the two tiles of one step of `order` carry the gold pair (motif
+## kin): a step in [n / 3, 2n / 3) (at least one), preferring steps whose two tiles are both not
+## free at the start, picked with one rng draw. The side-a tile stays side a, so `order` still solves.
+static func with_gold_pair(geometry: HalvesGeometry, order: Array[Vector2i], faces: PackedInt32Array,
+		rng: RandomNumberGenerator) -> PackedInt32Array:
+	var out := faces.duplicate()
+	var n := order.size()
+	if n == 0:
+		return out
+	var start := HalvesBits.empty()
+	for pair in order:
+		HalvesBits.set_bit(start, pair.x)
+		HalvesBits.set_bit(start, pair.y)
+	var start_free := geometry.free_mask(start)
+	var lo := n / 3
+	var hidden := PackedInt32Array()
+	var open := PackedInt32Array()
+	for k in range(lo, maxi((2 * n) / 3, lo + 1)):
+		if HalvesBits.has(start_free, order[k].x) or HalvesBits.has(start_free, order[k].y):
+			open.append(k)
+		else:
+			hidden.append(k)
+	var steps := hidden if not hidden.is_empty() else open
+	var pick := order[steps[rng.randi_range(0, steps.size() - 1)]]
+	var gold := HalvesCrests.pair_of(HalvesCrests.motif_index(&"kin"), 0)
+	var x_side := HalvesFace.SIDE_A if HalvesFace.side(faces[pick.x]) == HalvesFace.SIDE_A else HalvesFace.SIDE_B
+	out[pick.x] = gold << 1 | x_side
+	out[pick.y] = gold << 1 | (1 - x_side)
+	return out
+
+
 ## The pair key of every remaining side-A face, sorted: what a re-deal has to place.
 static func remaining_pair_keys(state: HalvesState) -> PackedInt32Array:
 	var keys := PackedInt32Array()

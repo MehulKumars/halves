@@ -1,10 +1,11 @@
 class_name HalvesRun
 extends RefCounted
 ## The clock and move log of one board: active play time (from the first tap, pauses left out)
-## and every pair, mistake, undo, shuffle and hint. Kept for best times; replay() re-checks a run
-## with HalvesState, which is what a future leaderboard server would do before trusting a time.
+## and every pair, mistake, undo, shuffle, hint and (v3) mend. Kept for best times; replay() re-checks
+## a run with HalvesState, which is what a future leaderboard server would do before trusting a time.
 
-enum Event { PAIR, MISMATCH, UNDO, SHUFFLE, HINT }
+## Saved logs store the kind as an int: only ever append (MEND: [t_ms, MEND, a, -1]).
+enum Event { PAIR, MISMATCH, UNDO, SHUFFLE, HINT, MEND }
 
 const FORMAT: int = 1
 ## A frame longer than this (a hitch, or time in the background) only counts this much.
@@ -65,7 +66,7 @@ static func from_dict(data: Dictionary) -> HalvesRun:
 	run.active_ms = int(data.get("active_ms", 0))
 	for entry: Variant in data.get("events", []):
 		var e: Array = entry
-		run.events.append([int(e[0]), int(e[1]), int(e[2]), int(e[3])])
+		run.events.append([int(e[0]), int(e[1]), int(e[2]) if e.size() > 2 else -1, int(e[3]) if e.size() > 3 else -1])
 	run.started = not run.events.is_empty() or run.active_ms > 0
 	return run
 
@@ -115,6 +116,10 @@ static func replay(level: HalvesLevelData, run: Dictionary, level_gen: int = -1,
 				state.apply_deal(dealt.remaining, dealt.faces, stuck)
 			Event.HINT:
 				pass
+			Event.MEND:
+				if state.try_mend(e[2]) != HalvesState.Result.MATCH:
+					out.error = "event %d: tile %d can not be mended" % [n, e[2]]
+					return out
 			_:
 				out.error = "event %d: unknown kind %d" % [n, e[1]]
 				return out
