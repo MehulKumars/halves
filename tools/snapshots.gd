@@ -223,7 +223,7 @@ func _show_confirm() -> bool:
 	var popup := _popup(Screens.CONFIRM)
 	if popup == null:
 		return false
-	popup.call(&"setup", "Reset progress?", "Stars, coins and purchases on this phone are deleted.", "Reset", true)
+	popup.call(&"setup", "Reset progress?", "Stars, coins and the daily streak on this phone are deleted.", "Reset", true)
 	return true
 
 
