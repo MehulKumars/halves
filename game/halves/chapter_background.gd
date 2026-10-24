@@ -98,7 +98,7 @@ func set_chapter(chapter_index: int) -> void:
 
 ## Rebuilds for the current style (after Settings changes it).
 func refresh() -> void:
-	var id: String = HalvesChapters.get_chapter(chapter).id
+	var id: String = HalvesChapters.scene_id(chapter)
 	if style() == "drawn" and HalvesScenery.has_scene(id):
 		_texture = null
 		if _scenery == null:

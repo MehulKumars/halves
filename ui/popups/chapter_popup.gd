@@ -19,11 +19,11 @@ func setup(chapter: int, completed: bool) -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.text = ("%s complete" if completed else "%s") % info.name
 	content.add_child(title)
-	var drawn := ChapterBackground.style() == "drawn" and HalvesScenery.has_scene(info.id)
+	var drawn := ChapterBackground.style() == "drawn" and HalvesScenery.has_scene(HalvesChapters.scene_id(chapter))
 	var picture: Control
 	if drawn:
 		var scenery := HalvesScenery.new()
-		scenery.set_scene(info.id)
+		scenery.set_scene(HalvesChapters.scene_id(chapter))
 		picture = scenery
 	else:
 		var photo := TextureRect.new()
