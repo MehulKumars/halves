@@ -294,7 +294,7 @@ func _on_match(a: int, b: int, before: Dictionary) -> void:
 	var chain := mini(combo_count - 1, MAX_COMBO_STEP)
 	var fx := HalvesSnapFx.new()
 	_fx_layer.add_child(fx)
-	var colour := HalvesPalette.shape_color(HalvesFace.shape(state.faces[a]))
+	var colour := HalvesPalette.face_color(state.faces[a])
 	var burst := 1.0 + 0.12 * chain
 	fx.snapped.connect(func(point: Vector2) -> void: _shards.burst(point, colour, _unit / 110.0, burst))
 	fx.play(state.faces[a], state.faces[b], start_a, start_b, _tiles[a].face_size)

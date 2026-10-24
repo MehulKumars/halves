@@ -104,10 +104,11 @@ func slips() -> int:
 	return mistakes + stuck_shuffles
 
 
-func stars() -> int:
-	if slips() == 0:
+## Stars for this board's slips with `allowance` free slips (-1: unlimited; v3, section 1).
+func stars(allowance: int = 0) -> int:
+	if allowance < 0 or slips() <= allowance:
 		return 3
-	return 2 if slips() <= HalvesConfig.STAR2_MAX_MISTAKES else 1
+	return 2 if slips() <= allowance + HalvesConfig.STAR2_EXTRA_SLIPS else 1
 
 
 ## Takes a shuffled board (HalvesFill.shuffle); the old undo history no longer applies.

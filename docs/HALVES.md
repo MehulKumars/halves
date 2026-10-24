@@ -171,7 +171,8 @@ static func count(s: PackedInt64Array) -> int
 static func ids(s: PackedInt64Array) -> PackedInt32Array    # ascending
 static func first(s: PackedInt64Array) -> int               # lowest id, -1 if empty
 ```
-A set is a valid `Dictionary` key (packed arrays compare by content), so solver memos key on it
+Ids outside `0..127` are ignored: `of` skips them, `has` is false, `added`, `removed`, `set_bit` and
+`clear_bit` leave the set as it is. A set is a valid `Dictionary` key (packed arrays compare by content), so solver memos key on it
 directly. `HalvesGeometry.popcount` becomes `HalvesBits.count`; `HalvesGeometry.MAX_TILES` is 128.
 
 ### `HalvesFace` (`halves_face.gd`, static; a face is an `int`)
@@ -510,7 +511,7 @@ func record(kind: Event, a: int = -1, b: int = -1) -> void   # starts the clock 
 func finish() -> void
 func to_dict() -> Dictionary
 static func from_dict(data: Dictionary) -> HalvesRun
-static func replay(level: HalvesLevelData, run: Dictionary, level_gen: int = -1) -> Dictionary
+static func replay(level: HalvesLevelData, run: Dictionary, level_gen: int = -1, allowance: int = 0) -> Dictionary  # (v3) stars use the allowance
 ```
 - Event arguments: `PAIR a b` and `MISMATCH a b` are the two tiles in tap order; `UNDO` none;
   `SHUFFLE count stuck`: `count` is the board's shuffle counter used for `shuffle_rng` and `stuck`

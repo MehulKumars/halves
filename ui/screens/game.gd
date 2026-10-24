@@ -337,7 +337,7 @@ func _on_cleared() -> void:
 			Juice.pop(_stars, 1.2, 0.3)
 			await get_tree().create_timer(0.9, false).timeout
 			if is_inside_tree():
-				finish(true, _state.stars())
+				finish(true, _state.stars(_allowance()))
 
 
 ## The chapter's burst over the cleared board, its little fanfare and a strong haptic.
@@ -413,7 +413,7 @@ func _record_clear(stars: int) -> Dictionary:
 		coins += HalvesConfig.SWIFT_COINS
 	var details := {"time_ms": _run.active_ms, "par_ms": _data.par_ms(), "best_ms": record.best_ms,
 			"new_best": record.new_best, "swift": record.swift, "swift_new": record.swift_new, "chapter": _chapter,
-			"gold_coins": gold_coins, "combo_coins": _combo_coins, "slips": _state.slips()}
+			"gold_coins": gold_coins, "combo_coins": _combo_coins, "slips": _state.slips(), "allowance": _allowance()}
 	if _mode == Screens.Mode.DAILY:
 		var daily := HalvesRecords.record_daily(_daily_date, _run.active_ms, stars)
 		details.title = "Daily #%d complete!" % HalvesPools.daily_number(_daily_date)
@@ -455,10 +455,15 @@ func _go_next() -> void:
 	UI.goto(Screens.GAME)
 
 
+## Free slips on this board before a star goes (HalvesConfig.star_allowance; -1 = unlimited).
+func _allowance() -> int:
+	return HalvesConfig.star_allowance(_mode, _level, _state.geometry.size() / 2)
+
+
 func _refresh_hud() -> void:
 	if _state == null:
 		return
-	_stars.stars = _state.stars()
+	_stars.stars = _state.stars(_allowance())
 	var total := _state.geometry.size()
 	_progress.value = 100.0 * float(total - _state.tiles_left()) / maxf(1.0, float(total))
 	%UndoButton.disabled = _state.history.is_empty()
@@ -583,7 +588,7 @@ func _on_debug_command(command: StringName, _args: Array) -> void:
 	match command:
 		&"skip_level":
 			if _state != null and (_mode == Screens.Mode.LEVELS or _mode == Screens.Mode.DAILY):
-				finish(true, _state.stars())
+				finish(true, _state.stars(_allowance()))
 			elif _mode == Screens.Mode.RUSH:
 				_finish_rush()
 		&"stats":

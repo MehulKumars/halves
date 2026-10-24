@@ -224,7 +224,7 @@ func _print_board(data: HalvesLevelData) -> void:
 			if p.z != z:
 				continue
 			var face := data.faces[i]
-			var letter: String = "CTSD"[HalvesFace.shape(face)]
+			var letter: String = "CTSD"[HalvesFace.shape(face)] if not HalvesFace.is_crest(face) else str(HalvesFace.family(face)).substr(0, 1).to_upper()
 			if HalvesFace.side(face) == HalvesFace.SIDE_B:
 				letter = letter.to_lower()
 			grid[p.y][p.x] = letter

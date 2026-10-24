@@ -12,8 +12,15 @@ const PRICE_HINT: int = 30
 const PRICE_UNDO: int = 30
 const PRICE_SHUFFLE: int = 40
 
-## Stars: 3 with no mistakes, 2 with up to this many, else 1.
+## Stars (v2, no longer used): 3 with no mistakes, 2 with up to this many, else 1.
 const STAR2_MAX_MISTAKES: int = 2
+
+## Stars (v3, docs/HALVES.md section 1): a slip allowance. Levels 1..STAR_FREE_LEVELS never lose
+## stars; later boards allow pairs / STAR_ALLOWANCE_PAIRS free slips (at least 1) for 3 stars, and
+## STAR2_EXTRA_SLIPS more for 2. Tuned by the human after real plays.
+const STAR_FREE_LEVELS: int = 10
+const STAR_ALLOWANCE_PAIRS: int = 15
+const STAR2_EXTRA_SLIPS: int = 3
 
 ## Levels 1..N forgive the first mistake (and show the mate) so the rule is taught, not punished.
 const TUTORIAL_FORGIVE_LEVELS: int = 4
@@ -53,3 +60,10 @@ const PAR_PER_LAYER_S: float = 3.0
 const PAR_PER_FEATURE_S: float = 1.0
 const PAR_DIFFICULTY_SCALE: float = 0.004
 const PAR_ROUND_S: int = 5
+
+
+## How many slips still give 3 stars on a board (-1: any number). `mode` is a Screens.Mode.
+static func star_allowance(mode: int, level: int, pairs: int) -> int:
+	if mode == Screens.Mode.LEVELS and level >= 1 and level <= STAR_FREE_LEVELS:
+		return -1
+	return maxi(1, pairs / STAR_ALLOWANCE_PAIRS)

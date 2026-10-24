@@ -72,7 +72,7 @@ static func from_dict(data: Dictionary) -> HalvesRun:
 
 ## Plays `run` back on `level`: {"ok", "error", "cleared", "stars", "slips"}.
 ## `level_gen` is the gen version the board was baked with (HalvesLevels or HalvesPools).
-static func replay(level: HalvesLevelData, run: Dictionary, level_gen: int = -1) -> Dictionary:
+static func replay(level: HalvesLevelData, run: Dictionary, level_gen: int = -1, allowance: int = 0) -> Dictionary:
 	var out := {"ok": false, "error": "", "cleared": false, "stars": 0, "slips": 0}
 	var parsed := from_dict(run)
 	var expected_gen := level_gen if level_gen >= 0 else HalvesLevels.gen_version()
@@ -120,6 +120,6 @@ static func replay(level: HalvesLevelData, run: Dictionary, level_gen: int = -1)
 				return out
 	out.ok = true
 	out.cleared = state.is_cleared()
-	out.stars = state.stars()
+	out.stars = state.stars(allowance)
 	out.slips = state.slips()
 	return out

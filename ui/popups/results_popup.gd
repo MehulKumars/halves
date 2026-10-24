@@ -57,10 +57,12 @@ func show_win(level: int, stars: int, coins: int, details: Dictionary = {}) -> v
 func _message(stars: int, details: Dictionary) -> String:
 	if bool(details.get("rush", false)):
 		return "%d boards cleared" % int(details.get("boards", 0))
-	var text: String = ["Done!", "Done!", "Nice!", "Flawless!"][clampi(stars, 0, 3)]
 	var slips := int(details.get("slips", 0))
+	var text: String = "Flawless!" if stars >= 3 and slips == 0 else ["Done!", "Done!", "Nice!", "Great!"][clampi(stars, 0, 3)]
 	if slips > 0:
-		text += "  (%d slip%s)" % [slips, "" if slips == 1 else "s"]
+		text += "  (%d slip%s" % [slips, "" if slips == 1 else "s"]
+		var allowance := int(details.get("allowance", -1))
+		text += ", %d free)" % allowance if allowance >= 0 else ")"
 	if details.has("streak"):
 		text += "\nStreak: %d day%s" % [int(details.streak), "" if int(details.streak) == 1 else "s"]
 		if int(details.get("daily_reward", 0)) > 0:
