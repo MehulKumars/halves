@@ -58,7 +58,7 @@ func test_every_level_follows_its_plan_slot() -> void:
 		assert_eq(data.positions, HalvesMask.parse(layers), "level %d positions are its mask" % n)
 		# Pair keys: the plan's types round-robin over tiles / 2 pairs, one side A each.
 		var keys := H.round_robin(slot.get("types", []), int(data.positions.size() / 2.0))
-		assert_eq(H.side_a_keys(-1, data.faces), H.sorted_ints(keys), "level %d pair types" % n)
+		assert_eq(H.side_a_keys(HalvesBits.full(HalvesBits.MAX), data.faces), H.sorted_ints(keys), "level %d pair types" % n)
 
 
 func test_levels_are_numbered_in_order() -> void:
@@ -74,7 +74,7 @@ func test_every_level_has_sorted_tiles_and_complete_pairs() -> void:
 		var count := data.positions.size()
 		assert_eq(data.faces.size(), count, "level %d: one face per tile" % n)
 		assert_eq(count % 2, 0, "level %d: even tile count" % n)
-		assert_true(count <= HalvesGeometry.MAX_TILES, "level %d: at most 64 tiles" % n)
+		assert_true(count <= HalvesGeometry.MAX_TILES, "level %d: at most %d tiles" % [n, HalvesGeometry.MAX_TILES])
 		for i: int in range(1, count):
 			var a: Vector3i = data.positions[i - 1]
 			var b: Vector3i = data.positions[i]

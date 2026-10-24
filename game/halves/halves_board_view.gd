@@ -134,7 +134,7 @@ func tile_at(point: Vector2) -> int:
 	if state == null:
 		return -1
 	for i in range(_tiles.size() - 1, -1, -1):
-		if state.remaining & (1 << i) != 0 and _tiles[i].hit_rect().has_point(point):
+		if HalvesBits.has(state.remaining, i) and _tiles[i].hit_rect().has_point(point):
 			return i
 	return -1
 
@@ -151,7 +151,7 @@ func _gui_input(event: InputEvent) -> void:
 
 ## What a tap on tile `i` does (also used by tests and the tutorial).
 func tap(i: int) -> void:
-	if _busy or state == null or state.remaining & (1 << i) == 0:
+	if _busy or state == null or not HalvesBits.has(state.remaining, i):
 		return
 	if not _tapped:
 		_tapped = true
@@ -245,8 +245,9 @@ func shuffle(was_stuck: bool = false) -> void:
 		return
 	_busy = true
 	var involved: Array[HalvesTileView] = []
+	var moved := HalvesBits.union(before, state.remaining)
 	for tile in _tiles:
-		if (before | state.remaining) & (1 << tile.index) != 0:
+		if HalvesBits.has(moved, tile.index):
 			involved.append(tile)
 	var flip := create_tween().set_parallel()
 	for tile in involved:
@@ -319,29 +320,29 @@ func _on_match(a: int, b: int, before: Dictionary) -> void:
 ## frost thaws, gold pays.
 func _feature_feedback(before: Dictionary, at: Vector2, a: int, b: int) -> void:
 	var after := _snapshot()
-	var freed: int = after.free & ~int(before.free) & state.remaining
-	var revealed: int = int(before.veiled) & ~state.veiled
-	var opened: int = int(before.locked) & ~int(after.locked)
-	var thawed: int = int(before.frosted) & ~int(after.frosted)
+	var freed := HalvesBits.intersection(HalvesBits.minus(after.free, before.free), state.remaining)
+	var revealed := HalvesBits.minus(before.veiled, state.veiled)
+	var opened := HalvesBits.minus(before.locked, after.locked)
+	var thawed := HalvesBits.minus(before.frosted, after.frosted)
 	for tile in _tiles:
-		var bit := 1 << tile.index
-		if revealed & bit != 0:
+		var i := tile.index
+		if HalvesBits.has(revealed, i):
 			tile.veiled = true
 			tile.reveal()
-		elif freed & bit != 0:
+		elif HalvesBits.has(freed, i):
 			tile.pop()
-		if opened & bit != 0:
+		if HalvesBits.has(opened, i):
 			tile.unlock()
-		if thawed & bit != 0:
+		if HalvesBits.has(thawed, i):
 			tile.thaw()
-	if revealed != 0:
+	if not HalvesBits.is_empty(revealed):
 		HalvesSfx.play(&"reveal")
-	if opened != 0:
+	if not HalvesBits.is_empty(opened):
 		HalvesSfx.play(&"unlock")
 		Haptics.success()
-	if thawed != 0:
+	if not HalvesBits.is_empty(thawed):
 		HalvesSfx.play(&"thaw")
-	var gold := HalvesGeometry.popcount(state.gold & ((1 << a) | (1 << b)))
+	var gold := HalvesBits.count(HalvesBits.intersection(state.gold, HalvesBits.of([a, b])))
 	if gold > 0:
 		HalvesSfx.play(&"gold")
 		_float(at + Vector2(0, _unit * 0.2), "+%d" % (gold * HalvesConfig.GOLD_COINS), HalvesPalette.GOLD, 0.36)
@@ -426,36 +427,36 @@ func _layout() -> void:
 			tile.lift = LIFT * _unit
 
 
-## Free, veiled, locked and frosted tiles right now (masks), to see what a snap changed.
+## Free, veiled, locked and frosted tiles right now (HalvesBits sets), to see what a snap changed.
 func _snapshot() -> Dictionary:
 	var g := state.geometry
-	var locked := 0
-	var frosted := 0
+	var locked := HalvesBits.empty()
+	var frosted := HalvesBits.empty()
 	if not g.lock_need.is_empty():
 		for i in g.size():
-			if state.remaining & (1 << i) == 0:
+			if not HalvesBits.has(state.remaining, i):
 				continue
-			if state.remaining & g.lock_need[i] != 0:
-				locked |= 1 << i
-			if g.frost_need[i] != 0 and g.frost_need[i] & ~state.remaining == 0:
-				frosted |= 1 << i
+			if HalvesBits.intersects(state.remaining, g.lock_need[i]):
+				HalvesBits.set_bit(locked, i)
+			if not HalvesBits.is_empty(g.frost_need[i]) and HalvesBits.is_subset(g.frost_need[i], state.remaining):
+				HalvesBits.set_bit(frosted, i)
 	return {"free": g.free_mask(state.remaining), "veiled": state.veiled, "locked": locked, "frosted": frosted}
 
 
 func _refresh() -> void:
 	var now := _snapshot()
-	var keys := 0
+	var keys := HalvesBits.empty()
 	for group: Dictionary in state.geometry.features.get("locks", []):
-		keys |= HalvesFeatures.mask(group.keys)
+		keys = HalvesBits.union(keys, HalvesFeatures.mask(group.keys))
 	for tile in _tiles:
-		var bit := 1 << tile.index
-		var present := state.remaining & bit != 0
+		var i := tile.index
+		var present := HalvesBits.has(state.remaining, i)
 		tile.visible = present
-		tile.face = state.faces[tile.index]
+		tile.face = state.faces[i]
 		if present:
-			tile.blocked = int(now.free) & bit == 0
-			tile.veiled = state.veiled & bit != 0
-			tile.key_mark = keys & bit != 0
-			tile.lock_amount = 1.0 if int(now.locked) & bit != 0 else 0.0
-			tile.frost = 1.0 if int(now.frosted) & bit != 0 else 0.0
-			tile.gold = state.gold & bit != 0
+			tile.blocked = not HalvesBits.has(now.free, i)
+			tile.veiled = HalvesBits.has(state.veiled, i)
+			tile.key_mark = HalvesBits.has(keys, i)
+			tile.lock_amount = 1.0 if HalvesBits.has(now.locked, i) else 0.0
+			tile.frost = 1.0 if HalvesBits.has(now.frosted, i) else 0.0
+			tile.gold = HalvesBits.has(state.gold, i)

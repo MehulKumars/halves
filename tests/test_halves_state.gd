@@ -11,7 +11,7 @@ func _column(texts: Array) -> HalvesState:
 	return H.state(H.column(texts.size()), texts)
 
 
-func _assert_unchanged(s: HalvesState, remaining: int, mistakes: int, history_size: int) -> void:
+func _assert_unchanged(s: HalvesState, remaining: PackedInt64Array, mistakes: int, history_size: int) -> void:
 	assert_eq(s.remaining, remaining, "remaining unchanged")
 	assert_eq(s.mistakes, mistakes, "mistakes unchanged")
 	assert_eq(s.history.size(), history_size, "history unchanged")
@@ -19,7 +19,7 @@ func _assert_unchanged(s: HalvesState, remaining: int, mistakes: int, history_si
 
 func test_new_state_has_every_tile() -> void:
 	var s := _column(["circle:v:-:a", "circle:v:-:b", "tri:v:-:a", "tri:v:-:b"])
-	assert_eq(s.remaining, 0b1111)
+	assert_eq(s.remaining, H.from_int(0b1111))
 	assert_eq(s.tiles_left(), 4)
 	assert_eq(s.mistakes, 0)
 	assert_eq(s.free_mistakes, 0)
@@ -32,12 +32,12 @@ func test_new_state_has_every_tile() -> void:
 func test_match_removes_both_and_records_the_pair() -> void:
 	var s := _column(["circle:v:-:a", "tri:v:-:a", "circle:v:-:b", "tri:v:-:b"])
 	assert_eq(s.try_pair(0, 2), R.MATCH)
-	assert_eq(s.remaining, 0b1010)
+	assert_eq(s.remaining, H.from_int(0b1010))
 	assert_eq(s.tiles_left(), 2)
 	assert_eq(s.mistakes, 0)
 	assert_eq(s.history, [{"kind": "pair", "a": 0, "b": 2}])
 	assert_eq(s.try_pair(3, 1), R.MATCH)
-	assert_eq(s.remaining, 0)
+	assert_eq(s.remaining, HalvesBits.empty())
 	assert_eq(s.history.size(), 2)
 	var last: Dictionary = s.history[1]
 	assert_eq(last.get("kind"), "pair")
@@ -54,12 +54,12 @@ func test_invalid_ids_change_nothing() -> void:
 	assert_eq(s.try_pair(-1, 1), R.INVALID, "negative id")
 	assert_eq(s.try_pair(0, 4), R.INVALID, "id == size")
 	assert_eq(s.try_pair(99, 1), R.INVALID, "id far out of range")
-	_assert_unchanged(s, 0b1111, 0, 0)
+	_assert_unchanged(s, H.from_int(0b1111), 0, 0)
 	assert_eq(s.try_pair(0, 1), R.MATCH)
 	assert_eq(s.try_pair(0, 1), R.INVALID, "both already removed")
 	assert_eq(s.try_pair(0, 2), R.INVALID, "first already removed")
 	assert_eq(s.try_pair(3, 1), R.INVALID, "second already removed")
-	_assert_unchanged(s, 0b1100, 0, 1)
+	_assert_unchanged(s, H.from_int(0b1100), 0, 1)
 
 
 func test_invalid_is_checked_before_blocked() -> void:
@@ -68,7 +68,7 @@ func test_invalid_is_checked_before_blocked() -> void:
 			["circle:v:-:a", "circle:v:-:a", "circle:v:-:b"])
 	assert_eq(s.try_pair(1, 1), R.INVALID, "same blocked tile")
 	assert_eq(s.try_pair(1, 3), R.INVALID, "blocked tile with an out-of-range id")
-	_assert_unchanged(s, 0b111, 0, 0)
+	_assert_unchanged(s, H.from_int(0b111), 0, 0)
 
 
 func test_blocked_by_neighbours_changes_nothing() -> void:
@@ -77,7 +77,7 @@ func test_blocked_by_neighbours_changes_nothing() -> void:
 			["tri:v:-:a", "circle:v:-:a", "tri:v:-:b", "circle:v:-:b"])
 	assert_eq(s.try_pair(1, 3), R.BLOCKED)
 	assert_eq(s.try_pair(3, 1), R.BLOCKED)
-	_assert_unchanged(s, 0b1111, 0, 0)
+	_assert_unchanged(s, H.from_int(0b1111), 0, 0)
 	assert_eq(s.try_pair(0, 2), R.MATCH)
 	assert_eq(s.try_pair(1, 3), R.MATCH, "free once its neighbours are gone")
 
@@ -87,7 +87,7 @@ func test_blocked_is_checked_before_mismatch() -> void:
 	var s := H.state([Vector3i(0, 0, 0), Vector3i(2, 0, 0), Vector3i(4, 0, 0), Vector3i(0, 4, 0)],
 			["tri:v:-:a", "circle:v:-:a", "tri:v:-:b", "circle:v:-:a"])
 	assert_eq(s.try_pair(1, 3), R.BLOCKED)
-	_assert_unchanged(s, 0b1111, 0, 0)
+	_assert_unchanged(s, H.from_int(0b1111), 0, 0)
 
 
 func test_blocked_by_a_covering_tile() -> void:
@@ -95,7 +95,7 @@ func test_blocked_by_a_covering_tile() -> void:
 	var s := H.state([Vector3i(0, 0, 0), Vector3i(0, 4, 0), Vector3i(0, 8, 0), Vector3i(0, 0, 1)],
 			["circle:v:-:a", "circle:v:-:b", "tri:v:-:b", "tri:v:-:a"])
 	assert_eq(s.try_pair(0, 1), R.BLOCKED)
-	_assert_unchanged(s, 0b1111, 0, 0)
+	_assert_unchanged(s, H.from_int(0b1111), 0, 0)
 	assert_eq(s.try_pair(3, 2), R.MATCH)
 	assert_eq(s.try_pair(0, 1), R.MATCH)
 	assert_true(s.is_cleared())
@@ -104,7 +104,7 @@ func test_blocked_by_a_covering_tile() -> void:
 func test_twins_are_a_mistake() -> void:
 	var s := _column(["circle:v:-:a", "circle:v:-:a"])
 	assert_eq(s.try_pair(0, 1), R.MISMATCH)
-	assert_eq(s.remaining, 0b11, "nothing is removed")
+	assert_eq(s.remaining, H.from_int(0b11), "nothing is removed")
 	assert_eq(s.mistakes, 1)
 	assert_eq(s.history, [{"kind": "mistake"}])
 	assert_eq(s.try_pair(1, 0), R.MISMATCH)
@@ -117,7 +117,7 @@ func test_near_twins_are_mistakes() -> void:
 	assert_eq(s.try_pair(0, 1), R.MISMATCH, "other cut")
 	assert_eq(s.try_pair(0, 2), R.MISMATCH, "other mark")
 	assert_eq(s.try_pair(0, 3), R.MISMATCH, "other mark, same side")
-	assert_eq(s.remaining, 0b1111)
+	assert_eq(s.remaining, H.from_int(0b1111))
 	assert_eq(s.mistakes, 3)
 	assert_eq(s.history.size(), 3)
 
@@ -127,7 +127,7 @@ func test_different_shapes_switch_without_penalty() -> void:
 	assert_eq(s.try_pair(0, 1), R.SWITCH)
 	assert_eq(s.try_pair(2, 3), R.SWITCH, "square and diamond are different shapes")
 	assert_eq(s.try_pair(1, 2), R.SWITCH)
-	_assert_unchanged(s, 0b1111, 0, 0)
+	_assert_unchanged(s, H.from_int(0b1111), 0, 0)
 
 
 func test_strict_makes_every_non_match_a_mistake() -> void:
@@ -139,7 +139,7 @@ func test_strict_makes_every_non_match_a_mistake() -> void:
 	assert_eq(s.mistakes, 2)
 	assert_eq(s.history.size(), 2)
 	assert_eq(s.try_pair(0, 2), R.MATCH, "matches still match")
-	assert_eq(s.remaining, 0b1010)
+	assert_eq(s.remaining, H.from_int(0b1010))
 
 
 func test_free_mistake_absorbs_the_first_mismatch() -> void:
@@ -161,7 +161,7 @@ func test_undo_a_pair() -> void:
 	var s := _column(["circle:v:-:a", "tri:v:-:a", "circle:v:-:b", "tri:v:-:b"])
 	assert_eq(s.try_pair(0, 2), R.MATCH)
 	assert_true(s.undo())
-	assert_eq(s.remaining, 0b1111, "both tiles return")
+	assert_eq(s.remaining, H.from_int(0b1111), "both tiles return")
 	assert_eq(s.tiles_left(), 4)
 	assert_true(s.history.is_empty())
 	assert_eq(s.mistakes, 0)
@@ -175,7 +175,7 @@ func test_undo_a_mistake() -> void:
 	assert_eq(s.mistakes, 2)
 	assert_true(s.undo())
 	assert_eq(s.mistakes, 1)
-	assert_eq(s.remaining, 0b11)
+	assert_eq(s.remaining, H.from_int(0b11))
 	assert_true(s.undo())
 	assert_eq(s.mistakes, 0)
 	assert_eq(s.stars(), 3, "the star comes back")
@@ -188,16 +188,16 @@ func test_undo_takes_back_the_last_action_first() -> void:
 	assert_eq(s.try_pair(2, 3), R.MISMATCH)
 	assert_true(s.undo())
 	assert_eq(s.mistakes, 0, "the mistake went first")
-	assert_eq(s.remaining, 0b1100, "the pair is still gone")
+	assert_eq(s.remaining, H.from_int(0b1100), "the pair is still gone")
 	assert_true(s.undo())
-	assert_eq(s.remaining, 0b1111)
+	assert_eq(s.remaining, H.from_int(0b1111))
 	assert_false(s.undo())
 
 
 func test_undo_on_a_fresh_board() -> void:
 	var s := _column(["circle:v:-:a", "circle:v:-:b"])
 	assert_false(s.undo())
-	assert_eq(s.remaining, 0b11)
+	assert_eq(s.remaining, H.from_int(0b11))
 
 
 func test_stars_thresholds() -> void:
@@ -240,29 +240,30 @@ func test_not_stuck_with_a_free_pair() -> void:
 	assert_eq(s.free_pairs(), H.pairs([Vector2i(0, 1)]))
 
 
-func test_64_tiles_use_bit_63() -> void:
-	# 8 x 8 grid, tile i at row i / 8, column i % 8: only row ends are free. The last row's ends
-	# (56 and 63) are the only match; every other tile is the same twin.
+func test_128_tiles_use_bit_127() -> void:
+	# (v3: the limit is 128 tiles, was 64.) 16 x 8 grid, tile i at row i / 16, column i % 16: only
+	# row ends are free. The last row's ends (112 and 127) are the only match; every other tile is
+	# the same twin.
 	var points: Array = []
 	var texts: Array = []
-	for i: int in 64:
-		points.append(Vector3i(2 * (i % 8), 2 * int(i / 8.0), 0))
+	for i: int in 128:
+		points.append(Vector3i(2 * (i % 16), 2 * int(i / 16.0), 0))
 		texts.append("tri:v:-:a")
-	texts[56] = "circle:v:-:a"
-	texts[63] = "circle:v:-:b"
+	texts[112] = "circle:v:-:a"
+	texts[127] = "circle:v:-:b"
 	var s := H.state(points, texts)
-	assert_eq(s.remaining, -1, "all 64 bits")
-	assert_eq(s.tiles_left(), 64)
-	assert_eq(s.free_pairs(), H.pairs([Vector2i(56, 63)]))
-	assert_eq(s.try_pair(62, 63), R.BLOCKED)
-	assert_eq(s.try_pair(63, 64), R.INVALID)
-	assert_eq(s.try_pair(0, 7), R.MISMATCH, "free twins")
-	assert_eq(s.try_pair(63, 56), R.MATCH)
-	assert_eq(s.remaining, -1 & ~((1 << 56) | (1 << 63)))
-	assert_eq(s.tiles_left(), 62)
+	assert_eq(s.remaining, HalvesBits.full(128), "all 128 bits")
+	assert_eq(s.tiles_left(), 128)
+	assert_eq(s.free_pairs(), H.pairs([Vector2i(112, 127)]))
+	assert_eq(s.try_pair(126, 127), R.BLOCKED)
+	assert_eq(s.try_pair(127, 128), R.INVALID)
+	assert_eq(s.try_pair(0, 15), R.MISMATCH, "free twins")
+	assert_eq(s.try_pair(127, 112), R.MATCH)
+	assert_eq(s.remaining, HalvesBits.minus(HalvesBits.full(128), H.mask_of([112, 127])))
+	assert_eq(s.tiles_left(), 126)
 	assert_true(s.undo())
 	assert_true(s.undo())
-	assert_eq(s.remaining, -1)
+	assert_eq(s.remaining, HalvesBits.full(128))
 	assert_eq(s.mistakes, 0)
 
 
@@ -272,8 +273,8 @@ func test_apply_deal_replaces_the_board_and_clears_history() -> void:
 	s.try_pair(2, 3)
 	assert_eq(s.history.size(), 2)
 	var new_faces := H.faces(["", "", "tri:v:-:b", "tri:v:-:a"])
-	s.apply_deal(0b1100, new_faces)
-	assert_eq(s.remaining, 0b1100)
+	s.apply_deal(H.from_int(0b1100), new_faces)
+	assert_eq(s.remaining, H.from_int(0b1100))
 	assert_eq(s.faces, new_faces)
 	assert_true(s.history.is_empty())
 	assert_false(s.undo(), "a shuffle clears the undo history")

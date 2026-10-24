@@ -75,20 +75,20 @@ func test_solve_from_a_partly_cleared_board() -> void:
 
 func test_empty_board_is_solved_with_no_moves() -> void:
 	var g := H.geometry(H.column(2))
-	var result := HalvesSolver.solve(g, H.faces(["circle:v:-:a", "circle:v:-:b"]), 0)
+	var result := HalvesSolver.solve(g, H.faces(["circle:v:-:a", "circle:v:-:b"]), HalvesBits.empty())
 	assert_eq(result.get("status"), S.SOLVED)
 	assert_eq(_moves(result).size(), 0)
 
 
 func test_twins_only_is_unsolvable() -> void:
 	var g := H.geometry([Vector3i(0, 0, 0), Vector3i(2, 0, 0)])
-	var result := HalvesSolver.solve(g, H.faces(["circle:v:-:a", "circle:v:-:a"]), 0b11)
+	var result := HalvesSolver.solve(g, H.faces(["circle:v:-:a", "circle:v:-:a"]), H.from_int(0b11))
 	assert_eq(result.get("status"), S.UNSOLVABLE)
 
 
 func test_mates_stacked_on_each_other_are_unsolvable() -> void:
 	var g := H.geometry([Vector3i(0, 0, 0), Vector3i(0, 0, 1)])
-	var result := HalvesSolver.solve(g, H.faces(["circle:v:-:a", "circle:v:-:b"]), 0b11)
+	var result := HalvesSolver.solve(g, H.faces(["circle:v:-:a", "circle:v:-:b"]), H.from_int(0b11))
 	assert_eq(result.get("status"), S.UNSOLVABLE)
 
 
@@ -116,7 +116,7 @@ func test_tiny_budget_never_claims_unsolvable() -> void:
 func test_hint_avoids_the_trap() -> void:
 	var s := _trap_state()
 	assert_eq(H.norm(HalvesSolver.hint(s)), Vector2i(3, 5), "a greedy pick would take the trap (3,4)")
-	assert_eq(s.remaining, 0b111111, "hint does not change the board")
+	assert_eq(s.remaining, H.from_int(0b111111), "hint does not change the board")
 
 
 func test_hint_is_minus_one_when_unsolvable_even_with_a_free_pair() -> void:

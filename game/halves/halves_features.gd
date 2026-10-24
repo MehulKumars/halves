@@ -35,8 +35,8 @@ static func validate(geometry: HalvesGeometry, features: Dictionary,
 	var problems := PackedStringArray()
 	var f := normalize(features)
 	var count := geometry.size()
-	var all_keys := 0
-	var all_locked := 0
+	var all_keys := HalvesBits.empty()
+	var all_locked := HalvesBits.empty()
 	var groups: Array = f.get("locks", [])
 	for g in groups.size():
 		var group: Dictionary = groups[g]
@@ -46,11 +46,11 @@ static func validate(geometry: HalvesGeometry, features: Dictionary,
 					problems.append("lock group %d: %s tile %d is not on the board (0..%d)" % [g + 1, list, tile, count - 1])
 		var keys := mask(group.keys)
 		var locked := mask(group.locked)
-		for tile in _bits(keys & locked):
+		for tile in HalvesBits.ids(HalvesBits.intersection(keys, locked)):
 			problems.append("lock group %d: tile %d is both a key and locked" % [g + 1, tile])
-		all_keys |= keys
-		all_locked |= locked
-	for tile in _bits(all_keys & all_locked):
+		all_keys = HalvesBits.union(all_keys, keys)
+		all_locked = HalvesBits.union(all_locked, locked)
+	for tile in HalvesBits.ids(HalvesBits.intersection(all_keys, all_locked)):
 		problems.append("tile %d is a key in one lock group and locked in another" % tile)
 	for list in LISTS:
 		for tile: int in f.get(list, []):
@@ -62,17 +62,17 @@ static func validate(geometry: HalvesGeometry, features: Dictionary,
 	var remaining := rules.full_mask()
 	for k in solution.size():
 		var pair := solution[k]
-		var bits := (1 << pair.x) | (1 << pair.y)
-		if pair.x == pair.y or remaining & bits != bits:
+		if pair.x == pair.y or not HalvesBits.has(remaining, pair.x) or not HalvesBits.has(remaining, pair.y):
 			problems.append("solution step %d (%d, %d) uses a tile that is not on the board" % [k, pair.x, pair.y])
 			return problems
 		for tile in [pair.x, pair.y]:
 			if not rules.is_free(tile, remaining):
 				problems.append("solution step %d (%d, %d): tile %d is not free" % [k, pair.x, pair.y, tile])
 				return problems
-		remaining &= ~bits
-	if remaining != 0:
-		problems.append("the solution leaves %d tiles" % HalvesGeometry.popcount(remaining))
+		HalvesBits.clear_bit(remaining, pair.x)
+		HalvesBits.clear_bit(remaining, pair.y)
+	if not HalvesBits.is_empty(remaining):
+		problems.append("the solution leaves %d tiles" % HalvesBits.count(remaining))
 	return problems
 
 
@@ -85,18 +85,19 @@ static func place(geometry: HalvesGeometry, order: Array[Vector2i], faces: Packe
 	var step := PackedInt32Array()
 	step.resize(count)
 	step.fill(-1)
-	var board := 0
+	var left_over := HalvesBits.empty()
 	for k in n:
 		step[order[k].x] = k
 		step[order[k].y] = k
-		board |= (1 << order[k].x) | (1 << order[k].y)
-	var free_before := PackedInt64Array()
-	var left_over := board
+		HalvesBits.set_bit(left_over, order[k].x)
+		HalvesBits.set_bit(left_over, order[k].y)
+	var free_before: Array[PackedInt64Array] = []
 	for k in n:
 		free_before.append(geometry.free_mask(left_over))
-		left_over &= ~(1 << order[k].x) & ~(1 << order[k].y)
-	var start_free: int = free_before[0] if n > 0 else 0
-	var used := 0
+		HalvesBits.clear_bit(left_over, order[k].x)
+		HalvesBits.clear_bit(left_over, order[k].y)
+	var start_free: PackedInt64Array = free_before[0] if n > 0 else HalvesBits.empty()
+	var used := HalvesBits.empty()
 	var result: Dictionary = {}
 
 	var key_pairs := int(spec.get("key_pairs", 0))
@@ -120,7 +121,7 @@ static func place(geometry: HalvesGeometry, order: Array[Vector2i], faces: Packe
 				continue
 			var seen := false
 			for k in last + 1:
-				if free_before[k] & (1 << tile) != 0:
+				if HalvesBits.has(free_before[k], tile):
 					seen = true
 					break
 			if seen:
@@ -130,52 +131,53 @@ static func place(geometry: HalvesGeometry, order: Array[Vector2i], faces: Packe
 		var locked := _take(reachable, others, locked_wanted, rng)
 		if not keys.is_empty() and not locked.is_empty():
 			result["locks"] = [{"keys": keys, "locked": locked}]
-			used |= mask(keys) | mask(locked)
+			used = HalvesBits.union(used, HalvesBits.union(mask(keys), mask(locked)))
 
 	var frost_wanted := int(spec.get("frost", 0))
 	if frost_wanted > 0:
 		var open := PackedInt32Array()
 		var others := PackedInt32Array()
 		for tile in count:
-			if step[tile] < 0 or used & (1 << tile) != 0:
+			if step[tile] < 0 or HalvesBits.has(used, tile):
 				continue
 			var thawed := false
-			for other in count:
-				if geometry.touch[tile] & (1 << other) != 0 and step[other] >= 0 and step[other] < step[tile]:
+			for other in HalvesBits.ids(geometry.touch[tile]):
+				if step[other] >= 0 and step[other] < step[tile]:
 					thawed = true
 					break
 			if not thawed:
 				continue
-			if start_free & (1 << tile) != 0:
+			if HalvesBits.has(start_free, tile):
 				open.append(tile)
 			else:
 				others.append(tile)
 		var frost := _take(open, others, frost_wanted, rng)
 		if not frost.is_empty():
 			result["frost"] = frost
-			used |= mask(frost)
+			used = HalvesBits.union(used, mask(frost))
 
 	var mist_wanted := int(spec.get("mist", 0))
 	if mist_wanted > 0:
-		var trap_tops := 0
+		var trap_tops := HalvesBits.empty()
 		for link in HalvesFill.trap_links(geometry, order):
 			if HalvesFill.is_live_link(order, faces, link):
-				trap_tops |= 1 << link.w
+				HalvesBits.set_bit(trap_tops, link.w)
+		var skip := HalvesBits.union(used, trap_tops)
 		var hidden := PackedInt32Array()
 		for tile in count:
-			if step[tile] >= 0 and start_free & (1 << tile) == 0 and (used | trap_tops) & (1 << tile) == 0:
+			if step[tile] >= 0 and not HalvesBits.has(start_free, tile) and not HalvesBits.has(skip, tile):
 				hidden.append(tile)
 		var mist := _take(hidden, PackedInt32Array(), mist_wanted, rng)
 		if not mist.is_empty():
 			result["mist"] = mist
-			used |= mask(mist)
+			used = HalvesBits.union(used, mask(mist))
 
 	var gold_wanted := int(spec.get("gold", 0))
 	if gold_wanted > 0:
 		var upper := PackedInt32Array()
 		var lower := PackedInt32Array()
 		for tile in count:
-			if step[tile] < 0 or used & (1 << tile) != 0:
+			if step[tile] < 0 or HalvesBits.has(used, tile):
 				continue
 			if geometry.positions[tile].z >= 1:
 				upper.append(tile)
@@ -190,18 +192,15 @@ static func place(geometry: HalvesGeometry, order: Array[Vector2i], faces: Packe
 ## Distinct tiles that are a key, locked, frosted or misted (gold doesn't slow a player down).
 static func tile_count(features: Dictionary) -> int:
 	var f := normalize(features)
-	var tiles := 0
+	var tiles := HalvesBits.union(mask(f.get("frost", [])), mask(f.get("mist", [])))
 	for group: Dictionary in f.get("locks", []):
-		tiles |= mask(group.keys) | mask(group.locked)
-	tiles |= mask(f.get("frost", [])) | mask(f.get("mist", []))
-	return HalvesGeometry.popcount(tiles)
+		tiles = HalvesBits.union(tiles, HalvesBits.union(mask(group.keys), mask(group.locked)))
+	return HalvesBits.count(tiles)
 
 
-static func mask(ids: Array) -> int:
-	var m := 0
-	for id: Variant in ids:
-		m |= 1 << int(id)
-	return m
+## The set of tile `ids` (JSON floats are cast).
+static func mask(ids: Array) -> PackedInt64Array:
+	return HalvesBits.of(ids)
 
 
 ## The first `count` of `preferred` then `rest`, each group in a random order (both always shuffled).
@@ -227,11 +226,3 @@ static func _ids(values: Variant) -> Array:
 	var ids: Array = seen.keys()
 	ids.sort()
 	return ids
-
-
-static func _bits(m: int) -> PackedInt32Array:
-	var out := PackedInt32Array()
-	for i in HalvesGeometry.MAX_TILES:
-		if m & (1 << i) != 0:
-			out.append(i)
-	return out

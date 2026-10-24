@@ -252,33 +252,34 @@ static func draw(canvas: CanvasItem, pair: int, side: int, center: Vector2, exte
 
 ### `HalvesGeometry` (`halves_geometry.gd`, RefCounted)
 ```
-const MAX_TILES := 64
+const MAX_TILES := 128                                                # (v3; v2: 64)
 enum Block { FREE, COVERED, SIDES, LOCKED, FROSTED }                  # (v2)
 var positions: Array[Vector3i]
-var cover: PackedInt64Array        # cover[i]: tiles that lie on top of tile i
-var left: PackedInt64Array         # left[i]: its left neighbours (right[i] likewise)
-var right: PackedInt64Array
-var touch: PackedInt64Array        # (v2) touch[i]: tiles touching i (section 1, Features)
-var lock_need: PackedInt64Array    # (v2) empty without features; else lock_need[i] = union of the key masks of i's lock groups
-var frost_need: PackedInt64Array   # (v2) empty without features; else touch[i] for frosted tiles, 0 for the others
+var cover: Array[PackedInt64Array]       # cover[i]: tiles that lie on top of tile i
+var left: Array[PackedInt64Array]        # left[i]: its left neighbours (right[i] likewise)
+var right: Array[PackedInt64Array]
+var touch: Array[PackedInt64Array]       # (v2) touch[i]: tiles touching i (section 1, Features)
+var lock_need: Array[PackedInt64Array]   # (v2) empty without features; else lock_need[i] = union of the key masks of i's lock groups
+var frost_need: Array[PackedInt64Array]  # (v2) empty without features; else touch[i] for frosted tiles, the empty set for the others
 var features: Dictionary           # (v2) the normalised features ({} without)
 static func from_positions(positions: Array[Vector3i]) -> HalvesGeometry   # keeps the given order; no features
 func with_features(features: Dictionary) -> HalvesGeometry  # (v2) a new geometry (same positions) with the rules; never mutates self
 func has_features() -> bool                                  # (v2) features is not empty
 func size() -> int
-func full_mask() -> int                              # every tile present
-func is_free(i: int, remaining: int) -> bool         # rules of section 1, against the tiles in `remaining`
-func blocked_reason(i: int, remaining: int) -> Block # (v2) the first that applies: COVERED, SIDES, LOCKED, FROSTED; else FREE
-func free_mask(remaining: int) -> int                # free tiles among `remaining`
-func free_tiles(remaining: int) -> PackedInt32Array  # ascending ids
+func full_mask() -> PackedInt64Array                                # every tile present
+func is_free(i: int, remaining: PackedInt64Array) -> bool           # rules of section 1, against the tiles in `remaining`
+func blocked_reason(i: int, remaining: PackedInt64Array) -> Block   # (v2) the first that applies: COVERED, SIDES, LOCKED, FROSTED; else FREE
+func free_mask(remaining: PackedInt64Array) -> PackedInt64Array     # free tiles among `remaining`
+func free_tiles(remaining: PackedInt64Array) -> PackedInt32Array    # ascending ids
 func bounds() -> Rect2i                              # x/y extent in half-units (from 0,0 to max x+2, y+2)
 func max_z() -> int
-static func popcount(mask: int) -> int
 ```
 `is_free(i, remaining)` (v2) is: not covered, sides open (as v1), and, when the geometry has
-features, `remaining & lock_need[i] == 0` and (`frost_need[i] == 0` or
-`frost_need[i] & ~remaining != 0`). A geometry without features behaves exactly as v1.
-`with_features({})` returns a geometry equal to one without features.
+features, `lock_need[i]` does not intersect `remaining` and (`frost_need[i]` is empty or
+not a subset of `remaining`). A geometry without features behaves exactly as v1.
+`with_features({})` returns a geometry equal to one without features. (v3) The per-tile sets
+are read-only: `is_free`, `free_mask` and `free_tiles` read flat word copies made when the
+geometry is built. `popcount` is gone (use `HalvesBits.count`).
 
 ### `HalvesFeatures` (`halves_features.gd`, static) (v2)
 Features in a level file and in code:
@@ -293,7 +294,7 @@ static func validate(geometry: HalvesGeometry, features: Dictionary,
 static func place(geometry: HalvesGeometry, order: Array[Vector2i], faces: PackedInt32Array,
 		spec: Dictionary, rng: RandomNumberGenerator) -> Dictionary
 static func tile_count(features: Dictionary) -> int                 # distinct tiles that are key, locked, frost or mist
-static func mask(ids: Array) -> int
+static func mask(ids: Array) -> PackedInt64Array                    # (v3) HalvesBits.of(ids)
 ```
 - `normalize`: ints everywhere (JSON floats cast), every list sorted ascending and without
   duplicates, empty lists and lock groups with no keys or no locked tiles removed; key order
@@ -325,13 +326,13 @@ static func mask(ids: Array) -> int
 enum Result { MATCH, MISMATCH, SWITCH, BLOCKED, INVALID }
 var geometry: HalvesGeometry
 var faces: PackedInt32Array       # faces[i] for tile i
-var remaining: int                # bitmask of tiles still on the board
+var remaining: PackedInt64Array   # the tiles still on the board
 var mistakes: int = 0
 var free_mistakes: int = 0        # mismatches that cost nothing (tutorial)
 var strict: bool = false
 var stuck_shuffles: int = 0       # (v2) shuffles applied while stuck
-var veiled: int = 0               # (v2) mist tiles whose face is still hidden
-var gold: int = 0                 # (v2) the gold tiles (mask), from geometry.features
+var veiled: PackedInt64Array      # (v2) mist tiles whose face is still hidden
+var gold: PackedInt64Array        # (v2) the gold tiles (mask), from geometry.features
 var gold_earned: int = 0          # (v2) gold tiles cleared so far
 var history: Array[Dictionary]    # {"kind": "pair", "a": int, "b": int} or {"kind": "mistake"}
 func _init(geometry: HalvesGeometry, faces: PackedInt32Array) -> void   # all tiles remaining
@@ -344,8 +345,11 @@ func is_stuck() -> bool           # tiles left and no free pair
 func tiles_left() -> int
 func slips() -> int               # (v2) mistakes + stuck_shuffles
 func stars(allowance: int = 0) -> int  # (v3) the slip allowance, section 1; -1 = unlimited
-func apply_deal(remaining: int, faces: PackedInt32Array, stuck: bool = false) -> void
+func apply_deal(remaining: PackedInt64Array, faces: PackedInt32Array, stuck: bool = false) -> void
 ```
+(v3) The state replaces `remaining`, `veiled` and `gold` with new sets on every change and never
+edits them in place, so a set a caller kept (a view's snapshot) stays as it was; `apply_deal`
+keeps a copy of the set it is given.
 `try_pair(a, b)`, in this order:
 1. `INVALID` if `a == b`, an id is out of range, or a tile is not remaining. Nothing changes.
 2. `BLOCKED` if either tile is not free. Nothing changes.
@@ -364,14 +368,15 @@ history, and (v2) adds 1 to `stuck_shuffles` when `stuck` is true. The game scre
 (`stars(0)` is not the v2 rule: v2 gave 2 stars up to 2 slips, v3 up to 3).
 
 (v2) Mist and gold: `_init` sets `gold` and `veiled` from `geometry.features` (`mist` and `gold`
-lists; 0 without features), then reveals. **Reveal** means `veiled &= ~geometry.free_mask(remaining)`
+lists; empty without features), then reveals. **Reveal** means
+`veiled = HalvesBits.minus(veiled, geometry.free_mask(remaining))`
 and happens after `_init`, after a `MATCH`, after an `undo()` and after `apply_deal`. Revealing never
 hides a tile again. `gold_earned` goes up by the number of gold tiles in a matched pair and down by
 the number of gold tiles an undone pair returns.
 
 ### `HalvesFill` (`halves_fill.gd`, static): reverse-removal fill, traps and shuffle
 ```
-static func removal_order(geometry: HalvesGeometry, mask: int, rng: RandomNumberGenerator,
+static func removal_order(geometry: HalvesGeometry, mask: PackedInt64Array, rng: RandomNumberGenerator,
 		budget: int = 4000, restarts: int = 30) -> Array[Vector2i]
 static func assign_faces(order: Array[Vector2i], pair_keys: PackedInt32Array,
 		rng: RandomNumberGenerator, tile_count: int) -> PackedInt32Array
@@ -393,13 +398,13 @@ static func shuffle_ints(values: PackedInt32Array, rng: RandomNumberGenerator) -
 - `removal_order`: pairs of tiles such that, starting from `mask` and removing the pairs in order,
   both tiles of each pair are free at their step (under the geometry's rules, features included)
   and the end is empty. Uses every tile of `mask` exactly once. Returns `[]` if it finds none within
-  the budget (or `mask == 0`). Same inputs and rng state give the same result.
+  the budget (or `mask` is empty). Same inputs and rng state give the same result.
 - `assign_faces`: needs `pair_keys.size() == order.size()`. Pair keys are shuffled with `rng`; pair
   k of `order` gets one key, one tile side A and the other side B (which tile is A is random).
   Tiles not in `order` get `-1`. Playing `order` forward is then a solution.
 - (v2) `trap_links(geometry, order)`: with `S_0` = every tile of `order` and `S_k+1 = S_k` minus
   the tiles of `order[k]`, every `Vector4i(q, p, x, y)` with `q < p`, `x` a tile of `order[q]`, `y`
-  a tile of `order[p]`, x covering y (`geometry.cover[y]` has bit x), and the **other** tile of
+  a tile of `order[p]`, x covering y (`geometry.cover[y]` contains x), and the **other** tile of
   `order[p]` free in `S_q`. Sorted ascending by (q, p, x, y). Meaning: if x and y become mates and
   the other two tiles of their steps are mates too, then pairing those two at step q (both free)
   leaves x on top of its only mate y: a trap.
@@ -425,7 +430,7 @@ static func shuffle_ints(values: PackedInt32Array, rng: RandomNumberGenerator) -
   Returns `{"faces", "solution", "features", "traps": live_traps(...)}` or `{}` if no order was
   found or `pair_keys.size() * 2 != geometry.size()`.
 - `remaining_pair_keys`: for every remaining side-A face, its pair key; sorted ascending.
-- `shuffle`: returns `{"remaining": int, "faces": PackedInt32Array, "reseated": bool}` (or `{}` when
+- `shuffle`: returns `{"remaining": PackedInt64Array, "faces": PackedInt32Array, "reseated": bool}` (or `{}` when
   the board is clear). The remaining faces keep their multiset (same faces, new places), and the
   returned board has a removal order consistent with its faces under `state.geometry` (features
   included). `reseated` is false when the tile positions are unchanged (`remaining` equals
@@ -438,15 +443,16 @@ static func shuffle_ints(values: PackedInt32Array, rng: RandomNumberGenerator) -
 ### `HalvesSolver` (`halves_solver.gd`, static)
 ```
 enum Status { SOLVED, UNSOLVABLE, UNKNOWN }
-static func solve(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: int,
+static func solve(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: PackedInt64Array,
 		budget: int = 20000) -> Dictionary        # {"status": Status, "moves": Array[Vector2i]}
 static func hint(state: HalvesState, budget: int = 5000) -> Vector2i
-static func most_freeing_pair(geometry: HalvesGeometry, remaining: int, pairs: Array[Vector2i]) -> Vector2i
+static func most_freeing_pair(geometry: HalvesGeometry, remaining: PackedInt64Array, pairs: Array[Vector2i]) -> Vector2i
 ```
-- `solve`: depth-first search over free matching pairs, remembering dead states, giving up after
+- `solve`: depth-first search over free matching pairs, remembering dead states (a memo keyed on
+  the `remaining` set, v3), giving up after
   `budget` expanded states (`UNKNOWN`; a budget of 0 expands nothing). When every remaining tile
   of a pair type is free, one of its pairs is taken without branching (it can never hurt). `SOLVED`
-  moves clear `remaining` when played in order; `remaining == 0` is `SOLVED` with no moves.
+  moves clear `remaining` when played in order; an empty `remaining` is `SOLVED` with no moves.
   `UNSOLVABLE` only when the search is exhausted.
 - `hint`: the first move of a `SOLVED` result; `Vector2i(-1, -1)` when `UNSOLVABLE` or there is no
   free pair. If `UNKNOWN` (v2): `most_freeing_pair` over the free pairs that are **not** trap moves
@@ -458,7 +464,7 @@ static func most_freeing_pair(geometry: HalvesGeometry, remaining: int, pairs: A
 enum Policy { RANDOM, CAREFUL, WARY }                                          # WARY (v2)
 static func play(geometry: HalvesGeometry, faces: PackedInt32Array,
 		rng: RandomNumberGenerator, policy: Policy) -> Dictionary
-static func is_trap_move(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: int,
+static func is_trap_move(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: PackedInt64Array,
 		pair: Vector2i) -> bool                                                  # (v2)
 static func rate(geometry: HalvesGeometry, faces: PackedInt32Array, seed_parts: Array,
 		runs: int = 50) -> Dictionary
@@ -473,7 +479,7 @@ static func difficulty(random_win: float, decoy_exposure: float, avg_free_pairs:
   `free_pairs` = free pairs on it, `decoy` = (unordered pairs of free tiles that are decoys) /
   max(1, free pairs).
 - (v2) `is_trap_move(geometry, faces, remaining, pair)`: with `after` = `remaining` without the two
-  tiles of `pair`: true if `after != 0` and `after` has no free matching pair, or if some pair key
+  tiles of `pair`: true if `after` is not empty and `after` has no free matching pair, or if some pair key
   has exactly two tiles left in `after` and one of them covers the other. (A half on top of its
   last mate can never be matched: the classic dead end a human learns to see.)
 - `rate`: one rng `SeedService.make_rng(seed_parts + ["rate"], GEN_VERSION)`; `runs` RANDOM games,

@@ -104,21 +104,24 @@ func test_layer_limit() -> void:
 			Vector3i(0, 0, 3), Vector3i(0, 0, 4)], "5 layers")
 
 
-## Layer 0: a full 6 x 7 grid (42 tiles, width 12, height 14). Layer 1: `upper` tiles stacked
-## straight on top, row by row, so every board is valid apart from its tile count.
+## Layer 0: a full 6 x 7 grid (42 tiles, width 12, height 14). Then `upper` tiles stacked
+## straight on top, row by row, filling layer 1, then 2, then 3 (42 each), so every board is
+## valid apart from its tile count.
 func _big_board(upper: int) -> Array:
 	var points: Array = []
 	for y: int in range(0, 14, 2):
 		for x: int in range(0, 12, 2):
 			points.append(Vector3i(x, y, 0))
 	for i: int in upper:
-		points.append(Vector3i(2 * (i % 6), 2 * int(i / 6.0), 1))
+		var cell := i % 42
+		points.append(Vector3i(2 * (cell % 6), 2 * int(cell / 6.0), 1 + int(i / 42.0)))
 	return points
 
 
+## (v3: the limit is 128 tiles, was 64.)
 func test_tile_limit() -> void:
-	_assert_valid(_big_board(22), "64 tiles")
-	_assert_invalid(_big_board(24), "66 tiles")
+	_assert_valid(_big_board(86), "128 tiles")
+	_assert_invalid(_big_board(88), "130 tiles")
 
 
 func test_every_mask_in_the_data_parses_and_validates() -> void:

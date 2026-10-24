@@ -51,7 +51,7 @@ func _initialize() -> void:
 	# Play the solution; the first snap is captured mid-flight.
 	var first := true
 	for pair in board.level_data.solution:
-		if state.remaining & (1 << pair.x) == 0:
+		if not HalvesBits.has(state.remaining, pair.x):
 			continue
 		await _tap(board, pair.x)
 		await _tap(board, pair.y, 1)

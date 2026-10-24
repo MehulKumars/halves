@@ -10,10 +10,10 @@ enum _Outcome { SOLVED, DEAD, OUT_OF_BUDGET }
 
 
 ## {"status": Status, "moves": Array[Vector2i]}; the moves clear `remaining` when SOLVED.
-static func solve(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: int,
+static func solve(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: PackedInt64Array,
 		budget: int = 20000) -> Dictionary:
 	var moves: Array[Vector2i] = []
-	var dead: Dictionary[int, bool] = {}
+	var dead: Dictionary[PackedInt64Array, bool] = {}
 	var spent: Array[int] = [0]
 	var outcome := _search(geometry, faces, remaining, dead, moves, spent, budget)
 	match outcome:
@@ -42,21 +42,20 @@ static func hint(state: HalvesState, budget: int = 5000) -> Vector2i:
 
 
 ## The pair (from `pairs`) that leaves the most free tiles; ties keep the earliest.
-static func most_freeing_pair(geometry: HalvesGeometry, remaining: int, pairs: Array[Vector2i]) -> Vector2i:
+static func most_freeing_pair(geometry: HalvesGeometry, remaining: PackedInt64Array, pairs: Array[Vector2i]) -> Vector2i:
 	var best := Vector2i(-1, -1)
 	var best_free := -1
 	for pair in pairs:
-		var after := remaining & ~(1 << pair.x) & ~(1 << pair.y)
-		var free := HalvesGeometry.popcount(geometry.free_mask(after))
+		var free := HalvesBits.count(geometry.free_mask(_without(remaining, pair)))
 		if free > best_free:
 			best_free = free
 			best = pair
 	return best
 
 
-static func _search(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: int,
-		dead: Dictionary[int, bool], moves: Array[Vector2i], spent: Array[int], budget: int) -> _Outcome:
-	if remaining == 0:
+static func _search(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: PackedInt64Array,
+		dead: Dictionary[PackedInt64Array, bool], moves: Array[Vector2i], spent: Array[int], budget: int) -> _Outcome:
+	if HalvesBits.is_empty(remaining):
 		return _Outcome.SOLVED
 	if dead.has(remaining):
 		return _Outcome.DEAD
@@ -66,7 +65,7 @@ static func _search(geometry: HalvesGeometry, faces: PackedInt32Array, remaining
 	var candidates := _candidates(geometry, faces, remaining)
 	for pair in candidates:
 		moves.append(pair)
-		var outcome := _search(geometry, faces, remaining & ~(1 << pair.x) & ~(1 << pair.y), dead, moves, spent, budget)
+		var outcome := _search(geometry, faces, _without(remaining, pair), dead, moves, spent, budget)
 		if outcome != _Outcome.DEAD:
 			if outcome == _Outcome.OUT_OF_BUDGET:
 				moves.pop_back()
@@ -78,19 +77,21 @@ static func _search(geometry: HalvesGeometry, faces: PackedInt32Array, remaining
 
 ## The moves worth trying from `remaining`: one forced safe pair if a pair type is entirely free,
 ## else every free pair, most freeing first.
-static func _candidates(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: int) -> Array[Vector2i]:
-	var free_mask := geometry.free_mask(remaining)
+static func _candidates(geometry: HalvesGeometry, faces: PackedInt32Array, remaining: PackedInt64Array) -> Array[Vector2i]:
 	var pairs: Array[Vector2i] = []
 	var key_total: Dictionary[int, int] = {}
 	var key_free: Dictionary[int, int] = {}
+	var r0 := remaining[0]
+	var r1 := remaining[1]
 	for i in geometry.size():
-		if remaining & (1 << i) == 0:
+		if (r0 if i < 64 else r1) & (1 << (i & 63)) == 0:
 			continue
 		var key := HalvesFace.pair_key(faces[i])
 		key_total[key] = key_total.get(key, 0) + 1
-		if free_mask & (1 << i) != 0:
-			key_free[key] = key_free.get(key, 0) + 1
 	var free := geometry.free_tiles(remaining)
+	for tile in free:
+		var key := HalvesFace.pair_key(faces[tile])
+		key_free[key] = key_free.get(key, 0) + 1
 	for i in free.size():
 		for j in range(i + 1, free.size()):
 			if HalvesFace.matches(faces[free[i]], faces[free[j]]):
@@ -103,10 +104,17 @@ static func _candidates(geometry: HalvesGeometry, faces: PackedInt32Array, remai
 		return pairs
 	var scored: Array[Vector3i] = []
 	for pair in pairs:
-		var after := remaining & ~(1 << pair.x) & ~(1 << pair.y)
-		scored.append(Vector3i(-HalvesGeometry.popcount(geometry.free_mask(after)), pair.x, pair.y))
+		scored.append(Vector3i(-HalvesBits.count(geometry.free_mask(_without(remaining, pair))), pair.x, pair.y))
 	scored.sort()
 	var ordered: Array[Vector2i] = []
 	for s in scored:
 		ordered.append(Vector2i(s.y, s.z))
 	return ordered
+
+
+## `remaining` without the two tiles of `pair` (valid tile ids), as a new set.
+static func _without(remaining: PackedInt64Array, pair: Vector2i) -> PackedInt64Array:
+	var after := remaining.duplicate()
+	after[pair.x >> 6] &= ~(1 << (pair.x & 63))
+	after[pair.y >> 6] &= ~(1 << (pair.y & 63))
+	return after

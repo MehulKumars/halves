@@ -174,7 +174,7 @@ func _pick_masks(catalogue: Dictionary) -> Dictionary:
 			continue
 		# A pure pyramid only frees its top tile or two: no choice at all at the start.
 		var geometry := HalvesGeometry.from_positions(positions)
-		if HalvesGeometry.popcount(geometry.free_mask(geometry.full_mask())) < 6:
+		if HalvesBits.count(geometry.free_mask(geometry.full_mask())) < 6:
 			continue
 		if not _faces_fit(geometry):
 			continue

@@ -23,14 +23,14 @@ func _three_stacks() -> HalvesGeometry:
 func test_the_order_checker_catches_bad_orders() -> void:
 	# Guards the helper the other tests trust: each of these breaks one rule.
 	var g := _row_of_four()
-	assert_eq(H.order_error(g, 0b1111, [Vector2i(0, 3), Vector2i(1, 2)]), "")
-	assert_ne(H.order_error(g, 0b1111, [Vector2i(1, 2), Vector2i(0, 3)]), "", "blocked at its step")
-	assert_ne(H.order_error(g, 0b1111, [Vector2i(0, 3)]), "", "tiles left over")
-	assert_ne(H.order_error(g, 0b1111, [Vector2i(0, 3), Vector2i(0, 3)]), "", "a tile used twice")
-	assert_ne(H.order_error(g, 0b1111, [Vector2i(0, 0), Vector2i(3, 3)]), "", "a tile paired with itself")
-	assert_false(H.solvable(g, H.faces(["circle:v:-:a", "circle:v:-:b", "circle:v:-:b", "circle:v:-:a"]), 0b1111),
+	assert_eq(H.order_error(g, H.from_int(0b1111), [Vector2i(0, 3), Vector2i(1, 2)]), "")
+	assert_ne(H.order_error(g, H.from_int(0b1111), [Vector2i(1, 2), Vector2i(0, 3)]), "", "blocked at its step")
+	assert_ne(H.order_error(g, H.from_int(0b1111), [Vector2i(0, 3)]), "", "tiles left over")
+	assert_ne(H.order_error(g, H.from_int(0b1111), [Vector2i(0, 3), Vector2i(0, 3)]), "", "a tile used twice")
+	assert_ne(H.order_error(g, H.from_int(0b1111), [Vector2i(0, 0), Vector2i(3, 3)]), "", "a tile paired with itself")
+	assert_false(H.solvable(g, H.faces(["circle:v:-:a", "circle:v:-:b", "circle:v:-:b", "circle:v:-:a"]), H.from_int(0b1111)),
 			"free ends are twins")
-	assert_true(H.solvable(g, H.faces(["circle:v:-:a", "tri:v:-:b", "tri:v:-:a", "circle:v:-:b"]), 0b1111))
+	assert_true(H.solvable(g, H.faces(["circle:v:-:a", "tri:v:-:b", "tri:v:-:a", "circle:v:-:b"]), H.from_int(0b1111)))
 
 
 func test_removal_order_on_a_row_is_forced() -> void:
@@ -45,12 +45,12 @@ func test_removal_order_on_a_row_is_forced() -> void:
 
 func test_removal_order_respects_the_mask() -> void:
 	var g := _row_of_four()
-	var middle := HalvesFill.removal_order(g, 0b0110, _rng(["middle"]))
+	var middle := HalvesFill.removal_order(g, H.from_int(0b0110), _rng(["middle"]))
 	assert_eq(middle.size(), 1)
 	if middle.size() == 1:
 		assert_eq(H.norm(middle[0]), Vector2i(1, 2))
-	var ends := HalvesFill.removal_order(g, 0b1001, _rng(["ends"]))
-	assert_eq(H.order_error(g, 0b1001, ends), "")
+	var ends := HalvesFill.removal_order(g, H.from_int(0b1001), _rng(["ends"]))
+	assert_eq(H.order_error(g, H.from_int(0b1001), ends), "")
 	assert_eq(ends.size(), 1)
 
 
@@ -74,17 +74,17 @@ func test_removal_order_on_real_masks() -> void:
 
 func test_removal_order_is_empty_when_impossible() -> void:
 	var stacked := H.geometry([Vector3i(0, 0, 0), Vector3i(0, 0, 1)])
-	assert_eq(HalvesFill.removal_order(stacked, 0b11, _rng(["stacked"])), H.pairs([]),
+	assert_eq(HalvesFill.removal_order(stacked, H.from_int(0b11), _rng(["stacked"])), H.pairs([]),
 			"only the top tile is ever free")
 	var tower := H.geometry([Vector3i(0, 0, 0), Vector3i(4, 0, 0), Vector3i(0, 0, 1), Vector3i(0, 0, 2)])
-	assert_eq(HalvesFill.removal_order(tower, 0b1111, _rng(["tower"])), H.pairs([]),
+	assert_eq(HalvesFill.removal_order(tower, H.from_int(0b1111), _rng(["tower"])), H.pairs([]),
 			"the lone tile must go with the tower top, then the tower is stuck")
 	var odd := H.geometry([Vector3i(0, 0, 0), Vector3i(2, 0, 0), Vector3i(4, 0, 0)])
-	assert_eq(HalvesFill.removal_order(odd, 0b111, _rng(["odd"])), H.pairs([]), "odd tile count")
+	assert_eq(HalvesFill.removal_order(odd, H.from_int(0b111), _rng(["odd"])), H.pairs([]), "odd tile count")
 
 
 func test_removal_order_of_mask_zero_is_empty() -> void:
-	assert_eq(HalvesFill.removal_order(_row_of_four(), 0, _rng(["zero"])), H.pairs([]))
+	assert_eq(HalvesFill.removal_order(_row_of_four(), HalvesBits.empty(), _rng(["zero"])), H.pairs([]))
 
 
 func test_removal_order_same_seed_same_order() -> void:
@@ -184,13 +184,13 @@ func _check_shuffle(s: HalvesState, result: Dictionary, label: String) -> void:
 	if not result.has("faces"):
 		return
 	var g := s.geometry
-	var rem: int = result["remaining"]
+	var rem: PackedInt64Array = result["remaining"]
 	var faces: PackedInt32Array = result["faces"]
 	assert_eq(faces.size(), g.size(), label + ": one face per tile")
-	assert_eq(HalvesGeometry.popcount(rem), s.tiles_left(), label + ": same number of tiles")
+	assert_eq(HalvesBits.count(rem), s.tiles_left(), label + ": same number of tiles")
 	assert_eq(H.faces_on(rem, faces), H.faces_on(s.remaining, s.faces), label + ": same faces, new places")
 	for i: int in g.size():
-		if (rem & (1 << i)) == 0:
+		if not HalvesBits.has(rem, i):
 			assert_eq(faces[i], -1, label + ": tile %d is off the board" % i)
 	assert_true(H.solvable(g, faces, rem), label + ": the shuffled board can be cleared")
 
@@ -205,7 +205,7 @@ func test_shuffle_keeps_positions_that_can_still_be_cleared() -> void:
 	var s := HalvesState.new(g, dealt["faces"])
 	for step: int in 2:
 		assert_eq(s.try_pair(solution[step].x, solution[step].y), HalvesState.Result.MATCH)
-	var before_remaining := s.remaining
+	var before_remaining := s.remaining.duplicate()
 	var before_faces := s.faces.duplicate()
 	var result := HalvesFill.shuffle(s, solution, _rng(["shuffle"]))
 	_check_shuffle(s, result, "same positions")

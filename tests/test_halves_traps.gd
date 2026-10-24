@@ -107,17 +107,17 @@ func test_trap_links_on_a_dealt_board_match_the_definition() -> void:
 	var order := HalvesFill.removal_order(g, g.full_mask(), _rng(["links order"]))
 	assert_gt(order.size(), 0)
 	var want: Array[Vector4i] = []
-	var s_k: Array[int] = []
+	var s_k: Array[PackedInt64Array] = []
 	var rem := g.full_mask()
 	for k: int in order.size():
 		s_k.append(rem)
-		rem &= ~((1 << order[k].x) | (1 << order[k].y))
+		rem = HalvesBits.minus(rem, H.mask_of([order[k].x, order[k].y]))
 	for q: int in order.size():
 		for p: int in range(q + 1, order.size()):
 			for x: int in [order[q].x, order[q].y]:
 				for y: int in [order[p].x, order[p].y]:
 					var other := order[p].x + order[p].y - y
-					if (g.cover[y] & (1 << x)) != 0 and g.is_free(other, s_k[q]):
+					if HalvesBits.has(g.cover[y], x) and g.is_free(other, s_k[q]):
 						want.append(Vector4i(q, p, x, y))
 	want.sort()
 	assert_eq(HalvesFill.trap_links(g, order), want)
@@ -414,7 +414,7 @@ func test_is_trap_move_on_the_trap_board() -> void:
 	assert_true(HalvesBot.is_trap_move(s.geometry, s.faces, s.remaining, Vector2i(3, 4)), "5 is left on its last mate 2")
 	assert_true(HalvesBot.is_trap_move(s.geometry, s.faces, s.remaining, Vector2i(4, 3)), "either tap order")
 	assert_false(HalvesBot.is_trap_move(s.geometry, s.faces, s.remaining, Vector2i(3, 5)))
-	assert_eq(s.remaining, 0b111111, "is_trap_move does not change the board")
+	assert_eq(s.remaining, H.from_int(0b111111), "is_trap_move does not change the board")
 	# After (3,5): (2,4) leaves the tri pair side by side, free.
 	assert_false(HalvesBot.is_trap_move(s.geometry, s.faces, H.mask_of([0, 1, 2, 4]), Vector2i(2, 4)))
 
@@ -422,11 +422,11 @@ func test_is_trap_move_on_the_trap_board() -> void:
 func test_is_trap_move_when_no_free_pair_is_left() -> void:
 	var g := H.geometry(H.column(4))
 	var twins := H.faces(["circle:v:-:a", "circle:v:-:b", "tri:v:-:a", "tri:v:-:a"])
-	assert_true(HalvesBot.is_trap_move(g, twins, 0b1111, Vector2i(0, 1)), "only twins are left")
+	assert_true(HalvesBot.is_trap_move(g, twins, H.from_int(0b1111), Vector2i(0, 1)), "only twins are left")
 	var fine := H.faces(["circle:v:-:a", "circle:v:-:b", "tri:v:-:a", "tri:v:-:b"])
-	assert_false(HalvesBot.is_trap_move(g, fine, 0b1111, Vector2i(0, 1)))
+	assert_false(HalvesBot.is_trap_move(g, fine, H.from_int(0b1111), Vector2i(0, 1)))
 	var last := H.faces(["circle:v:-:a", "circle:v:-:b"])
-	assert_false(HalvesBot.is_trap_move(H.geometry(H.column(2)), last, 0b11, Vector2i(0, 1)), "clearing the board is never a trap")
+	assert_false(HalvesBot.is_trap_move(H.geometry(H.column(2)), last, H.from_int(0b11), Vector2i(0, 1)), "clearing the board is never a trap")
 
 
 func test_is_trap_move_counts_exactly_two_tiles_of_a_key() -> void:
@@ -525,7 +525,7 @@ func test_most_freeing_pair() -> void:
 	assert_eq(HalvesSolver.most_freeing_pair(w.geometry, w.remaining, H.pairs([Vector2i(0, 3), Vector2i(0, 5)])),
 			Vector2i(0, 5), "four free tiles against three")
 	var column := H.geometry(H.column(4))
-	assert_eq(HalvesSolver.most_freeing_pair(column, 0b1111, H.pairs([Vector2i(2, 3), Vector2i(0, 1)])),
+	assert_eq(HalvesSolver.most_freeing_pair(column, H.from_int(0b1111), H.pairs([Vector2i(2, 3), Vector2i(0, 1)])),
 			Vector2i(2, 3), "a tie keeps the earliest in the list")
 
 
@@ -534,7 +534,7 @@ func test_hint_without_budget_skips_trap_moves() -> void:
 	assert_eq(HalvesSolver.solve(s.geometry, s.faces, s.remaining, 0).get("status"), HalvesSolver.Status.UNKNOWN,
 			"test setup: a budget of 0 expands nothing")
 	assert_eq(H.norm(HalvesSolver.hint(s, 0)), Vector2i(3, 5), "(3,4) frees more but is a trap move")
-	assert_eq(s.remaining, 0b111111, "hint does not change the board")
+	assert_eq(s.remaining, H.from_int(0b111111), "hint does not change the board")
 
 
 func test_hint_without_budget_when_every_pair_is_a_trap() -> void:
