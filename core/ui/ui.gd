@@ -256,12 +256,16 @@ func _on_node_added(node: Node) -> void:
 		plain.draw.connect(_draw_hugged_icon.bind(plain))
 
 
-## True when Godot would pin `button`'s icon to an edge while its text is centred.
+## True when Godot would pin `button`'s icon to an edge instead of centring it with its text: a side
+## icon by centred text, an icon above or below centred text, or an icon-only button not centred.
 func _hug_icon(button: Button, icon: Texture2D) -> bool:
-	return icon != null and button.text != "" and not button.expand_icon \
-		and button.alignment == HORIZONTAL_ALIGNMENT_CENTER \
-		and button.vertical_icon_alignment == VERTICAL_ALIGNMENT_CENTER \
-		and (button.icon_alignment == HORIZONTAL_ALIGNMENT_LEFT or button.icon_alignment == HORIZONTAL_ALIGNMENT_RIGHT)
+	if icon == null or button.expand_icon or button.alignment != HORIZONTAL_ALIGNMENT_CENTER:
+		return false
+	var side := button.icon_alignment == HORIZONTAL_ALIGNMENT_LEFT or button.icon_alignment == HORIZONTAL_ALIGNMENT_RIGHT
+	var middle := button.vertical_icon_alignment == VERTICAL_ALIGNMENT_CENTER
+	if button.text == "":
+		return side and middle
+	return side == middle
 
 
 ## Keeps `button.icon` a blank of the real icon's size while the icon should hug the text, and the
@@ -322,15 +326,26 @@ func _draw_hugged_icon(button: Button) -> void:
 	var left := box.get_margin(SIDE_LEFT)
 	var top := box.get_margin(SIDE_TOP)
 	var inner := button.size - Vector2(left + box.get_margin(SIDE_RIGHT), top + box.get_margin(SIDE_BOTTOM))
-	var font := button.get_theme_font(&"font")
-	var text_width := font.get_string_size(button.text, HORIZONTAL_ALIGNMENT_LEFT, -1,
-		button.get_theme_font_size(&"font_size")).x
-	var gap := float(button.get_theme_constant(&"h_separation"))
-	var start := left + maxf(0.0, (inner.x - icon_size.x - gap - text_width) * 0.5)
-	var x := start if button.icon_alignment == HORIZONTAL_ALIGNMENT_LEFT else start + text_width + gap
+	# Godot reserves the (blank) icon's room and centres the text in what is left, so placing the
+	# icon right beside (or above or below) the text centres the pair; an icon-only one is centred.
+	var text_size := Vector2.ZERO
+	var gap := 0.0
+	if button.text != "":
+		var font := button.get_theme_font(&"font")
+		var font_size := button.get_theme_font_size(&"font_size")
+		text_size = Vector2(font.get_string_size(button.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x,
+			font.get_height(font_size))
+		gap = float(button.get_theme_constant(&"h_separation"))
+	var centre := Vector2(left, top) + (inner - icon_size) * 0.5
+	var at := centre
+	if button.text != "" and button.vertical_icon_alignment == VERTICAL_ALIGNMENT_CENTER:
+		var start := left + maxf(0.0, (inner.x - icon_size.x - gap - text_size.x) * 0.5)
+		at.x = start if button.icon_alignment == HORIZONTAL_ALIGNMENT_LEFT else start + text_size.x + gap
+	elif button.text != "":
+		var start := top + maxf(0.0, (inner.y - icon_size.y - gap - text_size.y) * 0.5)
+		at.y = start if button.vertical_icon_alignment == VERTICAL_ALIGNMENT_TOP else start + text_size.y + gap
 	var colour_name := "icon_focus_color" if state == "normal" and button.has_focus() else "icon_%s_color" % state
-	var at := Vector2(x, top + (inner.y - icon_size.y) * 0.5).round()
-	button.draw_texture_rect(real, Rect2(at, icon_size), false, button.get_theme_color(StringName(colour_name)))
+	button.draw_texture_rect(real, Rect2(at.round(), icon_size), false, button.get_theme_color(StringName(colour_name)))
 
 
 func _blank_icon(icon_size: Vector2) -> Texture2D:
