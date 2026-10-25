@@ -6,7 +6,7 @@ fonts, Unsplash and Pexels licence photos (credited anyway; never Unsplash+), an
 synthesised in code.
 Never: CC BY-NC, CC BY-ND, CC BY-SA (Halves is closed source), GPL, Pixabay (its "standalone" clause
 covers edited wallpapers), AI-generated assets. No feature may let players save or export a photo.
-The CC BY-SA photos listed below are being replaced in Halves v3 (milestone M5); do not add more.
+Halves v3 ships no CC BY-SA assets; do not add any.
 
 ## Code (addons)
 | Item | Version | Author | Licence | Ships in release? |
@@ -54,20 +54,37 @@ Add one row per asset as you add them: file, author, licence, source URL.
 | `assets/audio/music/focus_tones.ogg` (binaural beat, soft chord, brown noise) | Synthesised by `tools/audio/build_music.sh` (ffmpeg) | Original work | - |
 
 ### Background photos (`assets/backgrounds/`, baked by `tools/art/process_photos.gd` from `tools/art/photos.json`)
-All from Wikimedia Commons. Changes made: cropped to portrait and resized (and dimmed on screen during
-play). CC BY-SA photos: the cropped versions in this repo are shared under the same licence.
+All from Wikimedia Commons (a few first shared on Unsplash under CC0). Changes made: cropped to portrait
+and resized (and dimmed on screen during play). Each place shows <place>_a for its levels 1-10 and
+<place>_b for 11-20 (HalvesChapters); Floating Gate, Golden Pavilion and Thousand Gates have one photo.
 | File | Photo | Author | Licence | Source |
 |---|---|---|---|---|
-| `fuji.webp` (home screen) | Mount Fuji at sunset, March 2025 | Romain Guy | CC0 1.0 | commons.wikimedia.org/wiki/File:Mount_Fuji_at_sunset,_March_2025.jpg |
-| `sakura.webp` | Rail tracks and cherry trees in Ashino Park | 掬茶 | CC BY-SA 4.0 | commons.wikimedia.org/wiki/File:Rail_tracks_and_cherry_trees_in_Ashino_Park.jpg |
-| `kyoto.webp` | Yasaka-dori early morning with street lanterns and the Tower of Yasaka (Hokan-ji Temple), Kyoto | Basile Morin | CC BY-SA 4.0 | commons.wikimedia.org/wiki/File:Yasaka-dori_early_morning_with_street_lanterns_and_the_Tower_of_Yasaka_(Hokan-ji_Temple),_Kyoto,_Japan.jpg |
-| `bamboo.webp` | Bamboo Grove, Arashiyama, Kyoto | Basile Morin | CC BY-SA 4.0 | commons.wikimedia.org/wiki/File:Bamboo_Grove,_Arashiyama,_Kyoto,_Japan.jpg |
+| `fuji_lake_a.webp` (also the home screen) | Kawaguchiko, Part II - Kawaguchiko6805 | lumoplank | CC0 1.0 | commons.wikimedia.org/wiki/File:Kawaguchiko,_Part_II_-_Kawaguchiko6805.jpg |
+| `fuji_lake_b.webp` | Kawaguchiko, Part I - Kawaguchiko6814 | lumoplank | CC0 1.0 | commons.wikimedia.org/wiki/File:Kawaguchiko,_Part_I_-_Kawaguchiko6814.jpg |
+| `sakura_a.webp` | Blossom-ueno-park (Unsplash) | Don Kawahigashi | CC0 1.0 | commons.wikimedia.org/wiki/File:Blossom-ueno-park_(Unsplash).jpg |
+| `sakura_b.webp` | Cherry blossom in Fukuokazeki sakura park | On-chan | CC0 1.0 | commons.wikimedia.org/wiki/File:Cherry_blossom_in_Fukuokazeki_sakura_park.JPG |
+| `bamboo_a.webp` | Hokokuji Bamboo Forest Kamakura | Urashimataro | Public domain | commons.wikimedia.org/wiki/File:Hokokuji_Bamboo_Forest_Kamakura.jpg |
+| `bamboo_b.webp` | Impressive bamboo canopy (Unsplash) | Jason Ortego | CC0 1.0 | commons.wikimedia.org/wiki/File:Impressive_bamboo_canopy_(Unsplash).jpg |
+| `kyoto_a.webp` | HigashiyamaStreets7228 | lumoplank | CC0 1.0 | commons.wikimedia.org/wiki/File:HigashiyamaStreets7228.jpg |
+| `kyoto_b.webp` | Streets of Gion, Kyoto - Gion7709 | lumoplank | CC0 1.0 | commons.wikimedia.org/wiki/File:Streets_of_Gion,_Kyoto_-_Gion7709.jpg |
+| `nara_a.webp` | Nara - Nara7619 | lumoplank | CC0 1.0 | commons.wikimedia.org/wiki/File:Nara_-_Nara7619.jpg |
+| `nara_b.webp` | Nara - Nara7598 | lumoplank | CC0 1.0 | commons.wikimedia.org/wiki/File:Nara_-_Nara7598.jpg |
+| `tokyo_a.webp` | Tokyo Tower at night - DSC00818 | Daderot | CC0 1.0 | commons.wikimedia.org/wiki/File:Tokyo_Tower_at_night_-_DSC00818.JPG |
+| `tokyo_b.webp` | Azabudai Hills and Tokyo Tower at night | Syced | CC0 1.0 | commons.wikimedia.org/wiki/File:Azabudai_Hills_and_Tokyo_Tower_at_night.jpg |
+| `autumn_a.webp` | Eikando, Kyoto - Eikando7376 | lumoplank | CC0 1.0 | commons.wikimedia.org/wiki/File:Eikando,_Kyoto_-_Eikando7376.jpg |
+| `autumn_b.webp` | Nanzen-ji, Kyoto - Nanzenji7336 | lumoplank | CC0 1.0 | commons.wikimedia.org/wiki/File:Nanzen-ji,_Kyoto_-_Nanzenji7336.jpg |
+| `moon_a.webp` | Matsumoto-castle-2026-PM | Hiroaki Kikuchi | CC0 1.0 | commons.wikimedia.org/wiki/File:Matsumoto-castle-2026-PM.jpg |
+| `moon_b.webp` | Tokyo Tower and moon seen from Shibuya Stream | Syced | CC0 1.0 | commons.wikimedia.org/wiki/File:Tokyo_Tower_and_moon_seen_from_Shibuya_Stream.jpg |
+| `ginzan_a.webp` | Otaru Canal Cruise (20240223) | Fumikas Sagisavas | CC0 1.0 | commons.wikimedia.org/wiki/File:Otaru_Canal_Cruise_(20240223).jpg |
+| `ginzan_b.webp` | Ginzan Onsen, the other side | lumoplank | CC0 1.0 | commons.wikimedia.org/wiki/File:Ginzan_Onsen,_the_other_side.jpg |
+| `himeji_a.webp` | Himeji - Himeji357 | lumoplank | CC0 1.0 | commons.wikimedia.org/wiki/File:Himeji_-_Himeji357.jpg |
+| `himeji_b.webp` | Himeji Castle 20260403120700 | Loggieloggie | CC0 1.0 | commons.wikimedia.org/wiki/File:Himeji_Castle_20260403120700.jpg |
+| `shirakawa_a.webp` | Shirakawa-go - Shirakawa170 | lumoplank | CC0 1.0 | commons.wikimedia.org/wiki/File:Shirakawa-go_-_Shirakawa170.jpg |
+| `shirakawa_b.webp` | View of Shirakawa-go from Ogimachi Joseki Observatory - Jason Ortego 2015 (Unsplash) | Jason Ortego | CC0 1.0 | commons.wikimedia.org/wiki/File:View_of_Shirakawa-go_from_Ogimachi_Joseki_Observatory_-_Jason_Ortego_2015_(Unsplash).jpg |
+| `hokkaido_a.webp` | Field of flowers in Hokkaido, Japan | TheOneMattMan | CC0 1.0 | commons.wikimedia.org/wiki/File:Field_of_flowers_in_Hokkaido,_Japan.jpg |
+| `hokkaido_b.webp` | Historical Village of Hokkaido & Moerenuma Park - HistoricalVillageHokkaido7148 | lumoplank | CC0 1.0 | commons.wikimedia.org/wiki/File:Historical_Village_of_Hokkaido_&_Moerenuma_Park_-_HistoricalVillageHokkaido7148.jpg |
 | `torii.webp` | Itsukushima-jinja torii at sunset, Miyajima | Jakub Hałun | CC BY 4.0 | commons.wikimedia.org/wiki/File:Itsukushima-jinja_torii_at_sunset,_Miyajima,_Japan,_20240816_1835_4171.jpg |
-| `tokyo.webp` | Tokyo Tower at night | kakidai | CC BY-SA 3.0 | commons.wikimedia.org/wiki/File:Tokyo_Tower_at_night_2.JPG |
-| `nara.webp` | Nara Park, November 2016 | Martin Falbisoner | CC BY-SA 4.0 | commons.wikimedia.org/wiki/File:Nara_Park,_November_2016.jpg |
-| `kiyomizu.webp` | Kiyomizu-dera, Kyoto, November 2016 | Martin Falbisoner | CC BY-SA 4.0 | commons.wikimedia.org/wiki/File:Kiyomizu-dera,_Kyoto,_November_2016_-07.jpg |
-| `kinkaku.webp` | Kinkakuji temple in snow | Takeshi Kuboki | CC BY 2.0 | commons.wikimedia.org/wiki/File:雪の金閣寺_Kinkakuji_temple_in_snow_(5360759256).jpg |
-| `ginzan.webp` | Evening twilight in Ginzan Onsen town, January 2022 | さかおり | CC BY-SA 4.0 | commons.wikimedia.org/wiki/File:Evening_twilight_in_Ginzan_Onsen_town_January_2022_A.jpg |
+| `kinkaku.webp` | Kinkakuji temple in snow | Takeshi Kuboki | CC BY 2.0 | commons.wikimedia.org/wiki/File:%E9%9B%AA%E3%81%AE%E9%87%91%E9%96%A3%E5%AF%BA_Kinkakuji_temple_in_snow_(5360759256).jpg |
 | `inari.webp` | Fushimi Inari, Kyoto | Jakub Hałun | CC BY 4.0 | commons.wikimedia.org/wiki/File:Fushimi_Inari,_Kyoto,_20240818_1400_4476.jpg |
 Each `<id>_thumb.webp` is a 320 px square from the same photo.
 
@@ -82,7 +99,7 @@ Each `<id>_thumb.webp` is a 320 px square from the same photo.
 ### Music and soundscapes (`assets/audio/music/`, from `tools/audio/music.tsv` by `tools/audio/build_music.sh`)
 Songs are levelled to -18 LUFS and play whole, one after another; soundscapes are cut to seamless loops
 (at most 120 s) at -24 LUFS. Changes made: levelled, faded in, looped, re-encoded. None is AI-generated
-(Free Music Archive pages say "AI generated? No"). The BY-SA files stay under CC BY-SA.
+(Free Music Archive pages say "AI generated? No").
 | File | Track | Author | Licence | Source |
 |---|---|---|---|---|
 | `roof_tops.ogg` (Lo-fi) | Roof Tops | HoliznaCC0 | CC0 1.0 | freemusicarchive.org/music/holiznacc0/summer-air-lo-fi/roof-tops/ |

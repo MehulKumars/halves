@@ -82,10 +82,13 @@ func _ready() -> void:
 	if data == null:
 		push_error("Halves: no board for mode %d (level %d)" % [_mode, _level])
 		return
-	_background = ChapterBackground.install(self, _chapter, true, BACKGROUND_DIM, false, true)
+	var half := HalvesChapters.half_for_level(_level) if _mode == Screens.Mode.LEVELS else 0
+	_background = ChapterBackground.install(self, _chapter, true, BACKGROUND_DIM, false, true, half)
 	HalvesMusic.play()
-	if _mode == Screens.Mode.LEVELS and _level % HalvesChapters.LEVELS_PER_CHAPTER >= HalvesChapters.LEVELS_PER_CHAPTER - 2:
-		ChapterBackground.preload_chapter(_chapter + 1, true)
+	if _mode == Screens.Mode.LEVELS:
+		# The next level may show the place's other photo or the next place's (every 10 levels).
+		var next := _level + 1
+		ChapterBackground.preload_chapter(HalvesChapters.index_for_level(next), true, HalvesChapters.half_for_level(next))
 	_start_board(data)
 	Events.level_started.emit(_board_id())
 	_log_level_start()

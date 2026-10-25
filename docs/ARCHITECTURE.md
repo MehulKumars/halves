@@ -214,7 +214,7 @@ The game: rules, data formats, the logic API and how to regenerate levels are in
 [HALVES.md](HALVES.md). `Progress.start_session()` (called by the splash once per launch) feeds
 `AdPolicy.start_session()` so the first session stays free of interstitials. The game screen
 plays four modes (`Screens.mode`: levels, daily, zen, rush); `HalvesChapters` gives each 20 levels a
-place (15 in v3): a photo (or, by the Backgrounds setting, the place drawn in code by `HalvesScenery`)
+place (15 in v3): two photos, levels 1-10 and 11-20 (or, by the Backgrounds setting, the place drawn in code by `HalvesScenery`)
 and an ambience (`ChapterBackground` puts it behind any screen and hides its `StyledBackground`;
 behind the board it shows the soft baked `_play` copy, with a mat under the tiles); music
 is the player's choice (`HalvesMusic`); `HalvesRecords` keeps best times, Swift medals, best-run move logs

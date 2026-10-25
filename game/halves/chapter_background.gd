@@ -20,6 +20,8 @@ static var _loaded_texture: Texture2D
 static var _particle_textures: Dictionary[String, Texture2D] = {}
 
 var chapter: int = -2
+## Which of the chapter's photos (HalvesChapters.half_for_level: levels 1-10 or 11-20).
+var half: int = 0
 var ambient_enabled: bool = true
 ## 1 = full brightness; gameplay dims so the tiles stand out.
 var dim: float = 1.0
@@ -51,9 +53,9 @@ func _init() -> void:
 
 
 ## Puts `chapter_index`'s place (MENU for the home screen) behind `screen`'s content and hides
-## its "Background" node.
+## its "Background" node; `half_index` picks the place's photo (HalvesChapters.half_for_level).
 static func install(screen: Control, chapter_index: int, ambient: bool = true, dim_to: float = 1.0,
-		menu_look: bool = false, soft_look: bool = false) -> ChapterBackground:
+		menu_look: bool = false, soft_look: bool = false, half_index: int = 0) -> ChapterBackground:
 	var bg := ChapterBackground.new()
 	bg.soft = soft_look
 	bg.ambient_enabled = ambient
@@ -67,7 +69,7 @@ static func install(screen: Control, chapter_index: int, ambient: bool = true, d
 		at = old.get_index() + 1
 	screen.add_child(bg)
 	screen.move_child(bg, at)
-	bg.set_chapter(chapter_index)
+	bg.set_chapter(chapter_index, half_index)
 	return bg
 
 
@@ -86,23 +88,24 @@ static func set_style(id: String) -> void:
 
 
 ## Starts loading a chapter's photo on a thread (call before it is needed).
-static func preload_chapter(chapter_index: int, soft_look: bool = false) -> void:
-	var path := _photo_for(chapter_index, soft_look)
+static func preload_chapter(chapter_index: int, soft_look: bool = false, half_index: int = 0) -> void:
+	var path := _photo_for(chapter_index, soft_look, half_index)
 	if style() == "photo" and path != _loaded_path and ResourceLoader.exists(path):
 		ResourceLoader.load_threaded_request(path)
 
 
-func set_chapter(chapter_index: int) -> void:
-	if chapter_index == chapter:
+func set_chapter(chapter_index: int, half_index: int = 0) -> void:
+	if chapter_index == chapter and half_index == half:
 		return
 	chapter = chapter_index
+	half = half_index
 	refresh()
 
 
 ## Rebuilds for the current style (after Settings changes it).
 func refresh() -> void:
 	var id: String = HalvesChapters.scene_id(chapter)
-	var path := _photo_for(chapter, soft)
+	var path := _photo_for(chapter, soft, half)
 	var no_photo := not ResourceLoader.exists(path)
 	if (style() == "drawn" or no_photo) and HalvesScenery.has_scene(id):
 		_texture = null
@@ -172,9 +175,9 @@ func _draw_scrim() -> void:
 
 
 ## The soft play copy when asked for and baked, else the sharp photo.
-static func _photo_for(chapter_index: int, soft_look: bool) -> String:
-	var play := HalvesChapters.play_path(chapter_index)
-	return play if soft_look and ResourceLoader.exists(play) else HalvesChapters.photo_path(chapter_index)
+static func _photo_for(chapter_index: int, soft_look: bool, half_index: int = 0) -> String:
+	var play := HalvesChapters.play_path(chapter_index, half_index)
+	return play if soft_look and ResourceLoader.exists(play) else HalvesChapters.photo_path(chapter_index, half_index)
 
 
 static func _load(path: String) -> Texture2D:

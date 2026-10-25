@@ -655,7 +655,8 @@ static func star_allowance(mode: int, level: int, pairs: int) -> int   # section
 ```
 
 ### Places, backgrounds, music and view (not part of the logic contract)
-`HalvesChapters` holds the (v3) fifteen places of twenty levels (photo, credit, ambient effect, accent, win
+`HalvesChapters` holds the (v3) fifteen places of twenty levels (two photos each, one for levels 1-10 and one for 11-20 via
+`half_for_level`; credits, ambient effect, accent, win
 jingle) and the home screen's own (`MENU`). `ChapterBackground` shows a place's photo or, if the
 player chose "Drawn" in Settings, the same place drawn in code (`HalvesScenery`). `HalvesMusic`
 holds the music styles the player picks (lo-fi and calm playlists; rain, nature and focus loops).

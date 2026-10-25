@@ -29,6 +29,13 @@ func _initialize() -> void:
 			quit(1)
 			return
 		image.convert(Image.FORMAT_RGB8)
+		# Phone photos stored on their side carry an EXIF orientation Image ignores: "rotate" (degrees
+		# clockwise, 90 or 270) in photos.json turns them upright before the crop.
+		match int(p.get("rotate", 0)):
+			90:
+				image.rotate_90(CLOCKWISE)
+			270:
+				image.rotate_90(COUNTERCLOCKWISE)
 		var focus := Vector2(float(p.focus[0]), float(p.focus[1]))
 		var crop := _portrait(image.get_size(), focus)
 		var bg := image.get_region(crop)

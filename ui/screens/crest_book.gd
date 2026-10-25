@@ -7,14 +7,15 @@ extends Screen
 func _ready() -> void:
 	back_scene = Screens.LEVEL_SELECT
 	%BackButton.pressed.connect(on_back)
-	ChapterBackground.install(self, HalvesChapters.index_for_level(Progress.next_level()), true, 0.5)
+	var next := Progress.next_level()
+	ChapterBackground.install(self, HalvesChapters.index_for_level(next), true, 0.5, false, false,
+		HalvesChapters.half_for_level(next))
 	var pages: VBoxContainer = %Pages
 	var summary := Label.new()
 	summary.theme_type_variation = &"CaptionLabel"
 	summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	summary.text = "%d of %d crests restored" % [HalvesCrestBook.restored_total(), HalvesLevels.count()]
 	pages.add_child(summary)
-	var next := Progress.next_level()
 	for chapter in HalvesChapters.count():
 		var first := HalvesChapters.first_level(chapter)
 		if first > HalvesLevels.count():
