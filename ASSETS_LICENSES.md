@@ -40,7 +40,7 @@ bundled in commercial games if each copy carries the licence: both export preset
 ## Icons
 | Item | Licence | Source |
 |---|---|---|
-| 38 icons in `core/ui/icons/` (Material Symbols Rounded, filled; recoloured white and resized to 48 px) | Apache 2.0 (`core/ui/icons/LICENSE_material_symbols.txt`) | Google, github.com/google/material-design-icons |
+| 39 icons in `core/ui/icons/` (Material Symbols Rounded, filled, and Material Icons "local_fire_department"; recoloured white and resized to 48 px) | Apache 2.0 (`core/ui/icons/LICENSE_material_symbols.txt`) | Google, github.com/google/material-design-icons |
 
 ## Game assets
 Add one row per asset as you add them: file, author, licence, source URL.

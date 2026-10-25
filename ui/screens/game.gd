@@ -40,7 +40,7 @@ var _explained: Dictionary[int, bool] = {}
 var _caption: Label
 var _clock: Label
 var _progress: ProgressBar
-## The stuck card ("No pairs left"): Undo, Shuffle (%StuckButton, a slip) and Restart.
+## The stuck card ("No pairs left"): Undo, Shuffle (%StuckButton, a slip) and Try again (restart).
 var _stuck_undo: Button
 ## (v3) Mend: a booster-bar button shown while the board has mends.
 var _mend_button: Button
@@ -606,7 +606,7 @@ func _build_hud() -> void:
 	stuck_box.get_node(^"StuckText").hide()
 	%StuckButton.text = "Shuffle"
 	var restart := Button.new()
-	restart.text = "Restart"
+	restart.text = "Try again"
 	restart.icon = Icons.RESTART
 	restart.pressed.connect(UI.goto.bind(Screens.GAME))
 	stuck_box.add_child(restart)
