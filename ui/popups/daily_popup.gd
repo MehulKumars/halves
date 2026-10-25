@@ -1,6 +1,6 @@
 extends Modal
 ## Today's Daily Puzzle: its number and weekday difficulty, the streak with a 7-day strip, today's
-## best time, Play and (once cleared) Share. Opened from the main menu; closes with "play" or null.
+## best time and Play. Opened from the main menu; closes with "play" or null.
 ## Finishing the daily pays the streak reward (HalvesRecords.record_daily), not this popup.
 
 const WEEKDAYS: Array[String] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
@@ -47,21 +47,21 @@ func _ready() -> void:
 	play.icon = Icons.PLAY
 	play.pressed.connect(close.bind("play"))
 	content.add_child(play)
-	if bool(_state.done):
-		var share := Button.new()
-		share.text = "Copy my result"
-		share.theme_type_variation = &"GhostButton"
-		share.pressed.connect(_share)
-		content.add_child(share)
 	refit()
 
 
+## The last 7 days as badges in two rows (4 over 3), so the strip stays narrow on phones.
 func _week_strip() -> Control:
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override(&"separation", 14)
+	var rows := VBoxContainer.new()
+	rows.add_theme_constant_override(&"separation", 10)
+	var row: HBoxContainer
 	var week: Array = _state.week
 	for i in week.size():
+		if i == 0 or i == 4:
+			row = HBoxContainer.new()
+			row.alignment = BoxContainer.ALIGNMENT_CENTER
+			row.add_theme_constant_override(&"separation", 14)
+			rows.add_child(row)
 		var day := Label.new()
 		day.theme_type_variation = &"BadgeLabel" if bool(week[i]) else &"CaptionLabel"
 		day.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -76,9 +76,4 @@ func _week_strip() -> Control:
 			dot.modulate = Color(1, 1, 1, 0.35)
 		dot.add_child(day)
 		row.add_child(dot)
-	return row
-
-
-func _share() -> void:
-	DisplayServer.clipboard_set(HalvesRecords.share_line(str(_state.date)))
-	UI.toast("Result copied: paste it to your friends")
+	return rows

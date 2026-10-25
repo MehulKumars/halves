@@ -4,7 +4,8 @@ extends Node
 ## - confirm(...): yes/no popup you can await.        - toast(text): short message at the bottom.
 ## - apply_style(id): switch the visual style (core/ui/themes/<id>.tres) for the whole app.
 ## Every button also gets press feedback (a small squash and a haptic tick, following Reduce
-## Motion and Haptics), and focus rings only show after keyboard or gamepad input.
+## Motion and Haptics), and focus rings only show after keyboard or gamepad input. A button with
+## centred text and a side icon draws the icon beside its text, not at the edge (_hug_icon).
 ## Android Back arrives as ui_cancel: it closes the top popup; with no popup open the current
 ## screen's _unhandled_input gets it (go back, pause, or ask to quit).
 
@@ -29,6 +30,9 @@ var _fade_layer := CanvasLayer.new()
 var _fade := ColorRect.new()
 var _changing_scene: bool = false
 var _press_tweens: Dictionary[int, Tween] = {}
+## Transparent stand-ins by size: Godot still reserves the icon's room (so the text shifts by
+## exactly half of it) while _draw_hugged_icon paints the real icon next to the text.
+var _blank_icons: Dictionary[Vector2i, Texture2D] = {}
 
 
 func _ready() -> void:
@@ -245,6 +249,96 @@ func _on_node_added(node: Node) -> void:
 	button.set_meta(&"_ui_feedback", true)
 	button.button_down.connect(_on_button_down.bind(button))
 	button.button_up.connect(_on_button_up.bind(button))
+	var plain := button as Button
+	if plain != null and not (plain is CheckBox or plain is CheckButton or plain is OptionButton
+			or plain is MenuButton or plain is ColorPickerButton):
+		_sync_hug(plain)
+		plain.draw.connect(_draw_hugged_icon.bind(plain))
+
+
+## True when Godot would pin `button`'s icon to an edge while its text is centred.
+func _hug_icon(button: Button, icon: Texture2D) -> bool:
+	return icon != null and button.text != "" and not button.expand_icon \
+		and button.alignment == HORIZONTAL_ALIGNMENT_CENTER \
+		and button.vertical_icon_alignment == VERTICAL_ALIGNMENT_CENTER \
+		and (button.icon_alignment == HORIZONTAL_ALIGNMENT_LEFT or button.icon_alignment == HORIZONTAL_ALIGNMENT_RIGHT)
+
+
+## Keeps `button.icon` a blank of the real icon's size while the icon should hug the text, and the
+## real icon otherwise; returns the real icon when hugging, else null. Code that sets `icon` later
+## is picked up on the next draw.
+func _sync_hug(button: Button) -> Texture2D:
+	var real: Texture2D = button.icon
+	if button.has_meta(&"_ui_icon"):
+		if real == button.get_meta(&"_ui_blank"):
+			real = button.get_meta(&"_ui_icon")
+		else:
+			button.remove_meta(&"_ui_icon")
+	if not _hug_icon(button, real):
+		if button.has_meta(&"_ui_icon"):
+			button.remove_meta(&"_ui_icon")
+			button.icon = real
+		return null
+	var blank := _blank_icon(real.get_size())
+	if button.icon != blank:
+		button.set_meta(&"_ui_icon", real)
+		button.set_meta(&"_ui_blank", blank)
+		button.icon = blank
+	return real
+
+
+## The icon the button really shows (its own, or the one hidden behind the blank).
+func _real_icon(button: Button) -> Texture2D:
+	if button.has_meta(&"_ui_icon") and button.icon == button.get_meta(&"_ui_blank"):
+		return button.get_meta(&"_ui_icon")
+	return button.icon
+
+
+## After a draw that found the icon out of step: swap it (a redraw then follows on its own).
+func _resync_hug(id: int) -> void:
+	var button := instance_from_id(id) as Button
+	if button != null:
+		_sync_hug(button)
+
+
+## Paints the real icon beside the centred text, in the theme's icon colour for the button's state.
+## Never swaps icons here: a redraw asked for while drawing is dropped, so that waits a moment.
+func _draw_hugged_icon(button: Button) -> void:
+	var real := _real_icon(button)
+	var hug := _hug_icon(button, real)
+	var swapped: bool = button.has_meta(&"_ui_icon") and button.icon == button.get_meta(&"_ui_blank")
+	if hug != swapped:
+		_resync_hug.call_deferred(button.get_instance_id())
+		return
+	if not hug:
+		return
+	var icon_size := real.get_size()
+	var max_width := button.get_theme_constant(&"icon_max_width")
+	if max_width > 0 and icon_size.x > max_width:
+		icon_size = Vector2(max_width, icon_size.y * max_width / icon_size.x)
+	var states := ["normal", "pressed", "hover", "disabled", "hover_pressed"]
+	var state: String = states[button.get_draw_mode()]
+	var box := button.get_theme_stylebox(StringName(state))
+	var left := box.get_margin(SIDE_LEFT)
+	var top := box.get_margin(SIDE_TOP)
+	var inner := button.size - Vector2(left + box.get_margin(SIDE_RIGHT), top + box.get_margin(SIDE_BOTTOM))
+	var font := button.get_theme_font(&"font")
+	var text_width := font.get_string_size(button.text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+		button.get_theme_font_size(&"font_size")).x
+	var gap := float(button.get_theme_constant(&"h_separation"))
+	var start := left + maxf(0.0, (inner.x - icon_size.x - gap - text_width) * 0.5)
+	var x := start if button.icon_alignment == HORIZONTAL_ALIGNMENT_LEFT else start + text_width + gap
+	var colour_name := "icon_focus_color" if state == "normal" and button.has_focus() else "icon_%s_color" % state
+	var at := Vector2(x, top + (inner.y - icon_size.y) * 0.5).round()
+	button.draw_texture_rect(real, Rect2(at, icon_size), false, button.get_theme_color(StringName(colour_name)))
+
+
+func _blank_icon(icon_size: Vector2) -> Texture2D:
+	var key := Vector2i(icon_size)
+	if not _blank_icons.has(key):
+		var image := Image.create_empty(maxi(key.x, 1), maxi(key.y, 1), false, Image.FORMAT_RGBA8)
+		_blank_icons[key] = ImageTexture.create_from_image(image)
+	return _blank_icons[key]
 
 
 func _on_button_down(button: BaseButton) -> void:

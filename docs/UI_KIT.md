@@ -96,7 +96,7 @@ Font sizes: `small`, `body`, `header`, `title`. Fonts: `display`, `body`.
 
 | Piece | File | Use |
 |---|---|---|
-| `UI` autoload | `core/ui/ui.gd` | `goto(path)` (fade), `open(scene) -> Modal`, `await confirm(title, message, ok, destructive)`, `toast(text, icon)`, `apply_style(id)`, `list_styles()`, `has_modal()`, `close_all()`. Also gives every button a press squash and a haptic tick, and shows focus rings only after keyboard or gamepad input |
+| `UI` autoload | `core/ui/ui.gd` | `goto(path)` (fade), `open(scene) -> Modal`, `await confirm(title, message, ok, destructive)`, `toast(text, icon)`, `apply_style(id)`, `list_styles()`, `has_modal()`, `close_all()`. Also gives every button a press squash and a haptic tick, shows focus rings only after keyboard or gamepad input, and draws a side icon next to centred button text (not at the edge) |
 | `Screen` | `core/ui/screen.gd` | Base for full screens. Back calls `on_back()`; or set `back_scene` |
 | `Modal` | `core/ui/modal.gd` | Base for popups: dimmed backdrop, pop-in, Back and backdrop taps close it when `dismissible`, `pauses_game`, `sheet_max_width`, `await popup.closed` for the result. A `%Scroll` inside the sheet scrolls when the content is taller than the screen |
 | `StyledBackground` | `core/ui/styled_background.gd` | Gradient and animated pattern from the style; stops moving with Reduce Motion |

@@ -142,11 +142,6 @@ static func thumb_path(index: int, half: int = 0) -> String:
 	return "res://assets/backgrounds/%s_thumb.webp" % photo_info(index, half).id
 
 
-## (v3) The soft 720 x 1440 copy baked for behind the board (tools/art/process_photos.gd).
-static func play_path(index: int, half: int = 0) -> String:
-	return "res://assets/backgrounds/%s_play.webp" % photo_info(index, half).id
-
-
 ## The drawn scene (HalvesScenery) for a chapter; the home screen's is "fuji".
 static func scene_id(index: int) -> String:
 	var c := get_chapter(index)

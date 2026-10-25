@@ -12,7 +12,7 @@ func _ready() -> void:
 	%BackButton.pressed.connect(on_back)
 	%Stars.value = Progress.total_stars()
 	var next := Progress.next_level(level_count)
-	ChapterBackground.install(self, HalvesChapters.index_for_level(next), true, 0.6, false, false,
+	ChapterBackground.install(self, HalvesChapters.index_for_level(next), true, 0.6, false,
 		HalvesChapters.half_for_level(next))
 	HalvesMusic.play()
 	%Grid.queue_free()

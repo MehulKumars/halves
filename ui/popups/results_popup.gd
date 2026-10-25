@@ -7,8 +7,6 @@ var _stats: VBoxContainer
 var _time: Label
 var _time_note: Label
 var _ribbons: HFlowContainer
-var _share_button: Button
-var _share_text: String = ""
 
 
 func _ready() -> void:
@@ -28,8 +26,6 @@ func show_win(level: int, stars: int, coins: int, details: Dictionary = {}) -> v
 	%Stars.visible = not rush
 	%RewardRow.show()
 	%Reward.value = 0
-	_share_text = str(details.get("share", ""))
-	_share_button.visible = not _share_text.is_empty()
 	_stats.visible = details.has("time_ms") or rush
 	_time_note.text = _time_text(details)
 	_time.text = "0" if rush else "0:00"
@@ -160,12 +156,3 @@ func _build_stats() -> void:
 	_ribbons.add_theme_constant_override(&"h_separation", 12)
 	_ribbons.add_theme_constant_override(&"v_separation", 10)
 	_stats.add_child(_ribbons)
-	_share_button = Button.new()
-	_share_button.text = "Copy result"
-	_share_button.theme_type_variation = &"GhostButton"
-	_share_button.visible = false
-	_share_button.pressed.connect(func() -> void:
-		DisplayServer.clipboard_set(_share_text)
-		UI.toast("Result copied: paste it to your friends"))
-	content.add_child(_share_button)
-	content.move_child(_share_button, %NextButton.get_index() + 1)

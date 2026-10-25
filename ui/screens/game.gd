@@ -40,9 +40,9 @@ var _explained: Dictionary[int, bool] = {}
 var _caption: Label
 var _clock: Label
 var _progress: ProgressBar
+## The stuck card ("No pairs left"): Undo, Shuffle (%StuckButton, a slip) and Restart.
 var _stuck_undo: Button
-## (v3) Mend: a booster-bar button shown while the board has mends, and its twin on the stuck card.
-var _stuck_mend: Button
+## (v3) Mend: a booster-bar button shown while the board has mends.
 var _mend_button: Button
 var _mend_badge: Label
 
@@ -83,12 +83,12 @@ func _ready() -> void:
 		push_error("Halves: no board for mode %d (level %d)" % [_mode, _level])
 		return
 	var half := HalvesChapters.half_for_level(_level) if _mode == Screens.Mode.LEVELS else 0
-	_background = ChapterBackground.install(self, _chapter, true, BACKGROUND_DIM, false, true, half)
+	_background = ChapterBackground.install(self, _chapter, true, BACKGROUND_DIM, false, half)
 	HalvesMusic.play()
 	if _mode == Screens.Mode.LEVELS:
 		# The next level may show the place's other photo or the next place's (every 10 levels).
 		var next := _level + 1
-		ChapterBackground.preload_chapter(HalvesChapters.index_for_level(next), true, HalvesChapters.half_for_level(next))
+		ChapterBackground.preload_chapter(HalvesChapters.index_for_level(next), HalvesChapters.half_for_level(next))
 	_start_board(data)
 	Events.level_started.emit(_board_id())
 	_log_level_start()
@@ -384,7 +384,6 @@ func _on_stuck() -> void:
 		return
 	%StuckCenter.show()
 	_stuck_undo.visible = not _state.history.is_empty()
-	_stuck_mend.visible = _state.mends > 0
 	var card: Control = %StuckCenter.get_child(0)
 	card.pivot_offset_ratio = Vector2(0.5, 0.5)
 	Juice.pop(card, 1.06, 0.2)
@@ -493,7 +492,6 @@ func _record_clear(stars: int) -> Dictionary:
 		details.title = "Daily #%d complete!" % HalvesPools.daily_number(_daily_date)
 		details.streak = daily.streak
 		details.daily_reward = daily.reward
-		details.share = HalvesRecords.share_line(_daily_date)
 		details.next_text = "Done"
 		Services.leaderboard.submit_time(board + "_time", _run.active_ms)
 		Progress.add_coins(coins)
@@ -605,14 +603,13 @@ func _build_hud() -> void:
 	var stuck_box: Node = %StuckButton.get_parent()
 	stuck_box.add_child(_stuck_undo)
 	stuck_box.move_child(_stuck_undo, %StuckButton.get_index())
-	stuck_box.get_node(^"StuckText").text = "Undo your last pairs, mend, or shuffle the board. A shuffle out of a dead end is a slip."
-	%StuckButton.text = "Shuffle · a slip"
-	_stuck_mend = Button.new()
-	_stuck_mend.text = "Mend"
-	_stuck_mend.icon = Icons.DIAMOND
-	_stuck_mend.pressed.connect(_start_mend)
-	stuck_box.add_child(_stuck_mend)
-	stuck_box.move_child(_stuck_mend, %StuckButton.get_index())
+	stuck_box.get_node(^"StuckText").hide()
+	%StuckButton.text = "Shuffle"
+	var restart := Button.new()
+	restart.text = "Restart"
+	restart.icon = Icons.RESTART
+	restart.pressed.connect(UI.goto.bind(Screens.GAME))
+	stuck_box.add_child(restart)
 	var show_time := Settings.show_timer()
 	match _mode:
 		Screens.Mode.DAILY:

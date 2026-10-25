@@ -8,7 +8,7 @@ func _ready() -> void:
 	back_scene = Screens.LEVEL_SELECT
 	%BackButton.pressed.connect(on_back)
 	var next := Progress.next_level()
-	ChapterBackground.install(self, HalvesChapters.index_for_level(next), true, 0.5, false, false,
+	ChapterBackground.install(self, HalvesChapters.index_for_level(next), true, 0.5, false,
 		HalvesChapters.half_for_level(next))
 	var pages: VBoxContainer = %Pages
 	var summary := Label.new()
